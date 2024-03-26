@@ -29,7 +29,7 @@ export const placesFilePath = path.join(
 
 const fileOrDirectoryExists = async (path: string) => {
   return fs.promises
-    .access(repoPath, fs.constants.F_OK)
+    .access(path, fs.constants.F_OK)
     .then(() => true)
     .catch(() => false);
 };
