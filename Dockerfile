@@ -2,8 +2,6 @@ FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Install curl (required for healthcheck in docker-compose)
-RUN apk add --no-cache curl
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -38,6 +36,8 @@ RUN \
 
 # Production image, copy all the files and run next
 FROM base AS runner
+# Install curl (required for healthcheck in docker-compose)
+RUN apk add --no-cache curl
 WORKDIR /app
 
 ENV NODE_ENV production
