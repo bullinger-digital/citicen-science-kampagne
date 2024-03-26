@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate-prod": "node .next/server/migrate.js",
-    "migrate-dev": "node .next/server/migrate.js && npm run codegen",
+    "migrate-prod": "cd migrations && npm run migrate",
+    "migrate-dev": "npm run migrate-prod && npm run codegen",
     "codegen": "kysely-codegen --out-file src/lib/generated/kysely-codegen.ts"
   },
   "dependencies": {

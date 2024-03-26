@@ -7,3 +7,8 @@ README.md
 .git
 local
 tei-corpus
+.env
+
+# Migrations
+migrations/node_modules
+migrations/npm-debug.log

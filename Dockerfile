@@ -58,6 +58,11 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Migrations ------------------
+COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
+RUN cd migrations && npm ci
+# -----------------------------
+
 USER nextjs
 
 EXPOSE 3000
