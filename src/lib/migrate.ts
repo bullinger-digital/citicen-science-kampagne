@@ -1,12 +1,10 @@
-// Call with `npm run migrate-dev` (or `npm run migrate`)
+// Call with `node .next/server/migrate.js` (or `npm run migrate-dev`)
 
 import * as path from "path";
 import { promises as fs } from "fs";
 import { Migrator, FileMigrationProvider } from "kysely";
-import * as dotenv from "dotenv";
-dotenv.config();
 
-async function migrateToLatest() {
+export async function migrateToLatest() {
   const db = (await import("./db")).kdb;
 
   const migrator = new Migrator({

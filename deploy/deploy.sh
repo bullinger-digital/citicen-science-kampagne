@@ -32,7 +32,7 @@ echo " * Awaiting docker stack... (timeout: $DEPLOYMENT_TIMEOUT_SECONDS seconds)
 sh docker-stack-wait.sh -t $DEPLOYMENT_TIMEOUT_SECONDS $STACK_NAME
 
 echo " * Migrating database..."
-docker exec $(docker ps --filter name=citizen-science-app_citizen-science-app.1. -q) npm run migrate
+docker exec $(docker ps --filter name=citizen-science-app_citizen-science-app.1. -q) npm run migrate-prod
 
 echo " * Docker prune..."
 docker system prune -af
