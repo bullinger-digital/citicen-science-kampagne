@@ -36,6 +36,8 @@ RUN \
 
 # Production image, copy all the files and run next
 FROM base AS runner
+# Install git (required for import / export)
+RUN apk add --no-cache git
 # Install curl (required for healthcheck in docker-compose)
 RUN apk add --no-cache curl
 WORKDIR /app
