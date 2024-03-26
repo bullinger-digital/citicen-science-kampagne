@@ -6,6 +6,7 @@ const nextConfig = {
       return {
         ...config,
         entry() {
+          console.log("Adding entry for migration script");
           return config.entry().then((entry) => {
             return Object.assign({}, entry, {
               migrate: "./src/lib/migrate.ts",
