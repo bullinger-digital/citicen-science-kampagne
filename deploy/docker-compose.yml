@@ -29,3 +29,8 @@ services:
       POSTGRES_DB: citizen-science
     volumes:
       - citizen-science-database-data:/var/lib/postgresql/data/
+
+
+volumes:
+  citizen-science-database-data:
+  citizen-science-tei-corpus:
