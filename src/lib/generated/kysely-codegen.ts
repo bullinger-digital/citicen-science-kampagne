@@ -1,0 +1,177 @@
+import type { ColumnType } from "kysely";
+
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
+
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [K in string]?: JsonValue;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
+export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export interface GitExport {
+  base_commit_hash: string;
+  created_log_id: number;
+  id: Generated<number>;
+  updated_log_id: number | null;
+  written_at: Timestamp;
+}
+
+export interface GitImport {
+  created_log_id: number;
+  hash: string;
+  id: Generated<number>;
+  is_current: Generated<boolean>;
+}
+
+export interface Letter {
+  created_log_id: number;
+  id: Generated<number>;
+}
+
+export interface LetterVersion {
+  actions: Generated<Json>;
+  created_log_id: number;
+  git_export_id: number | null;
+  git_import_id: number | null;
+  id: number;
+  is_latest: Generated<boolean>;
+  is_new: Generated<boolean>;
+  is_touched: Generated<boolean>;
+  review_state: string;
+  reviewed_log_id: number | null;
+  version_id: Generated<number>;
+  xml: string;
+}
+
+export interface LetterVersionAction {
+  action_id: Generated<number>;
+}
+
+export interface LetterVersionExtractPerson {
+  cert: string;
+  link_type: string;
+  node_text: string;
+  person_id: number;
+  version_id: number;
+}
+
+export interface LetterVersionExtractPlace {
+  cert: string;
+  link_type: string;
+  node_text: string;
+  place_id: number;
+  version_id: number;
+}
+
+export interface Log {
+  created_by_id: number;
+  id: Generated<number>;
+  log_type: string;
+  timestamp: Generated<Timestamp>;
+}
+
+export interface Person {
+  created_log_id: number;
+  id: Generated<number>;
+}
+
+export interface PersonAlias {
+  created_log_id: number;
+  id: Generated<number>;
+}
+
+export interface PersonAliasVersion {
+  created_log_id: number;
+  forename: string;
+  git_export_id: number | null;
+  git_import_id: number | null;
+  id: number;
+  is_latest: Generated<boolean>;
+  is_new: Generated<boolean>;
+  is_touched: Generated<boolean>;
+  person_id: number;
+  review_state: string;
+  reviewed_log_id: number | null;
+  surname: string;
+  type: string;
+  version_id: Generated<number>;
+}
+
+export interface PersonVersion {
+  created_log_id: number;
+  git_export_id: number | null;
+  git_import_id: number | null;
+  gnd: string | null;
+  hist_hub: string | null;
+  id: number;
+  is_latest: Generated<boolean>;
+  is_new: Generated<boolean>;
+  is_touched: Generated<boolean>;
+  portrait: string | null;
+  review_state: string;
+  reviewed_log_id: number | null;
+  version_id: Generated<number>;
+  wiki: string | null;
+}
+
+export interface Place {
+  created_log_id: number;
+  id: Generated<number>;
+}
+
+export interface PlaceVersion {
+  country: string;
+  created_log_id: number;
+  district: string;
+  git_export_id: number | null;
+  git_import_id: number | null;
+  id: number;
+  is_latest: Generated<boolean>;
+  is_new: Generated<boolean>;
+  is_touched: Generated<boolean>;
+  latitude: number;
+  longitude: number;
+  review_state: string;
+  reviewed_log_id: number | null;
+  settlement: string;
+  version_id: Generated<number>;
+}
+
+export interface User {
+  created_at: Generated<Timestamp>;
+  email: string;
+  id: Generated<number>;
+  last_login_at: Timestamp;
+  roles: Generated<Json>;
+  sub: string;
+  updated_at: Generated<Timestamp>;
+  user_name: string;
+}
+
+export interface DB {
+  git_export: GitExport;
+  git_import: GitImport;
+  letter: Letter;
+  letter_version: LetterVersion;
+  letter_version_action: LetterVersionAction;
+  letter_version_extract_person: LetterVersionExtractPerson;
+  letter_version_extract_place: LetterVersionExtractPlace;
+  log: Log;
+  person: Person;
+  person_alias: PersonAlias;
+  person_alias_version: PersonAliasVersion;
+  person_version: PersonVersion;
+  place: Place;
+  place_version: PlaceVersion;
+  user: User;
+}
