@@ -3,7 +3,7 @@ set -e -u
 
 APP_NAME=citizen-science-app
 STACK_NAME=$APP_NAME
-DEPLOYMENT_TIMEOUT_SECONDS=120
+DEPLOYMENT_TIMEOUT_SECONDS=240
 IMAGE=ghcr.io/bullinger-digital/bullinger-citizen-science:latest
 
 echo "Deploying $APP_NAME..."
