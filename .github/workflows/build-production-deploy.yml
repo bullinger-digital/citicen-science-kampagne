@@ -65,4 +65,5 @@ jobs:
           scp deploy/deploy.sh $SSH_USER_AT_HOST:citizen-science
           scp deploy/docker-compose.yml $SSH_USER_AT_HOST:citizen-science
           scp deploy/docker-stack-wait.sh $SSH_USER_AT_HOST:citizen-science
-          ssh $SSH_USER_AT_HOST GITHUB_TOKEN=$GITHUB_TOKEN POSTGRES_PASSWORD=$POSTGRES_PASSWORD sh citizen-science/deploy.sh
+          # The '"' syntax escapes the string so it can contains special characters (e.g. &)
+          ssh $SSH_USER_AT_HOST GITHUB_TOKEN='"'$GITHUB_TOKEN'"' POSTGRES_PASSWORD='"'$POSTGRES_PASSWORD'"' sh citizen-science/deploy.sh
