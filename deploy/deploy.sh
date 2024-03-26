@@ -25,6 +25,7 @@ fi
 
 echo " * Deploying..."
 IMAGE=$IMAGE \
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
   docker stack deploy --compose-file docker-compose.yml --prune $STACK_NAME
 
 echo " * Awaiting docker stack... (timeout: $DEPLOYMENT_TIMEOUT_SECONDS seconds)"
