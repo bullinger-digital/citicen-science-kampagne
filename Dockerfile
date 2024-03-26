@@ -65,6 +65,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
 RUN cd migrations && npm ci
 # -----------------------------
 
+# Initialize tei-corpus folder
+RUN mkdir tei-corpus
+RUN chown nextjs:nodejs tei-corpus
+
 USER nextjs
 
 EXPOSE 3000
