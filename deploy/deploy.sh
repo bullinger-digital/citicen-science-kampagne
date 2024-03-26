@@ -26,7 +26,12 @@ fi
 echo " * Deploying..."
 IMAGE=$IMAGE \
 POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
-  docker stack deploy --compose-file docker-compose.yml --prune $STACK_NAME --detach=false
+AUTH0_SECRET="$AUTH0_SECRET" \
+AUTH0_BASE_URL="$AUTH0_BASE_URL" \
+AUTH0_ISSUER_BASE_URL="$AUTH0_ISSUER_BASE_URL" \
+AUTH0_CLIENT_ID="$AUTH0_CLIENT_ID" \
+AUTH0_CLIENT_SECRET="$AUTH0_CLIENT_SECRET" \
+  docker stack deploy --compose-file docker-compose.yml --prune $STACK_NAME --detach=false --with-registry-auth
 
 echo " * Awaiting docker stack... (timeout: $DEPLOYMENT_TIMEOUT_SECONDS seconds)"
 sh docker-stack-wait.sh -t $DEPLOYMENT_TIMEOUT_SECONDS $STACK_NAME
