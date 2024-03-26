@@ -38,6 +38,7 @@ export const initRepository = async () => {
   const exists = await fileOrDirectoryExists(repoPath);
   const gitExists = await fileOrDirectoryExists(path.join(repoPath, ".git"));
   if (!exists) {
+    console.log("Creating directory ", repoPath);
     await fs.promises.mkdir(repoPath);
   }
   if (!gitExists) {

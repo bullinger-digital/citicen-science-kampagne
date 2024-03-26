@@ -8,6 +8,7 @@ import { withRequireRoleAppApi } from "@/lib/security/withRequireRole";
 import { NextRequest } from "next/server";
 
 export const GET = withRequireRoleAppApi("admin", async (req: NextRequest) => {
+  console.log("Route called: importing from repository");
   await initRepository();
   //await pullRepository();
   await importFromCurrentCommit();
