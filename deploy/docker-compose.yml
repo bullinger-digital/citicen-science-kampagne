@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  citizen-science-app:
+    image: $IMAGE
+    ports:
+      - 3000:3000
+    healthcheck:
+      test: curl -sS 127.0.0.1:3000 || exit 1
+    environment:
+      DATABASE_URL: postgresql://postgres:$POSTGRES_PASSWORD@citizen-science-db:5432/citizen-science
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 5s
+    volumes:
+      - citizen-science-tei-corpus:/app/tei-corpus
+  
+  citizen-science-db:
+    image: postgres:16.2-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: citizen-science
+    volumes:
+      - citizen-science-database-data:/var/lib/postgresql/data/

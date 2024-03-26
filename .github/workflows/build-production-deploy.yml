@@ -58,5 +58,10 @@ jobs:
       - name: Deploy docker container to staging server
         env:
           SSH_USER_AT_HOST: ${{ secrets.PROD_SSH_USER_AT_HOST }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ssh $SSH_USER_AT_HOST mkdir -p citizen-science
+          scp deploy/deploy.sh $SSH_USER_AT_HOST:citizen-science
+          scp deploy/docker-compose.yml $SSH_USER_AT_HOST:citizen-science
+          scp deploy/docker-stack-wait.sh $SSH_USER_AT_HOST:citizen-science
+          ssh $SSH_USER_AT_HOST GITHUB_TOKEN=$GITHUB_TOKEN sh frontend/deploy.sh
