@@ -33,3 +33,30 @@ jobs:
           echo VERSION=$VERSION
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+
+  deploy_to_production:
+    name: (main branch only) Deploy to production
+    runs-on: ubuntu-latest
+    needs: build_and_push_to_registry
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Create SSH key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf '%s\n' "Host $SSH_HOST" "HostName $SSH_HOST" "ProxyJump $JUMP_USER_AT_HOST" > ~/.ssh/config
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.PROD_SSH_PRIVATE_KEY}}
+          SSH_KNOWN_HOSTS: ${{secrets.PROD_SSH_KNOWN_HOSTS}}
+          SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          JUMP_USER_AT_HOST: ${{ secrets.PROD_SSH_JUMP_USER_AT_HOST }}
+      - name: Deploy docker container to staging server
+        env:
+          SSH_USER_AT_HOST: ${{ secrets.PROD_SSH_USER_AT_HOST }}
+        run: |
+          ssh $SSH_USER_AT_HOST mkdir -p citizen-science
