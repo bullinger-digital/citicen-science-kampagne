@@ -1,8 +1,12 @@
 import { Pool } from "pg";
 import { Kysely, PostgresDialect } from "kysely";
 import { DB } from "./generated/kysely-codegen";
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
 
-if (!process.env.DATABASE_URL) {
+if (
+  !process.env.DATABASE_URL &&
+  process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD
+) {
   throw new Error("DATABASE_URL is not set");
 }
 
