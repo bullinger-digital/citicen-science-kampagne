@@ -64,4 +64,4 @@ jobs:
           scp deploy/deploy.sh $SSH_USER_AT_HOST:citizen-science
           scp deploy/docker-compose.yml $SSH_USER_AT_HOST:citizen-science
           scp deploy/docker-stack-wait.sh $SSH_USER_AT_HOST:citizen-science
-          ssh $SSH_USER_AT_HOST GITHUB_TOKEN=$GITHUB_TOKEN sh frontend/deploy.sh
+          ssh $SSH_USER_AT_HOST GITHUB_TOKEN=$GITHUB_TOKEN sh citizen-science/deploy.sh
