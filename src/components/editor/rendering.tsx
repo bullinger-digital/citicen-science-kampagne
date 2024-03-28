@@ -88,20 +88,21 @@ const renderers: {
   },
   persname: function PersName({ node }) {
     const c = useContext(EditorContext);
+    const cert = node.getAttribute("cert");
+    const ref = node.getAttribute("ref");
     return (
       <span
-        className={`border-b-4 border-blue-300 ${
-          c?.selectedNode === node ? " bg-blue-100" : ""
+        className={`border-b-4 border-sky-600 ${
+          c?.selectedNode === node ? " bg-sky-100" : ""
+        } ${
+          cert === "high" && !!ref
+            ? ""
+            : !ref
+            ? "border-double"
+            : "border-dashed"
         }`}
         onClick={(e) => {
           c?.setSelectedNode(node);
-        }}
-        onDoubleClick={(e) => {
-          c?.addAction({
-            type: "unwrap",
-            nodePath: getPathFromNode(node),
-          });
-          c?.setSelectedNode(null);
         }}
       >
         <RenderText nodes={Array.from(node.childNodes)} />
@@ -110,20 +111,21 @@ const renderers: {
   },
   placename: function PlaceName({ node }) {
     const c = useContext(EditorContext);
+    const cert = node.getAttribute("cert");
+    const ref = node.getAttribute("ref");
     return (
       <span
-        className={`border-b-4 border-orange-300 ${
-          c?.selectedNode === node ? " bg-orange-100" : ""
+        className={`border-b-4 border-yellow-600 ${
+          c?.selectedNode === node ? " bg-yellow-100" : ""
+        } ${
+          cert === "high" && !!ref
+            ? ""
+            : !ref
+            ? "border-double"
+            : "border-dashed"
         }`}
         onClick={(e) => {
           c?.setSelectedNode(node);
-        }}
-        onDoubleClick={(e) => {
-          c?.addAction({
-            type: "unwrap",
-            nodePath: getPathFromNode(node),
-          });
-          c?.setSelectedNode(null);
         }}
       >
         <RenderText nodes={Array.from(node.childNodes)} />

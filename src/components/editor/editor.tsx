@@ -13,6 +13,8 @@ import { Selectable } from "kysely";
 import { Toolbar } from "./toolbar";
 import { Loading } from "../common/loadingIndicator";
 import { LetterVersion } from "@/lib/generated/kysely-codegen";
+import { isInRole } from "@/lib/security/isInRole";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 const useFile = (fileId: number) => {
   // Todo: what is the purpose of loading and isLoading?
@@ -77,6 +79,7 @@ const EditorInternal = ({
   refetch: () => void;
 }) => {
   const state = useEditorState({ letter_version, refetch });
+  const session = useUser();
   const { xmlDoc, actions } = state;
 
   const onBeforeUnload = useCallback(
@@ -138,9 +141,24 @@ const EditorInternal = ({
           </div>
           <div className="grow-0 shrink-0 basis-[26rem]">
             <Properties />
-            <ContextBox title="Debug">
-              <DebugActionsView />
+            <ContextBox title="Bedeutung der Markierungen">
+              <div className="self-center">
+                <div className="flex space-x-4 text-sm text-gray-400">
+                  <div className="border-gray-400 border-b-4">Verifiziert</div>
+                  <div className="border-gray-400 border-b-4 border-dashed">
+                    Nicht verifiziert
+                  </div>
+                  <div className="border-gray-400 border-b-4 border-double">
+                    Keine Zuweisung
+                  </div>
+                </div>
+              </div>
             </ContextBox>
+            {isInRole(session, "admin") && (
+              <ContextBox title="Debug">
+                <DebugActionsView />
+              </ContextBox>
+            )}
           </div>
         </div>
       </div>

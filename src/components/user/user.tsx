@@ -54,9 +54,15 @@ export const ProfileClient = () => {
               </a>
             </div>
           ) : (
-            <a className="text-blue-400" href="/api/auth/login">
-              Anmelden
-            </a>
+            <div>
+              <a className="text-blue-400" href="/api/auth/signup">
+                Registrieren
+              </a>{" "}
+              oder{" "}
+              <a className="text-blue-400" href="/api/auth/login">
+                Anmelden
+              </a>
+            </div>
           )}
         </div>
       )}

@@ -87,7 +87,11 @@ export const Popover = ({
       className={`cursor-pointer relative ${
         inline ? "" : "inline-block"
       } ${className}`}
-      onClick={() => setVisible(true)}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setVisible(true);
+      }}
       ref={targetRef}
     >
       {children}

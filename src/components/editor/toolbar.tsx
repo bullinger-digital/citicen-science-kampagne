@@ -2,7 +2,7 @@ import { isInRole } from "@/lib/security/isInRole";
 import { getPathFromNode } from "@/lib/xml";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { FaUndo, FaRedo, FaSave } from "react-icons/fa";
+import { FaUndo, FaRedo, FaSave, FaPlus, FaMinus } from "react-icons/fa";
 import Modal from "../common/modal";
 import { EditorContext } from "./editorContext";
 import dynamic from "next/dynamic";
@@ -10,8 +10,8 @@ const XmlView = dynamic(
   () => import("./xmlCodeView").then((mod) => mod.XmlView),
   { ssr: false }
 );
-import { BsFiletypeXml, BsPersonPlusFill } from "react-icons/bs";
-import { TbLocationPlus } from "react-icons/tb";
+import { BsFiletypeXml, BsPersonFill } from "react-icons/bs";
+import { TbLocation } from "react-icons/tb";
 
 const ToolbarButton = ({
   children,
@@ -26,7 +26,7 @@ const ToolbarButton = ({
 }) => {
   return (
     <button
-      className="p-2 text-lg disabled:text-gray-300 hover:text-emerald-500"
+      className="relative p-2 text-lg disabled:text-gray-300 hover:text-emerald-500"
       disabled={disabled}
       onClick={onClick}
       title={title}
@@ -91,6 +91,8 @@ export const Toolbar = () => {
     prepareAndSaveVersion,
     xmlDoc,
     xml,
+    selectedNode,
+    setSelectedNode,
   } = useContext(EditorContext)!;
   const [showXmlView, setShowXmlView] = useState(false);
   const { hasMarkableSelection } = useHasMarkableSelection();
@@ -132,6 +134,22 @@ export const Toolbar = () => {
     [addAction, xmlDoc]
   );
 
+  const removeMark = useCallback(() => {
+    addAction({
+      type: "unwrap",
+      nodePath: getPathFromNode(selectedNode!),
+    });
+    setSelectedNode(null);
+  }, [addAction, selectedNode, setSelectedNode]);
+
+  // onDoubleClick={(e) => {
+  //   c?.addAction({
+  //     type: "unwrap",
+  //     nodePath: getPathFromNode(node),
+  //   });
+  //   c?.setSelectedNode(null);
+  // }}
+
   return (
     <div className="flex justify-between border-b-2 border-gray-200 mb-7">
       <div>
@@ -140,14 +158,14 @@ export const Toolbar = () => {
           onClick={() => undo()}
           disabled={actions.length === 0}
         >
-          <FaUndo />
+          <FaUndo className="text-xl" />
         </ToolbarButton>
         <ToolbarButton
           title="Letzte Änderung wiederherstellen"
           onClick={() => redo()}
           disabled={redoableActions.length === 0}
         >
-          <FaRedo />
+          <FaRedo className="text-xl" />
         </ToolbarButton>
         <div className="inline-block mx-4 border-gray-400 border-l border h-5">
           {" "}
@@ -157,14 +175,33 @@ export const Toolbar = () => {
           onClick={() => addMark("persName")}
           title="Person markieren"
         >
-          <BsPersonPlusFill className="text-xl" />
+          <BsPersonFill className="text-2xl" />
+          <FaPlus className="text-sm absolute bottom-0 right-0" />
         </ToolbarButton>
+        <ToolbarButton
+          disabled={!selectedNode || selectedNode.nodeName !== "persName"}
+          onClick={() => removeMark()}
+          title="Personen-Markierung entfernen"
+        >
+          <BsPersonFill className="text-2xl" />
+          <FaMinus className="text-sm absolute bottom-0 right-0" />
+        </ToolbarButton>
+
         <ToolbarButton
           disabled={!hasMarkableSelection}
           onClick={() => addMark("placeName")}
           title="Ortschaft markieren"
         >
-          <TbLocationPlus className="text-xl" />
+          <TbLocation className="text-2xl" />
+          <FaPlus className="text-sm absolute bottom-0 right-0" />
+        </ToolbarButton>
+        <ToolbarButton
+          disabled={!selectedNode || selectedNode.nodeName !== "placeName"}
+          onClick={() => removeMark()}
+          title="Ortschafts-Markierung entfernen"
+        >
+          <TbLocation className="text-2xl" />
+          <FaMinus className="text-sm absolute bottom-0 right-0" />
         </ToolbarButton>
         <Modal
           open={showXmlView}

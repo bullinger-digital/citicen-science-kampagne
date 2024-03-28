@@ -5,7 +5,7 @@ import {
   searchPlace,
 } from "@/lib/actions/citizen";
 import { ReactNode, use, useContext, useEffect, useState } from "react";
-import { Popover } from "../common/info";
+import { InfoIcon, Popover } from "../common/info";
 import { EditorContext } from "./editorContext";
 import { ContextBox } from "./editor";
 import { FaSearch, FaUnlink } from "react-icons/fa";
@@ -19,7 +19,7 @@ const PersName = ({ node }: { node: Node }) => {
   const id = node.getAttribute("ref")?.replace("p", "");
   const [selectedPerson, setSelectedPerson] =
     useState<Awaited<ReturnType<typeof personById>>>();
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (!id) {
       setSelectedPerson(undefined);
@@ -27,12 +27,18 @@ const PersName = ({ node }: { node: Node }) => {
     }
     const fetch = async () => {
       setSelectedPerson(await personById({ id }));
+      setLoading(false);
     };
+    setLoading(true);
     fetch();
   }, [id]);
 
   const aliases = selectedPerson?.aliases || [];
   const mainAlias = aliases.find((a) => a.type === "main");
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (selectedPerson) {
     return (
@@ -61,6 +67,7 @@ const PersName = ({ node }: { node: Node }) => {
           )}
         </div>
         <EntityLinksList links={selectedPerson.links} />
+        <CertToggle node={node} />
         <RemoveReferenceButton node={node} />
       </div>
     );
@@ -99,6 +106,7 @@ const EntityLinksList = ({
         <Link
           className="inline-block mr-2 text-emerald-400 "
           href={`/letter/${l.id}`}
+          target="_blank"
           key={l.id}
         >
           {l.id}
@@ -114,6 +122,7 @@ const PlaceName = ({ node }: { node: Node }) => {
   const id = node.getAttribute("ref")?.replace("l", "");
   const [selectedPlace, setSelectedPlace] =
     useState<Awaited<ReturnType<typeof placeById>>>();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -122,9 +131,15 @@ const PlaceName = ({ node }: { node: Node }) => {
     }
     const fetch = async () => {
       setSelectedPlace(await placeById({ id }));
+      setLoading(false);
     };
+    setLoading(true);
     fetch();
   }, [id]);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (selectedPlace) {
     return (
@@ -137,6 +152,7 @@ const PlaceName = ({ node }: { node: Node }) => {
           ({id})
         </div>
         <EntityLinksList links={selectedPlace.links} />
+        <CertToggle node={node} />
         <RemoveReferenceButton node={node} />
       </div>
     );
@@ -182,6 +198,34 @@ const PlaceItem = ({
       {[entity.settlement, entity.district, entity.country].join(", ")} (
       {entity.id})
     </>
+  );
+};
+
+const CertToggle = ({ node }: { node: Node }) => {
+  const c = useContext(EditorContext);
+  const cert = node.getAttribute("cert");
+  const verified = cert === "high";
+
+  return (
+    <label
+      className={`${
+        verified ? "bg-green-100" : "bg-blue-100"
+      } p-2 inline-block w-full rounded-md my-2`}
+    >
+      <input
+        type="checkbox"
+        checked={verified}
+        onChange={() => {
+          c?.addAction({
+            type: "change-attributes",
+            attributes: { cert: cert === "high" ? "low" : "high" },
+            nodePath: getPathFromNode(node),
+          });
+        }}
+      />{" "}
+      Verifiziert{" "}
+      <InfoIcon content="Setzen Sie das Element dann auf verifiziert, wenn Sie sicher sind, dass es sich um die ausgewählte Person / die ausgewählte Ortschaft handelt." />
+    </label>
   );
 };
 

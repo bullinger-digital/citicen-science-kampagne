@@ -65,6 +65,7 @@ export const searchPerson = async ({ query }: { query: string }) => {
     .where(whereCurrent)
     .where((e) =>
       e.or([
+        ...(query.match(/^\d+$/) ? [e("id", "=", parseInt(query))] : []),
         e.exists(
           e
             .selectFrom("person_alias_version")
@@ -130,6 +131,7 @@ export const searchPlace = async ({ query }: { query: string }) => {
     .where(whereCurrent)
     .where((e) =>
       e.or([
+        ...(query.match(/^\d+$/) ? [e("id", "=", parseInt(query))] : []),
         e("settlement", "ilike", `%${query}%` as any),
         e("district", "ilike", `%${query}%` as any),
         e("country", "ilike", `%${query}%` as any),
