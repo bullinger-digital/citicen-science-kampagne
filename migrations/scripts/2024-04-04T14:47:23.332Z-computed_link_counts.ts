@@ -15,6 +15,9 @@ export async function up(db: Kysely<any>): Promise<void> {
     )
     .execute();
 
+  // Enable extension pg_trgm for trigram indexes
+  await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm;`.execute(db);
+
   await sql`
     -- person indexes
     CREATE INDEX idx_person_alias_version__forename_trgm
