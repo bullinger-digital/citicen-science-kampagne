@@ -246,9 +246,24 @@ export class Versioning {
       .executeTakeFirst();
   }
 
-  async updateComputedLinkCounts() {
+  async updateComputedLinkCounts({
+    letterId,
+  }: {
+    letterId?: number | undefined;
+  }) {
     await this.db
       .updateTable("person")
+      .$if(!!letterId, (e) =>
+        e.where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom("letter_version_extract_person as p")
+              .innerJoin("letter_version as v", "v.version_id", "p.version_id")
+              .where("p.person_id", "=", eb.ref("person.id"))
+              .where("v.id", "=", letterId!)
+          )
+        )
+      )
       .set((eb) => {
         return {
           computed_link_counts: eb
@@ -268,6 +283,17 @@ export class Versioning {
 
     await this.db
       .updateTable("place")
+      .$if(!!letterId, (e) =>
+        e.where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom("letter_version_extract_place as p")
+              .innerJoin("letter_version as v", "v.version_id", "p.version_id")
+              .where("p.place_id", "=", eb.ref("place.id"))
+              .where("v.id", "=", letterId!)
+          )
+        )
+      )
       .set((eb) => {
         return {
           computed_link_counts: eb

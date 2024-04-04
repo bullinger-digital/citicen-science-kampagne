@@ -269,5 +269,7 @@ export const saveVersion = async ({
     }),
   });
 
-  await v.updateComputedLinkCounts();
+  await v.updateComputedLinkCounts({
+    letterId: id,
+  });
 };

@@ -199,7 +199,7 @@ export const importFromCurrentCommit = async () => {
       );
     });
 
-    await v.updateComputedLinkCounts();
+    await v.updateComputedLinkCounts({});
 
     return true;
   });
