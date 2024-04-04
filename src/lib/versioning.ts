@@ -245,10 +245,50 @@ export class Versioning {
       .selectAll()
       .executeTakeFirst();
   }
+
+  async updateComputedLinkCounts() {
+    await this.db
+      .updateTable("person")
+      .set((eb) => {
+        return {
+          computed_link_counts: eb
+            .selectFrom("letter_version_extract_person as v")
+            .innerJoin("letter_version as lv", "lv.version_id", "v.version_id")
+            .where((e) =>
+              e.and([
+                e("v.person_id", "=", eb.ref("person.id")),
+                // Todo: fix typing
+                whereCurrent(e as any),
+              ])
+            )
+            .select(eb.fn.countAll<number>().as("count")),
+        };
+      })
+      .execute();
+
+    await this.db
+      .updateTable("place")
+      .set((eb) => {
+        return {
+          computed_link_counts: eb
+            .selectFrom("letter_version_extract_place as v")
+            .innerJoin("letter_version as lv", "lv.version_id", "v.version_id")
+            .where((e) =>
+              e.and([
+                e("v.place_id", "=", eb.ref("place.id")),
+                // Todo: fix typing
+                whereCurrent(e as any),
+              ])
+            )
+            .select(eb.fn.countAll<number>().as("count")),
+        };
+      })
+      .execute();
+  }
 }
 
-export const whereCurrent = <TV extends VersionedTable>(
-  eb: ExpressionBuilder<DB, TV>
+export const whereCurrent = <TA extends keyof DB>(
+  eb: ExpressionBuilder<DB, TA & VersionedTable>
 ) =>
   eb.and([
     eb("is_latest", "is", true as any),

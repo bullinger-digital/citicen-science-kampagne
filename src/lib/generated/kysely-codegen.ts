@@ -81,6 +81,7 @@ export interface Log {
 }
 
 export interface Person {
+  computed_link_counts: Generated<number>;
   created_log_id: number;
   id: Generated<number>;
 }
@@ -125,6 +126,7 @@ export interface PersonVersion {
 }
 
 export interface Place {
+  computed_link_counts: Generated<number>;
   created_log_id: number;
   id: Generated<number>;
 }

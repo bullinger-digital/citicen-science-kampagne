@@ -60,107 +60,108 @@ export const personById = async ({ id }: { id: string }) => {
 
 export const searchPerson = async ({ query }: { query: string }) => {
   await requireRoleOrThrow("user");
+  const keywords = query.split(" ");
   const people = await kdb
-    .selectFrom("person_version")
+    .selectFrom("person")
+    .innerJoin("person_version", "person_version.id", "person.id")
     .where(whereCurrent)
     .where((e) =>
       e.or([
-        ...(query.match(/^\d+$/) ? [e("id", "=", parseInt(query))] : []),
-        e.exists(
-          e
-            .selectFrom("person_alias_version")
-            .where(whereCurrent)
-            .where("person_id", "=", e.ref("person_version.id"))
-            .where((ea) =>
-              ea(
-                ea(
-                  ea(ea.ref("person_alias_version.forename"), "||", " "),
-                  "||",
-                  ea.ref("person_alias_version.surname")
-                ),
-                "ilike",
-                `%${query}%` as any
-              )
-            )
-            .selectAll()
-        ),
-        // Search in text of nodes linked to the person
-        e.exists(
-          e
-            .selectFrom("letter_version_extract_person as l")
-            .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
-            // Todo: Fix typing
-            .where(whereCurrent as any)
-            .where("l.person_id", "=", e.ref("person_version.id"))
-            .where("l.node_text", "ilike", `%${query}%` as any)
-            .selectAll()
+        ...(query.match(/^\d+$/) ? [e("person.id", "=", parseInt(query))] : []),
+        e.and(
+          keywords.map((k) =>
+            e.or([
+              e.exists(
+                e
+                  .selectFrom("person_alias_version")
+                  .where(whereCurrent)
+                  .where("person_id", "=", e.ref("person.id"))
+                  .where((eb) =>
+                    eb.or([
+                      eb("forename", "ilike", `%${k}%`),
+                      eb("surname", "ilike", `%${k}%`),
+                    ])
+                  )
+                  .selectAll()
+              ),
+              // Search in text of nodes linked to the person
+              e.exists(
+                e
+                  .selectFrom("letter_version_extract_person as l")
+                  .innerJoin(
+                    "letter_version as v2",
+                    "v2.version_id",
+                    "l.version_id"
+                  )
+                  // Todo: Fix typing
+                  .where(whereCurrent as any)
+                  .where("l.person_id", "=", e.ref("person.id"))
+                  .where((eb) => eb("l.node_text", "ilike", `%${k}%`))
+                  .selectAll()
+              ),
+            ])
+          )
         ),
       ])
     )
     .limit(10)
-    .selectAll()
+    .selectAll("person_version")
+    .select("person.computed_link_counts")
     .select((e) => [
       jsonArrayFrom(
         e
           .selectFrom("person_alias_version")
           .where(whereCurrent)
-          .where("person_id", "=", e.ref("person_version.id"))
+          .where("person_alias_version.person_id", "=", e.ref("person.id"))
           .selectAll()
       ).as("aliases"),
     ])
-    .select((e) =>
-      e
-        .selectFrom("letter_version_extract_person as l")
-        .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
-        // Todo: Fix typing
-        .where(whereCurrent as any)
-        .where("l.person_id", "=", e.ref("person_version.id"))
-        .select((eb) => eb.fn.countAll<number>().as("count"))
-        .as("linksCount")
-    )
     // Order by the number of letters the person is linked to (descending)
-    .orderBy("linksCount", "desc")
+    .orderBy("computed_link_counts", "desc")
     .execute();
   return people;
 };
 
 export const searchPlace = async ({ query }: { query: string }) => {
   await requireRoleOrThrow("user");
+  const keywords = query.split(" ");
   const places = await kdb
-    .selectFrom("place_version")
+    .selectFrom("place")
+    .innerJoin("place_version", "place_version.id", "place.id")
     .where(whereCurrent)
     .where((e) =>
       e.or([
-        ...(query.match(/^\d+$/) ? [e("id", "=", parseInt(query))] : []),
-        e("settlement", "ilike", `%${query}%` as any),
-        e("district", "ilike", `%${query}%` as any),
-        e("country", "ilike", `%${query}%` as any),
-        // Search in text of nodes linked to the place
-        e.exists(
-          e
-            .selectFrom("letter_version_extract_place as l")
-            .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
-            // Todo: Fix typing
-            .where(whereCurrent as any)
-            .where("l.place_id", "=", e.ref("place_version.id"))
-            .where("l.node_text", "ilike", `%${query}%` as any)
-            .selectAll()
+        ...(query.match(/^\d+$/) ? [e("place.id", "=", parseInt(query))] : []),
+        e.and(
+          keywords.map((k) =>
+            e.or([
+              e("settlement", "ilike", `%${k}%` as any),
+              e("district", "ilike", `%${k}%` as any),
+              e("country", "ilike", `%${k}%` as any),
+              // Search in text of nodes linked to the place
+              e.exists(
+                e
+                  .selectFrom("letter_version_extract_place as l")
+                  .innerJoin(
+                    "letter_version as v2",
+                    "v2.version_id",
+                    "l.version_id"
+                  )
+                  // Todo: Fix typing
+                  .where(whereCurrent as any)
+                  .where("l.place_id", "=", e.ref("place.id"))
+                  .where("l.node_text", "ilike", `%${k}%` as any)
+                  .selectAll()
+              ),
+            ])
+          )
         ),
       ])
     )
-    .selectAll()
-    .select((e) =>
-      e
-        .selectFrom("letter_version_extract_place as l")
-        .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
-        // Todo: Fix typing
-        .where(whereCurrent as any)
-        .where("l.place_id", "=", e.ref("place_version.id"))
-        .select((eb) => eb.fn.countAll<number>().as("linksCount"))
-        .as("linksCount")
-    )
+    .selectAll("place_version")
+    .select("place.computed_link_counts")
     // Order by the number of letters the place is linked to (descending)
-    .orderBy("linksCount", "desc")
+    .orderBy("computed_link_counts", "desc")
     .limit(10)
     .execute();
   return places;
@@ -267,4 +268,6 @@ export const saveVersion = async ({
       return { ...a, dom: undefined };
     }),
   });
+
+  await v.updateComputedLinkCounts();
 };
