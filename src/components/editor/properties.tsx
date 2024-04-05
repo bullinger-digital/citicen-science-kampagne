@@ -31,7 +31,7 @@ const PersName = ({ node }: { node: Node }) => {
     };
     setLoading(true);
     fetch();
-  }, [id]);
+  }, [id, node]);
 
   const aliases = selectedPerson?.aliases || [];
   const mainAlias = aliases.find((a) => a.type === "main");
