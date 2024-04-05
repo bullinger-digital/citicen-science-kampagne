@@ -350,6 +350,9 @@ const SearchField = ({
     <div className="flex items-center">
       <FaSearch className="inline-block mr-2 text-gray-300" />
       <input
+        onKeyDown={(e) => {
+          e.stopPropagation();
+        }}
         className="border w-full p-2"
         placeholder="Suche"
         value={query}
