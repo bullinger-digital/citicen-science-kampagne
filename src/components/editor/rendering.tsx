@@ -26,6 +26,15 @@ export const RenderText = ({ nodes }: { nodes: ChildNode[] }) => {
   });
 };
 
+const linkXmlAndDomNodes = (
+  xmlNode: Node | undefined | null,
+  domNode: HTMLElement | undefined | null
+) => {
+  if (!xmlNode || !domNode) return;
+  (domNode as any).xmlNode = xmlNode;
+  (xmlNode as any).domNode = domNode;
+};
+
 const renderers: {
   [key: string]: (props: RendererProps) => ReactElement<RendererProps>;
 } = {
@@ -36,15 +45,7 @@ const renderers: {
   },
   _text: ({ node }) => {
     return (
-      <span
-        ref={(r) => {
-          if (!r) return;
-          (r as any).xmlNode = node;
-          (node as any).domNode = r;
-        }}
-      >
-        {node.textContent}
-      </span>
+      <span ref={(r) => linkXmlAndDomNodes(node, r)}>{node.textContent}</span>
     );
   },
   p: ({ node }) => {
@@ -92,6 +93,7 @@ const renderers: {
     const ref = node.getAttribute("ref");
     return (
       <span
+        ref={(r) => linkXmlAndDomNodes(node, r)}
         className={`border-b-4 border-sky-600 ${
           c?.selectedNode === node ? " bg-sky-100" : ""
         } ${
@@ -115,6 +117,7 @@ const renderers: {
     const ref = node.getAttribute("ref");
     return (
       <span
+        ref={(r) => linkXmlAndDomNodes(node, r)}
         className={`border-b-4 border-yellow-600 ${
           c?.selectedNode === node ? " bg-yellow-100" : ""
         } ${

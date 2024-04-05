@@ -128,6 +128,34 @@ export const useEditorState = ({
       if (e.key === "Escape") {
         setSelectedNode(null);
       }
+      // Undo on ctrl+z (or cmd+z on Mac)
+      if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
+        undo();
+      }
+      // Select next/last instance of persName or placeName with arrow keys
+      if (["ArrowRight", "ArrowLeft"].includes(e.key)) {
+        const allPersNameAndPlaceNameNodes = Array.from(
+          xmlDoc!.querySelectorAll("persName, placeName")
+        ).filter((n) => !!(n as any).domNode); // Filter out nodes that are not rendered
+        const currentIndex = allPersNameAndPlaceNameNodes.indexOf(
+          selectedNode as Element
+        );
+        const nextIndex = selectedNode
+          ? e.key === "ArrowLeft"
+            ? currentIndex - 1
+            : currentIndex + 1
+          : 0;
+        const nextNode = allPersNameAndPlaceNameNodes[nextIndex];
+        if (nextNode) {
+          setSelectedNode(nextNode as Node);
+          // Scroll to DOM node
+          (nextNode as any).domNode.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center",
+          });
+        }
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
