@@ -52,7 +52,7 @@ const PersName = ({ node }: { node: Node }) => {
             <div>
               <Popover
                 content={
-                  <div className="max-h-36 overflow-auto">
+                  <div className="max-h-36 overflow-auto text-left">
                     {aliases.map((a) => (
                       <div key={a.id}>
                         {a.forename} {a.surname}
