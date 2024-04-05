@@ -121,9 +121,19 @@ const EditorInternal = ({
           <div className="p-5 bg-white shadow-xl border">
             <Toolbar />
             <div className="overflow-y-auto max-h-[calc(100vh-13rem)]">
+              <div className="pr-4 mb-4">
+                Brief {letter_version.id} -{" "}
+                <a
+                  target="_blank"
+                  className=" text-emerald-400"
+                  href={`https://tei.bullinger-digital.ch/file${letter_version.id}`}
+                >
+                  Im TEI-Publisher ansehen
+                </a>
+              </div>
               <div className="pr-4">
                 {regestNode && (
-                  <div>
+                  <div className="mb-8">
                     <h2 className="text-xl mb-3">Regest</h2>
                     <div className="leading-8 font-serif">
                       <RenderText
@@ -132,7 +142,7 @@ const EditorInternal = ({
                     </div>
                   </div>
                 )}
-                <h2 className="text-xl mb-3 mt-8">Brieftext</h2>
+                <h2 className="text-xl mb-3">Brieftext</h2>
                 <div className="leading-8 font-serif">
                   <RenderText nodes={Array.from(textNode?.childNodes || [])} />
                 </div>
