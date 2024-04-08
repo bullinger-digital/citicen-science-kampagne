@@ -7,12 +7,14 @@ const Modal = ({
   save,
   title = "Dialog",
   children,
+  maxWidth,
 }: {
   open: boolean;
   cancel?: () => any;
   save?: () => any;
   title?: ReactNode;
   children: ReactNode;
+  maxWidth?: number;
 }) => {
   const wrapperRef = useRef(null);
   return open
@@ -26,26 +28,26 @@ const Modal = ({
           }
         >
           <div
-            className="w-full bg-white rounded-lg shadow-2xl"
-            style={{ minHeight: "100px" }}
+            className={`bg-white rounded-lg shadow-2xl w-full`}
+            style={{ minHeight: "100px", maxWidth: maxWidth || 1200 }}
           >
             <header className="p-4 pl-5 text-2xl">{title}</header>
             <div className="pb-4 pl-5 pr-5">{children}</div>
             <div className="float-right p-4 pr-5">
-              {save && (
-                <button
-                  onClick={save}
-                  className="px-2 py-1 mr-1 text-white bg-red-600 rounded-sm"
-                >
-                  Save
-                </button>
-              )}
               <button
                 onClick={cancel}
-                className="px-2 py-1 text-white bg-red-600 rounded-sm"
+                className="px-2 py-1 text-white bg-gray-300 rounded-md"
               >
                 Schliessen
               </button>
+              {save && (
+                <button
+                  onClick={save}
+                  className="px-2 py-1 ml-1 text-white bg-emerald-600 rounded-md"
+                >
+                  Speichern
+                </button>
+              )}
             </div>
           </div>
         </div>,

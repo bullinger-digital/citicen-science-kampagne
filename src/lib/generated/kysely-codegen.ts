@@ -42,7 +42,7 @@ export interface LetterVersion {
   actions: Generated<Json>;
   created_log_id: number;
   git_export_id: number | null;
-  git_import_id: number | null;
+  git_import_id: number;
   id: number;
   is_latest: Generated<boolean>;
   is_new: Generated<boolean>;
@@ -95,7 +95,7 @@ export interface PersonAliasVersion {
   created_log_id: number;
   forename: string;
   git_export_id: number | null;
-  git_import_id: number | null;
+  git_import_id: number;
   id: number;
   is_latest: Generated<boolean>;
   is_new: Generated<boolean>;
@@ -111,7 +111,7 @@ export interface PersonAliasVersion {
 export interface PersonVersion {
   created_log_id: number;
   git_export_id: number | null;
-  git_import_id: number | null;
+  git_import_id: number;
   gnd: string | null;
   hist_hub: string | null;
   id: number;
@@ -136,13 +136,13 @@ export interface PlaceVersion {
   created_log_id: number;
   district: string;
   git_export_id: number | null;
-  git_import_id: number | null;
+  git_import_id: number;
   id: number;
   is_latest: Generated<boolean>;
   is_new: Generated<boolean>;
   is_touched: Generated<boolean>;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   review_state: string;
   reviewed_log_id: number | null;
   settlement: string;

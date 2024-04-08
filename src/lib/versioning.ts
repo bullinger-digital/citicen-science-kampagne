@@ -1,7 +1,7 @@
 import "server-only";
 import { kdb as kdb2 } from "@/lib/db";
 import { getSession } from "@auth0/nextjs-auth0";
-import { Kysely, UpdateObject } from "kysely";
+import { Kysely, UpdateObject, sql } from "kysely";
 import { ExpressionBuilder, InsertObject, Transaction } from "kysely";
 import { extractAndStoreMetadata } from "./extractMetadata";
 import { xmlParseFromString } from "./xmlSerialize";
@@ -87,34 +87,83 @@ export class Versioning {
     return v;
   }
 
-  async createNewVersion<T extends Versioned, TV extends `${T}_version`>(
+  async insertAndCreateNewVersion<
+    T extends Versioned,
+    TV extends `${T}_version`
+  >(
     table: T,
-    id: number,
-    parent_version_id: number,
     data: Omit<
-      UpdateObject<DB, TV>,
+      InsertObject<DB, TV>,
       | "id"
       | "created_log_id"
       | "git_import_id"
       | "is_touched"
       | "version_id"
       | "review_state"
-    >
+      | "is_new"
+      | "is_latest"
+    >,
+    logId?: number | undefined
   ) {
     const versions_table = `${table}_version` as TV;
 
     return await wrapTransaction(this.db, async (db) => {
-      const existingVersion = await this.getCurrentVersion(
+      logId = logId || (await this.createLogId("user"));
+
+      const id = (
+        await db
+          .insertInto<Versioned>(table)
+          .values({
+            created_log_id: logId,
+          })
+          .returning(["id"])
+          .executeTakeFirstOrThrow()
+      ).id;
+
+      const insertedVersion = await this.createNewVersion(
         table,
         id,
-        parent_version_id
+        null,
+        data as UpdateObject<DB, TV>,
+        logId,
+        false
       );
+      return insertedVersion;
+    });
+  }
 
-      if (!existingVersion) {
-        throw new Error("Previous version not found");
+  async createNewVersion<T extends Versioned, TV extends `${T}_version`>(
+    table: T,
+    id: number,
+    parent_version_id: number | null,
+    data: Omit<
+      UpdateObject<DB, TV>,
+      | "id"
+      | "created_log_id"
+      | "is_touched"
+      | "version_id"
+      | "review_state"
+      | "is_new"
+      | "is_latest"
+      | "git_import_id"
+    >,
+    logId?: number | undefined,
+    autoAccept: boolean = true
+  ) {
+    const versions_table = `${table}_version` as TV;
+
+    return await wrapTransaction(this.db, async (db) => {
+      const existingVersion = parent_version_id
+        ? await this.getCurrentVersion(table, id, parent_version_id)
+        : null;
+
+      if (parent_version_id && !existingVersion) {
+        throw new Error(
+          "Previous version not found, version id: " + parent_version_id
+        );
       }
 
-      const logId = await this.createLogId("user");
+      logId = logId || (await this.createLogId("user"));
 
       // Mark all other versions as not current
       await db
@@ -126,6 +175,16 @@ export class Versioning {
         .where("id", "=", id)
         .execute();
 
+      const gitImportId =
+        existingVersion?.git_import_id ||
+        (
+          await db
+            .selectFrom("git_import")
+            .where("is_current", "is", true)
+            .selectAll()
+            .executeTakeFirstOrThrow()
+        )?.id;
+
       const values: InsertObject<DB, VersionedTable> = {
         ...existingVersion,
         ...data,
@@ -133,8 +192,10 @@ export class Versioning {
         created_log_id: logId,
         is_touched: true,
         is_latest: true,
+        is_new: parent_version_id ? false : true,
         version_id: undefined,
-        review_state: "accepted",
+        review_state: autoAccept ? "accepted" : "pending",
+        git_import_id: gitImportId,
       };
 
       const v = await db
@@ -310,6 +371,17 @@ export class Versioning {
         };
       })
       .execute();
+  }
+
+  async resetPostgresIdSequences() {
+    const tables = ["person", "place", "person_alias"];
+    await wrapTransaction(this.db, async (db) => {
+      for (const table of tables) {
+        await sql`SELECT setval('${sql.id(
+          table + "_id_seq"
+        )}', (SELECT MAX(id) FROM ${sql.id(table)}), true);`.execute(db);
+      }
+    });
   }
 }
 

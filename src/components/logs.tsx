@@ -1,18 +1,11 @@
 "use client";
-import { getLogs } from "@/lib/actions/citizen";
-import { useEffect, useState } from "react";
+import { getLogs } from "@/lib/actions/admin";
+import { useServerFetch } from "./common/serverActions";
 
 export const Logs = () => {
-  const [logs, setLogs] = useState<Awaited<ReturnType<typeof getLogs>>>([]);
-  useEffect(() => {
-    const fetchLogs = async () => {
-      const logs = await getLogs();
-      setLogs(logs);
-    };
-    fetchLogs();
-  }, []);
+  const { loading, error, data: logs } = useServerFetch(getLogs, {});
 
-  const changesLabel = (log: (typeof logs)[0]) => {
+  const changesLabel = (log: NonNullable<typeof logs>[0]) => {
     const c = [
       {
         type: "Briefe",
@@ -51,7 +44,7 @@ export const Logs = () => {
           </tr>
         </thead>
         <tbody>
-          {logs.map((log) => (
+          {logs?.map((log) => (
             <tr className="odd:bg-slate-100" key={log.id}>
               <td>{log.log_type}</td>
               <td>{log.user[0].user_name}</td>
@@ -61,17 +54,6 @@ export const Logs = () => {
           ))}
         </tbody>
       </table>
-      {/* <ul>
-        {logs.map((log) => (
-          <li key={log.id}>
-            {log.log_type}
-            {log.created_by_id} {log.user[0].user_name}{" "}
-            {log.timestamp.toLocaleString("de-DE")} |{" "}
-            {log.letter_modified_count} {log.person_modified_count}{" "}
-            {log.person_alias_modified_count} {log.place_modified_count}
-          </li>
-        ))}
-      </ul> */}
     </div>
   );
 };

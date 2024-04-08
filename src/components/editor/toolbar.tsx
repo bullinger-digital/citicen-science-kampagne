@@ -12,6 +12,7 @@ const XmlView = dynamic(
 );
 import { BsFiletypeXml, BsPersonFill } from "react-icons/bs";
 import { TbLocation } from "react-icons/tb";
+import { Loading } from "../common/loadingIndicator";
 
 const ToolbarButton = ({
   children,
@@ -93,6 +94,8 @@ export const Toolbar = () => {
     xml,
     selectedNode,
     setSelectedNode,
+    loading,
+    error,
   } = useContext(EditorContext)!;
   const [showXmlView, setShowXmlView] = useState(false);
   const { hasMarkableSelection } = useHasMarkableSelection();
@@ -142,6 +145,8 @@ export const Toolbar = () => {
     setSelectedNode(null);
   }, [addAction, selectedNode, setSelectedNode]);
 
+  const toolbarDisabled = loading;
+
   // onDoubleClick={(e) => {
   //   c?.addAction({
   //     type: "unwrap",
@@ -156,14 +161,14 @@ export const Toolbar = () => {
         <ToolbarButton
           title="Letzte Änderung rückgängig machen"
           onClick={() => undo()}
-          disabled={actions.length === 0}
+          disabled={toolbarDisabled || actions.length === 0}
         >
           <FaUndo className="text-xl" />
         </ToolbarButton>
         <ToolbarButton
           title="Letzte Änderung wiederherstellen"
           onClick={() => redo()}
-          disabled={redoableActions.length === 0}
+          disabled={toolbarDisabled || redoableActions.length === 0}
         >
           <FaRedo className="text-xl" />
         </ToolbarButton>
@@ -171,7 +176,7 @@ export const Toolbar = () => {
           {" "}
         </div>
         <ToolbarButton
-          disabled={!hasMarkableSelection}
+          disabled={toolbarDisabled || !hasMarkableSelection}
           onClick={() => addMark("persName")}
           title="Person markieren"
         >
@@ -179,7 +184,11 @@ export const Toolbar = () => {
           <FaPlus className="text-sm absolute bottom-0 right-0" />
         </ToolbarButton>
         <ToolbarButton
-          disabled={!selectedNode || selectedNode.nodeName !== "persName"}
+          disabled={
+            toolbarDisabled ||
+            !selectedNode ||
+            selectedNode.nodeName !== "persName"
+          }
           onClick={() => removeMark()}
           title="Personen-Markierung entfernen"
         >
@@ -188,7 +197,7 @@ export const Toolbar = () => {
         </ToolbarButton>
 
         <ToolbarButton
-          disabled={!hasMarkableSelection}
+          disabled={toolbarDisabled || !hasMarkableSelection}
           onClick={() => addMark("placeName")}
           title="Ortschaft markieren"
         >
@@ -196,7 +205,11 @@ export const Toolbar = () => {
           <FaPlus className="text-sm absolute bottom-0 right-0" />
         </ToolbarButton>
         <ToolbarButton
-          disabled={!selectedNode || selectedNode.nodeName !== "placeName"}
+          disabled={
+            toolbarDisabled ||
+            !selectedNode ||
+            selectedNode.nodeName !== "placeName"
+          }
           onClick={() => removeMark()}
           title="Ortschafts-Markierung entfernen"
         >
@@ -220,7 +233,7 @@ export const Toolbar = () => {
           </ToolbarButton>
         )}
         <ToolbarButton
-          disabled={actions.length === 0}
+          disabled={toolbarDisabled || actions.length === 0}
           onClick={() => prepareAndSaveVersion()}
           title="Speichern"
         >
@@ -230,6 +243,7 @@ export const Toolbar = () => {
           </span>
         </ToolbarButton>
       </div>
+      {error && <div className="text-red-500">{error}</div>}
     </div>
   );
 };
