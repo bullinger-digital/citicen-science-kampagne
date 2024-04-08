@@ -200,7 +200,7 @@ export const importFromCurrentCommit = async () => {
     });
 
     await v.updateComputedLinkCounts({});
-
+    await v.resetPostgresIdSequences();
     return true;
   });
 

@@ -4,7 +4,7 @@ import {
   searchPerson,
   searchPlace,
 } from "@/lib/actions/citizen";
-import { ReactNode, use, useContext, useEffect, useState } from "react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 import { InfoIcon, Popover } from "../common/info";
 import { EditorContext } from "./editorContext";
 import { ContextBox } from "./editor";
@@ -13,25 +13,20 @@ import { FaLink } from "react-icons/fa6";
 import { getPathFromNode } from "@/lib/xml";
 import Link from "next/link";
 import { Loading } from "../common/loadingIndicator";
+import { EditPersonModal, EditPlaceModal } from "./modals";
+import { useServerFetch } from "../common/serverActions";
 
 const PersName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
   const id = node.getAttribute("ref")?.replace("p", "");
-  const [selectedPerson, setSelectedPerson] =
-    useState<Awaited<ReturnType<typeof personById>>>();
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    if (!id) {
-      setSelectedPerson(undefined);
-      return;
+
+  const { loading, data: selectedPerson } = useServerFetch(
+    personById,
+    { id },
+    {
+      skip: !id,
     }
-    const fetch = async () => {
-      setSelectedPerson(await personById({ id }));
-      setLoading(false);
-    };
-    setLoading(true);
-    fetch();
-  }, [id, node]);
+  );
 
   const aliases = selectedPerson?.aliases || [];
   const mainAlias = aliases.find((a) => a.type === "main");
@@ -43,6 +38,7 @@ const PersName = ({ node }: { node: Node }) => {
   if (selectedPerson) {
     return (
       <div>
+        <RemoveReferenceButton node={node} />
         <div>
           <span className="font-bold">
             {mainAlias?.forename} {mainAlias?.surname}
@@ -52,7 +48,7 @@ const PersName = ({ node }: { node: Node }) => {
             <div>
               <Popover
                 content={
-                  <div className="max-h-36 overflow-auto text-left">
+                  <div className="overflow-auto text-left max-h-36">
                     {aliases.map((a) => (
                       <div key={a.id}>
                         {a.forename} {a.surname}
@@ -61,14 +57,13 @@ const PersName = ({ node }: { node: Node }) => {
                   </div>
                 }
               >
-                <div className="text-sm">{aliases.length} weitere Namen</div>
+                <div className="text-sm">{aliases.length} Namensvarianten</div>
               </Popover>
             </div>
           )}
         </div>
         <EntityLinksList links={selectedPerson.links} />
         <CertToggle node={node} />
-        <RemoveReferenceButton node={node} />
       </div>
     );
   }
@@ -86,6 +81,7 @@ const PersName = ({ node }: { node: Node }) => {
       initialSearch={node.textContent}
       searchFn={searchPerson}
       displayComponent={PersonItem}
+      editModal={EditPersonModal}
     />
   );
 };
@@ -120,24 +116,16 @@ const EntityLinksList = ({
 const PlaceName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
   const id = node.getAttribute("ref")?.replace("l", "");
-  const [selectedPlace, setSelectedPlace] =
-    useState<Awaited<ReturnType<typeof placeById>>>();
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!id) {
-      setSelectedPlace(undefined);
-      return;
+  const { loading, data: selectedPlace } = useServerFetch(
+    placeById,
+    { id },
+    {
+      skip: !id,
     }
-    const fetch = async () => {
-      setSelectedPlace(await placeById({ id }));
-      setLoading(false);
-    };
-    setLoading(true);
-    fetch();
-  }, [id]);
+  );
 
-  if (loading) {
+  if (loading || (!!id && !selectedPlace)) {
     return <Loading />;
   }
 
@@ -146,8 +134,13 @@ const PlaceName = ({ node }: { node: Node }) => {
       <div>
         <div>
           <span className="font-bold">
-            {selectedPlace.settlement}, {selectedPlace.district},{" "}
-            {selectedPlace.country}
+            {[
+              selectedPlace.settlement,
+              selectedPlace.district,
+              selectedPlace.country,
+            ]
+              .filter((s) => !!s)
+              .join(", ")}
           </span>{" "}
           ({id})
         </div>
@@ -171,6 +164,7 @@ const PlaceName = ({ node }: { node: Node }) => {
       initialSearch={node.textContent}
       searchFn={searchPlace}
       displayComponent={PlaceItem}
+      editModal={EditPlaceModal}
     />
   );
 };
@@ -195,8 +189,10 @@ const PlaceItem = ({
 }) => {
   return (
     <>
-      {[entity.settlement, entity.district, entity.country].join(", ")} (
-      {entity.id})
+      {[entity.settlement, entity.district, entity.country]
+        .filter((s) => !!s)
+        .join(", ")}{" "}
+      ({entity.id})
     </>
   );
 };
@@ -229,11 +225,14 @@ const CertToggle = ({ node }: { node: Node }) => {
   );
 };
 
-const EntitySelector = <T extends typeof searchPerson | typeof searchPlace>({
+type SearchFunction = typeof searchPerson | typeof searchPlace;
+
+const EntitySelector = <T extends SearchFunction>({
   initialSearch,
   onSelect,
   searchFn,
   displayComponent,
+  editModal,
 }: {
   initialSearch: string | undefined | null;
   onSelect: (id: number) => void;
@@ -241,6 +240,7 @@ const EntitySelector = <T extends typeof searchPerson | typeof searchPlace>({
   displayComponent: (props: {
     entity: Awaited<ReturnType<T>>[0];
   }) => JSX.Element;
+  editModal: typeof EditPersonModal | typeof EditPlaceModal;
 }) => {
   const [query, setQuery] = useState(
     (initialSearch || "")
@@ -249,33 +249,26 @@ const EntitySelector = <T extends typeof searchPerson | typeof searchPlace>({
       .replace(/[\t\n]+/gi, " ")
       .trim()
   );
-  const [entities, setEntities] = useState<Array<Awaited<ReturnType<T>>[0]>>(
-    []
-  );
-  const [loading, setLoading] = useState(false);
-  const Component = displayComponent;
 
-  // Todo: Fix duplicate requests
-  useEffect(() => {
-    if (!query) {
-      setLoading(false);
-      setEntities([]);
-      return;
-    }
-    setLoading(true);
-    const search = async () => {
-      setEntities(await searchFn({ query }));
-      setLoading(false);
-    };
-    search();
-  }, [query, searchFn]);
+  const { loading, data: entities } = useServerFetch<
+    Parameters<T>[0],
+    Awaited<ReturnType<T>>
+  >(
+    // Todo: fix typing
+    searchFn as any,
+    { query }
+  );
+
+  const [newModalOpen, setNewModalOpen] = useState(false);
+  const Component = displayComponent;
+  const EditModal = editModal;
 
   return (
     <div>
       <div className="mb-2 italic">Nicht zugewiesen</div>
       <SearchField query={query} setQuery={setQuery} />
 
-      {loading ? (
+      {loading || !entities ? (
         <Loading />
       ) : (
         <div className="mt-2">
@@ -290,10 +283,33 @@ const EntitySelector = <T extends typeof searchPerson | typeof searchPlace>({
             </AddReferenceButton>
           ))}
           {entities.length === 0 && query && (
-            <div className="italic">Keine Ergebnisse gefunden</div>
+            <div className="italic pt-1 pb-4">Keine Ergebnisse gefunden</div>
           )}
         </div>
       )}
+      <div className="w-full pt-2 text-sm text-left border-t border-gray-200">
+        Der Eintrag existiert noch nicht?{" "}
+        <button
+          className="text-emerald-400"
+          onClick={(e) => setNewModalOpen(true)}
+        >
+          Neu erfassen
+        </button>{" "}
+        <InfoIcon
+          content={
+            "Erstellen Sie einen neuen Eintrag für die ausgewählte Person / Ortschaft."
+          }
+        />
+        <EditModal
+          close={(savedEntity) => {
+            if (savedEntity) {
+              onSelect(savedEntity.id);
+            }
+            setNewModalOpen(false);
+          }}
+          open={newModalOpen}
+        />
+      </div>
     </div>
   );
 };
@@ -310,7 +326,7 @@ const RemoveReferenceButton = ({ node }: { node: Node }) => {
           nodePath: getPathFromNode(node),
         });
       }}
-      className="flex space-x-2 mt-2 items-center text-red-400 hover:text-red-600 cursor-pointer"
+      className="flex items-center mb-2 space-x-2 text-red-400 cursor-pointer hover:text-red-600"
     >
       <FaUnlink />
       <span>Zuweisung entfernen</span>
@@ -327,7 +343,7 @@ const AddReferenceButton = ({
 }) => {
   return (
     <button
-      className="cursor-pointer p-1 flex items-center text-emerald-400 hover:text-emerald-600"
+      className="flex items-center p-1 cursor-pointer text-emerald-400 hover:text-emerald-600"
       title="Zuweisen"
       onClick={onClick}
     >
@@ -353,7 +369,7 @@ const SearchField = ({
         onKeyDown={(e) => {
           e.stopPropagation();
         }}
-        className="border w-full p-2"
+        className="w-full p-2 border"
         placeholder="Suche"
         value={query}
         onChange={(e) => setQuery(e.target.value)}

@@ -11,6 +11,7 @@ import {
 import { useNodeObserver } from "./useNodeObserver";
 import { xmlSerializeToString } from "@/lib/xmlSerialize";
 import { LetterVersion } from "@/lib/generated/kysely-codegen";
+import { useServerAction } from "../common/serverActions";
 
 export type EditorContextProps = {
   selectedNode: Node | null;
@@ -24,6 +25,8 @@ export type EditorContextProps = {
   xmlDoc: Document | null;
   xml: string;
   redoableActions: EditorAction[];
+  loading: boolean;
+  error: string | null;
 };
 
 export const EditorContext = createContext<EditorContextProps | null>(null);
@@ -42,25 +45,15 @@ export const useEditorState = ({
   const [actions, setActions] = useState<EditorAction[]>([]);
   const [redoableActions, setRedoableActions] = useState<EditorAction[]>([]);
 
+  const { execute: save, loading, error } = useServerAction(saveVersion);
+
   const prepareAndSaveVersion = async () => {
-    try {
-      await saveVersion({
-        id: letter_version.id,
-        version_id: letter_version.version_id,
-        xml: xml,
-        actions: actions.map((a) => ({ ...a, dom: undefined })),
-      });
-    } catch (e) {
-      console.error("Error saving version", e);
-      alert(
-        "Fehler beim Speichern der Version. " +
-          (typeof e === "string"
-            ? e
-            : e instanceof Error
-            ? e.message
-            : "Unbekannter Fehler")
-      );
-    }
+    await save({
+      id: letter_version.id,
+      version_id: letter_version.version_id,
+      xml: xml,
+      actions: actions.map((a) => ({ ...a, dom: undefined })),
+    });
     refetch();
   };
 
@@ -190,6 +183,8 @@ export const useEditorState = ({
     undo,
     redo,
     redoableActions,
+    loading,
+    error,
   };
 };
 
@@ -200,7 +195,7 @@ export const DebugActionsView = () => {
       <h3>Actions (debug)</h3>
       {actions.map((action, index) => {
         return (
-          <div className="border-gray-200 border" key={index}>
+          <div className="border border-gray-200" key={index}>
             <label className="block px-2 py-2">
               <input className="mr-2" type="checkbox" />
               {action.type}{" "}

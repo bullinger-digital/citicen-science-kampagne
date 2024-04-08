@@ -1,13 +1,12 @@
 "use server";
 import { kdb } from "@/lib/db";
-import { Versioned, Versioning, whereCurrent } from "../versioning";
+import { Versioning, whereCurrent } from "../versioning";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
 import { EditorAction, applyNewActions } from "../xml";
 import { JSDOM } from "jsdom";
-import { ExpressionBuilder } from "kysely";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
-import { DB } from "../generated/kysely-codegen";
+import { InferType, object, string } from "yup";
 
 if (!globalThis.window) {
   // Hack to make JSDOM window available globally
@@ -193,40 +192,88 @@ export const placeById = async ({ id }: { id: string }) => {
   return p;
 };
 
-export const getLogs = async () => {
+const updateOrInsertPersonSchema = object({
+  gnd: string().matches(/^[0-9]{8,10}$/, {
+    message: "Ungültige GND ID",
+    excludeEmptyString: true,
+  }),
+  hist_hub: string().matches(/^[0-9]{8,10}$/, {
+    message: "Ungültige HistHub ID",
+    excludeEmptyString: true,
+  }),
+  wiki: string().matches(/wikipedia\.org\/wiki\/.+/, {
+    message: "Ungültiger Wikipedia-Link",
+    excludeEmptyString: true,
+  }),
+  forename: string().required(),
+  surname: string().required(),
+});
+
+export const insertPerson = async (
+  newPerson: InferType<typeof updateOrInsertPersonSchema>
+) => {
+  await updateOrInsertPersonSchema.validate(newPerson);
+
   await requireRoleOrThrow("user");
-  const selectRelatedCounts =
-    (table: Versioned) => (eb: ExpressionBuilder<DB, "log">) =>
-      eb
-        .selectFrom(`${table}_version as v`)
-        .where("v.created_log_id", "=", eb.ref("log.id"))
-        .select((e) => e.fn.countAll<number>().as("count"))
-        .limit(1)
-        .as(`${table}_modified_count`);
+  const result = await kdb.transaction().execute(async (t) => {
+    const v = new Versioning(t);
 
-  // Todo: Should we store the commit hash in the logs table? Probably yes, so we know which commit the log is related to
-  // (for debugging)
-  let query = kdb
-    .selectFrom("log")
-    .orderBy("timestamp", "desc")
-    .selectAll()
-    .select([
-      (e) =>
-        jsonArrayFrom(
-          e
-            .selectFrom("user")
-            .where("id", "=", e.ref("log.created_by_id"))
-            .select(["user_name"])
-            .limit(1)
-        ).as("user"),
-    ])
-    .select(selectRelatedCounts("letter"))
-    .select(selectRelatedCounts("person"))
-    .select(selectRelatedCounts("person_alias"))
-    .select(selectRelatedCounts("place"))
-    .limit(100);
+    const logId = await v.createLogId("user");
+    const personVersion = await v.insertAndCreateNewVersion(
+      "person",
+      {
+        gnd: newPerson.gnd,
+        hist_hub: newPerson.hist_hub,
+        wiki: newPerson.wiki,
+      },
+      logId
+    );
 
-  return await query.execute();
+    await v.insertAndCreateNewVersion(
+      "person_alias",
+      {
+        forename: newPerson.forename,
+        surname: newPerson.surname,
+        person_id: personVersion.id,
+        type: "main",
+      },
+      logId
+    );
+
+    return personVersion;
+  });
+  return result;
+};
+
+const updateOrInsertPlaceSchema = object({
+  settlement: string(),
+  district: string(),
+  country: string(),
+});
+
+export const insertPlace = async (
+  newPlace: InferType<typeof updateOrInsertPlaceSchema>
+) => {
+  await updateOrInsertPlaceSchema.validate(newPlace);
+
+  await requireRoleOrThrow("user");
+  const result = await kdb.transaction().execute(async (t) => {
+    const v = new Versioning(t);
+
+    const logId = await v.createLogId("user");
+    const placeVersion = await v.insertAndCreateNewVersion(
+      "place",
+      {
+        settlement: newPlace.settlement || "",
+        district: newPlace.district || "",
+        country: newPlace.country || "",
+      },
+      logId
+    );
+
+    return placeVersion;
+  });
+  return result;
 };
 
 export const saveVersion = async ({
@@ -262,14 +309,55 @@ export const saveVersion = async ({
 
   if (newXml !== xml) throw new Error("XML does not match applied actions");
 
-  await v.createNewVersion("letter", id, version_id, {
-    xml: newXml,
-    actions: actions.map((a) => {
-      return { ...a, dom: undefined };
-    }),
-  });
+  // If any of the linked persName and placeName references point to person or places have review_state != accepted, the new version should have review_state = pending
+  const linkedPersonIds = getReferencedIds(existingXml, "person");
+  const linkedPlaceIds = getReferencedIds(existingXml, "place");
+
+  const allLinkedPersonAccepted =
+    linkedPersonIds.length === 0 ||
+    (await countUnacceptedReferences(linkedPersonIds, "person")) === "0";
+  const allLinkedPlaceAccepted =
+    linkedPlaceIds.length === 0 ||
+    (await countUnacceptedReferences(linkedPlaceIds, "place")) === "0";
+
+  await v.createNewVersion(
+    "letter",
+    id,
+    version_id,
+    {
+      xml: newXml,
+      actions: actions.map((a) => {
+        return { ...a, dom: undefined };
+      }),
+    },
+    undefined,
+    allLinkedPersonAccepted && allLinkedPlaceAccepted
+  );
 
   await v.updateComputedLinkCounts({
     letterId: id,
   });
+};
+
+const getReferencedIds = (xmlDom: Document, type: "person" | "place") => {
+  const refPrefix = type === "person" ? "p" : "l";
+  const elementName = type === "person" ? "persName" : "placeName";
+  return Array.from(xmlDom.querySelectorAll(`${elementName}[ref]`)).map((n) =>
+    parseInt(n.getAttribute("ref")?.replace(refPrefix, "")!)
+  );
+};
+
+const countUnacceptedReferences = async (
+  ids: number[],
+  table: "person" | "place"
+) => {
+  return (
+    await kdb
+      .selectFrom(`${table}_version`)
+      .where(whereCurrent)
+      .where("id", "in", ids)
+      .where("review_state", "!=", "accepted")
+      .select((e) => e.fn.countAll<string>().as("count"))
+      .executeTakeFirstOrThrow()
+  ).count;
 };

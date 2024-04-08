@@ -15,54 +15,17 @@ import { Loading } from "../common/loadingIndicator";
 import { LetterVersion } from "@/lib/generated/kysely-codegen";
 import { isInRole } from "@/lib/security/isInRole";
 import { useUser } from "@auth0/nextjs-auth0/client";
-
-const useFile = (fileId: number) => {
-  // Todo: what is the purpose of loading and isLoading?
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [file, setFile] = useState<Selectable<LetterVersion> | null>(null);
-
-  const fetchFile = async (f: number) => {
-    setIsLoading(true);
-    setFile(null);
-    setError(null);
-    try {
-      const file = await fileOnCurrentCommit({
-        id: f.toString(),
-      });
-      if (!file) {
-        setError(`Der Eintrag mit ID ${f} konnte nicht gefunden werden.`);
-      } else {
-        setFile(file || null);
-      }
-    } catch (e) {
-      setError(
-        `Beim Laden des Eintrags ist ein Fehler aufgetreten. ${
-          typeof e === "string"
-            ? e
-            : e instanceof Error
-            ? e.message
-            : "Unbekannter Fehler"
-        }`
-      );
-    }
-
-    setLoading(false);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    if (loading && !isLoading && !file) fetchFile(fileId);
-  }, [fileId, loading, isLoading, file]);
-
-  const refetch = useCallback(() => fetchFile(fileId), [fileId]);
-
-  return { file, loading, error, refetch };
-};
+import { useServerFetch } from "../common/serverActions";
 
 export const Editor = ({ letterId }: { letterId: number }) => {
-  const { file, loading, error, refetch } = useFile(letterId);
+  const {
+    data: file,
+    loading,
+    error,
+    refetch,
+  } = useServerFetch(fileOnCurrentCommit, {
+    id: letterId.toString(),
+  });
   if (error) return <div className="text-center">Fehler: {error}</div>;
   return loading || !file ? (
     <Loading />
