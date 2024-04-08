@@ -76,6 +76,7 @@ const EditorInternal = ({
     "TEI > teiHeader > fileDesc > sourceDesc > msDesc > msContents > summary"
   );
   const textNode = xmlDoc.querySelector("TEI > text > body");
+  const footNotes = xmlDoc.querySelectorAll("TEI note[type=footnote]");
 
   return (
     <EditorContext.Provider value={state}>
@@ -109,6 +110,23 @@ const EditorInternal = ({
                 <div className="leading-8 font-serif">
                   <RenderText nodes={Array.from(textNode?.childNodes || [])} />
                 </div>
+                {footNotes.length > 0 && (
+                  <>
+                    <h2 className="text-xl mb-3 mt-7">Fussnoten</h2>
+                    <ol className="leading-8 font-serif">
+                      {Array.from(footNotes).map((node, i) => (
+                        <li className="flex" key={i}>
+                          <span className="w-8 shrink-0 text-emerald-400">
+                            {node.getAttribute("n")}
+                          </span>
+                          <div>
+                            <RenderText nodes={Array.from(node.childNodes)} />
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </>
+                )}
               </div>
             </div>
           </div>
