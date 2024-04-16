@@ -47,6 +47,7 @@ export const useServerFetch = <P, R>(
       setData(await action(JSON.parse(propsString)));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unbekannter Fehler");
+      setData(null);
       console.error(e);
     } finally {
       setLoading(false);

@@ -54,6 +54,9 @@ export const LockOverlay = (props: {
         {lock.error && (
           <>
             Es ist ein Fehler aufgetreten: {lock.error}
+            {lock.error.includes("fetch") && (
+              <div>(mögliche Ursache: Server nicht erreichbar)</div>
+            )}
             <TryAgain onTryAgain={lock.refetch} />
           </>
         )}
