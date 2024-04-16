@@ -1,4 +1,5 @@
-import { Logs } from "@/components/logs";
+import { Logs } from "@/components/admin/logs";
+import { Review } from "@/components/admin/review";
 import { requireRoleOrThrow } from "@/lib/security/withRequireRole";
 import { withPageAuthRequired } from "@auth0/nextjs-auth0";
 import { redirect } from "next/navigation";
@@ -14,6 +15,7 @@ export default withPageAuthRequired(
     return (
       <div className=" px-5">
         <h2 className="text-xl">Admin</h2>
+        <Review />
         <Logs />
       </div>
     );

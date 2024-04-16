@@ -1,4 +1,4 @@
-import { Logs } from "@/components/logs";
+import { Logs } from "@/components/admin/logs";
 
 export default function Home() {
   return (

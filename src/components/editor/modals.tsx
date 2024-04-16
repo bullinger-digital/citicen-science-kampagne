@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "../common/modal";
 import { insertPerson, insertPlace } from "@/lib/actions/citizen";
 import { useServerAction } from "../common/serverActions";
@@ -17,6 +17,7 @@ const InputWithLabel = ({
   required = false,
   pattern,
   title,
+  children,
 }: {
   value: string | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -26,20 +27,24 @@ const InputWithLabel = ({
   required?: boolean;
   pattern?: string;
   title?: string;
+  children?: React.ReactNode;
 }) => (
   <div className="flex mb-4">
     <Label>{label}</Label>
-    <input
-      className="w-full p-1 border border-gray-300 rounded-md invalid:border-red-500"
-      type="text"
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      disabled={disabled}
-      required={required}
-      pattern={pattern}
-      title={title}
-    />
+    <div className="w-full">
+      <input
+        className="w-full p-1 border border-gray-300 rounded-md invalid:border-red-500"
+        type="text"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        disabled={disabled}
+        required={required}
+        pattern={pattern}
+        title={title}
+      />
+      {children}
+    </div>
   </div>
 );
 
@@ -118,12 +123,9 @@ export const EditPersonModal = ({
           disabled={id !== undefined}
           required
         />
-        <InputWithLabel
+        <GndField
           value={newPerson.gnd}
-          onChange={(e) => setNewPerson({ ...newPerson, gnd: e.target.value })}
-          label="GND-ID"
-          placeholder="123456789"
-          title="GND-ID im Format 123456789"
+          onChange={(v) => setNewPerson({ ...newPerson, gnd: v })}
         />
         <InputWithLabel
           value={newPerson.hist_hub}
@@ -143,6 +145,49 @@ export const EditPersonModal = ({
         />
       </form>
     </Modal>
+  );
+};
+
+const GndField = ({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (e: string) => void;
+}) => {
+  const [gndResult, setGndResult] = useState<any | null>(null);
+  useEffect(() => {
+    if (value && typeof value === "string" && value.match(/^\d{9}$/)) {
+      fetch(`https://lobid.org/gnd/${value}.json`, {
+        headers: {
+          "User-Agent": "Bullinger Digital - Citizen Science Kampagne",
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setGndResult(data));
+    }
+  }, [value]);
+
+  return (
+    <>
+      <InputWithLabel
+        value={value}
+        onChange={(v) => onChange(v.currentTarget.value)}
+        label="GND-ID"
+        placeholder="123456789"
+        title="GND-ID im Format 123456789"
+      >
+        {gndResult && (
+          <a
+            target="_blank"
+            className="text-emerald-400"
+            href={`https://d-nb.info/gnd/${value}`}
+          >
+            {gndResult.preferredName}
+          </a>
+        )}
+      </InputWithLabel>
+    </>
   );
 };
 

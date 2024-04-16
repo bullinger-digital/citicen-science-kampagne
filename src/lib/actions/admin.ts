@@ -4,10 +4,10 @@ import { jsonArrayFrom } from "kysely/helpers/postgres";
 import { kdb } from "../db";
 import { DB } from "../generated/kysely-codegen";
 import { requireRoleOrThrow } from "../security/withRequireRole";
-import { Versioned } from "../versioning";
+import { Versioned, VersionedTable, whereCurrent } from "../versioning";
 
 export const getLogs = async () => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const selectRelatedCounts =
     (table: Versioned) => (eb: ExpressionBuilder<DB, "log">) =>
       eb
@@ -40,4 +40,33 @@ export const getLogs = async () => {
     .limit(100);
 
   return await query.execute();
+};
+
+const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
+  return await kdb
+    .selectFrom(table)
+    // Todo: Fix typing
+    .innerJoin("log", "created_log_id" as any, "log.id" as any)
+    .where(whereCurrent as any)
+    .where("review_state" as any, "=", "pending")
+    .selectAll()
+    .execute();
+};
+
+export const getUncommitedChanges = async () => {
+  await requireRoleOrThrow("admin");
+
+  const letterChanges = await uncommitedChangesByTable("letter_version");
+  const personChanges = await uncommitedChangesByTable("person_version");
+  const personAliasChanges = await uncommitedChangesByTable(
+    "person_alias_version"
+  );
+  const placeChanges = await uncommitedChangesByTable("place_version");
+
+  return [
+    ...letterChanges.map((l) => ({ table: "letter", item: l })),
+    ...personChanges.map((p) => ({ table: "person", item: p })),
+    ...personAliasChanges.map((pa) => ({ table: "person_alias", item: pa })),
+    ...placeChanges.map((pl) => ({ table: "place", item: pl })),
+  ];
 };

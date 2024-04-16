@@ -1,6 +1,6 @@
 "use client";
 import { getLogs } from "@/lib/actions/admin";
-import { useServerFetch } from "./common/serverActions";
+import { useServerFetch } from "../common/serverActions";
 
 export const Logs = () => {
   const { loading, error, data: logs } = useServerFetch(getLogs, {});

@@ -3,29 +3,16 @@ import { simpleGit } from "simple-git";
 import fs, { opendirSync } from "fs";
 import path from "path";
 import { kdb } from "@/lib/db";
-import { JSDOM } from "jsdom";
 
-import {
-  ImportSpecs,
-  Versioning,
-  versionedTables,
-  whereCurrent,
-} from "./versioning";
+import { ImportSpecs, Versioning, versionedTables } from "../versioning";
 import { sql } from "kysely";
-
-if (!globalThis.window) {
-  // Hack to make JSDOM window available globally
-  // used in xmlSerialize.ts
-  (globalThis as any).jsDomWindow = new JSDOM().window;
-}
-
-export const repoPath = path.join(process.cwd(), "tei-corpus");
-export const letterPath = path.join(repoPath, "./data/letters");
-export const personsFilePath = path.join(repoPath, "./data/index/persons.xml");
-export const placesFilePath = path.join(
+import { xmlParseFromString } from "../xmlSerialize";
+import {
   repoPath,
-  "./data/index/localities.xml"
-);
+  personsFilePath,
+  placesFilePath,
+  letterPath,
+} from "./common";
 
 const fileOrDirectoryExists = async (path: string) => {
   return fs.promises
@@ -84,25 +71,33 @@ export const importFromCurrentCommit = async () => {
     const logId = await v.createLogId("import");
 
     // Check if commit is already imported
-    let git_import = await db
+    let existing_git_import = await db
       .selectFrom("git_import")
       .where("hash", "=", commitHash)
       .selectAll()
       .executeTakeFirst();
 
-    if (git_import) {
-      console.log("Commit already imported, will update", commitHash);
-    } else {
-      // Create commit entry
-      git_import = await db
-        .insertInto("git_import")
-        .values({
-          hash: commitHash,
-          created_log_id: logId,
-        })
-        .returningAll()
-        .executeTakeFirst();
+    if (existing_git_import) {
+      console.log("Commit already imported, will re-import", commitHash);
     }
+
+    // Set all existing git_imports to not current
+    await db
+      .updateTable("git_import")
+      .set({ is_current: false })
+      .where("is_current", "=", true)
+      .execute();
+
+    // Create commit entry
+    const git_import = await db
+      .insertInto("git_import")
+      .values({
+        hash: commitHash,
+        created_log_id: logId,
+        is_current: true,
+      })
+      .returningAll()
+      .executeTakeFirst();
 
     await v.removeNontouchedLatest();
 
@@ -116,8 +111,7 @@ export const importFromCurrentCommit = async () => {
       personsFilePath,
       "utf-8"
     );
-    const domParser = new new JSDOM().window.DOMParser();
-    const xml = domParser.parseFromString(xmlPersonsString, "text/xml");
+    const xml = xmlParseFromString(xmlPersonsString);
     const persons = Array.from(xml.querySelectorAll("person"));
 
     for (const person of persons) {
@@ -162,7 +156,7 @@ export const importFromCurrentCommit = async () => {
 
     // Import places
     const xmlPlacesString = await fs.promises.readFile(placesFilePath, "utf-8");
-    const xmlPlaces = domParser.parseFromString(xmlPlacesString, "text/xml");
+    const xmlPlaces = xmlParseFromString(xmlPlacesString);
     const places = Array.from(xmlPlaces.querySelectorAll("place"));
     for (const place of places) {
       const id = parseInt(place.getAttribute("xml:id")?.replace("l", "") || "");
@@ -208,73 +202,6 @@ export const importFromCurrentCommit = async () => {
   console.log(
     `Imported ${commitHash} in ${(performanceEnd - performanceStart) / 1000}s`
   );
-};
-
-export const exportToCurrentCommit = async () => {
-  const git = simpleGit(repoPath);
-
-  await kdb.transaction().execute(async (db) => {
-    const currentImportHash = (
-      await db
-        .selectFrom("git_import")
-        .where("is_current", "is", true)
-        .selectAll()
-        .executeTakeFirst()
-    )?.hash;
-
-    if (!currentImportHash) {
-      throw new Error("Export failed - no current import available");
-    }
-
-    await git.checkout(currentImportHash);
-    const commitHash = await getCommitHash();
-
-    if (commitHash !== currentImportHash) {
-      // Todo: we could manually checkout the commit and then export
-      throw new Error(
-        "Export failed - current checked out commit does not match the latest import"
-      );
-    }
-    // Todo: Check for uncommited changes in git repo
-    const s = await git.status();
-    if (!s.isClean)
-      throw new Error(
-        "Export failed - there are uncommited changes in the repository"
-      );
-
-    // Todo: export persons, person_aliases, places
-
-    // Select all latest letters and export them
-    const letters = await db
-      .selectFrom("letter_version")
-      .where(whereCurrent)
-      .where("is_touched", "is", true)
-      .where("review_state", "=", "accepted")
-      .select(["id", "xml"])
-      .execute();
-
-    for (const letter of letters) {
-      const xml = letter.xml;
-      const id = letter.id;
-      await fs.promises.writeFile(path.join(letterPath, `${id}.xml`), xml);
-    }
-
-    // Todo: Update git_export table and set entries to be exported
-
-    // Commit and push
-    // Todo: add git_export id to branch name / suffix?
-    await git.deleteLocalBranch("citizen-science-experiments", true);
-    await git.checkoutBranch("citizen-science-experiments", commitHash);
-    await git.add(".");
-    await git.commit(
-      `Citizen Science export ${new Date().toISOString()} (based on ${commitHash.substring(
-        0,
-        7
-      )})`
-    );
-    await git.push("origin", "citizen-science-experiments", ["-f"]);
-    await git.checkout(commitHash);
-  });
 };
 
 export const iterateFiles = async (

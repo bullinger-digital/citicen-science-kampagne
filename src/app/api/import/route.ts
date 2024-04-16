@@ -2,7 +2,7 @@ import {
   importFromCurrentCommit,
   initRepository,
   pullRepository,
-} from "@/lib/git";
+} from "@/lib/git/import";
 import { withRequireRoleAppApi } from "@/lib/security/withRequireRole";
 
 import { NextRequest } from "next/server";
