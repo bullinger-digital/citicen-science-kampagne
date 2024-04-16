@@ -38,6 +38,12 @@ export interface Letter {
   id: Generated<number>;
 }
 
+export interface LetterLock {
+  id: Generated<number>;
+  locked_at: Generated<Timestamp>;
+  locked_by_id: number;
+}
+
 export interface LetterVersion {
   actions: Generated<Json>;
   created_log_id: number;
@@ -164,6 +170,7 @@ export interface DB {
   git_export: GitExport;
   git_import: GitImport;
   letter: Letter;
+  letter_lock: LetterLock;
   letter_version: LetterVersion;
   letter_version_action: LetterVersionAction;
   letter_version_extract_person: LetterVersionExtractPerson;

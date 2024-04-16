@@ -34,8 +34,6 @@ export const useServerFetch = <P, R>(
   // Make sure action is not executed when props object change by comparing JSON string
   const propsString = JSON.stringify(props);
 
-  console.log("useServerFetch", { action, props });
-
   const runAction = useCallback(async () => {
     if (options.skip) {
       setLoading(false);

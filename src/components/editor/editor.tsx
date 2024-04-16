@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useCallback, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect } from "react";
 import {
   DebugActionsView,
   EditorContext,
@@ -16,6 +16,7 @@ import { LetterVersion } from "@/lib/generated/kysely-codegen";
 import { isInRole } from "@/lib/security/isInRole";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { useServerFetch } from "../common/serverActions";
+import { LockOverlay, useLetterLock } from "./locking";
 
 export const Editor = ({ letterId }: { letterId: number }) => {
   const {
@@ -42,6 +43,7 @@ const EditorInternal = ({
   refetch: () => void;
 }) => {
   const state = useEditorState({ letter_version, refetch });
+  const lock = useLetterLock(letter_version.id, refetch);
   const session = useUser();
   const { xmlDoc, actions } = state;
 
@@ -80,7 +82,8 @@ const EditorInternal = ({
 
   return (
     <EditorContext.Provider value={state}>
-      <div className="">
+      <div className="relative">
+        <LockOverlay lock={lock} />
         <div className="flex items-stretch space-x-2">
           <div className="p-5 bg-white shadow-xl border">
             <Toolbar />
