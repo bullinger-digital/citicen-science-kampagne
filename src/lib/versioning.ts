@@ -21,6 +21,16 @@ export type ImportSpecs = {
   gitImportId: number;
 };
 
+type InternalVersioningKeys =
+  | "id"
+  | "created_log_id"
+  | "is_touched"
+  | "version_id"
+  | "review_state"
+  | "is_new"
+  | "is_latest"
+  | "git_import_id";
+
 export class Versioning {
   db: Kysely<DB> | Transaction<DB>;
   constructor(transaction?: Transaction<DB>) {
@@ -89,24 +99,12 @@ export class Versioning {
 
   async insertAndCreateNewVersion<
     T extends Versioned,
-    TV extends `${T}_version`
+    TV extends `${T}_version`,
   >(
     table: T,
-    data: Omit<
-      InsertObject<DB, TV>,
-      | "id"
-      | "created_log_id"
-      | "git_import_id"
-      | "is_touched"
-      | "version_id"
-      | "review_state"
-      | "is_new"
-      | "is_latest"
-    >,
+    data: Omit<InsertObject<DB, TV>, InternalVersioningKeys>,
     logId?: number | undefined
   ) {
-    const versions_table = `${table}_version` as TV;
-
     return await wrapTransaction(this.db, async (db) => {
       logId = logId || (await this.createLogId("user"));
 
@@ -136,17 +134,7 @@ export class Versioning {
     table: T,
     id: number,
     parent_version_id: number | null,
-    data: Omit<
-      UpdateObject<DB, TV>,
-      | "id"
-      | "created_log_id"
-      | "is_touched"
-      | "version_id"
-      | "review_state"
-      | "is_new"
-      | "is_latest"
-      | "git_import_id"
-    >,
+    data: Omit<UpdateObject<DB, TV>, InternalVersioningKeys>,
     logId?: number | undefined,
     autoAccept: boolean = true
   ) {
@@ -272,7 +260,7 @@ export class Versioning {
     );
   };
 
-  createLogId = async (type: "import" | "user") => {
+  createLogId = async (type: "import" | "user" | "export") => {
     return (
       await this.db
         .insertInto("log")
@@ -330,13 +318,9 @@ export class Versioning {
           computed_link_counts: eb
             .selectFrom("letter_version_extract_person as v")
             .innerJoin("letter_version as lv", "lv.version_id", "v.version_id")
-            .where((e) =>
-              e.and([
-                e("v.person_id", "=", eb.ref("person.id")),
-                // Todo: fix typing
-                whereCurrent(e as any),
-              ])
-            )
+            // Todo: Fix typing
+            .where(whereCurrent as any)
+            .where((e) => e.and([e("v.person_id", "=", eb.ref("person.id"))]))
             .select(eb.fn.countAll<number>().as("count")),
         };
       })
@@ -360,13 +344,9 @@ export class Versioning {
           computed_link_counts: eb
             .selectFrom("letter_version_extract_place as v")
             .innerJoin("letter_version as lv", "lv.version_id", "v.version_id")
-            .where((e) =>
-              e.and([
-                e("v.place_id", "=", eb.ref("place.id")),
-                // Todo: fix typing
-                whereCurrent(e as any),
-              ])
-            )
+            // Todo: Fix typing
+            .where(whereCurrent as any)
+            .where((e) => e.and([e("v.place_id", "=", eb.ref("place.id"))]))
             .select(eb.fn.countAll<number>().as("count")),
         };
       })
