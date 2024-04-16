@@ -69,8 +69,8 @@ export const useEditorState = ({
       latestAction.type === "change-attributes"
         ? latestAction.dom?.affectedNode
         : latestAction.type === "wrap"
-        ? latestAction.dom?.affectedNodes[0]
-        : null;
+          ? latestAction.dom?.affectedNodes[0]
+          : null;
 
     if (node) {
       setSelectedNode(node);
@@ -99,13 +99,10 @@ export const useEditorState = ({
   const redo = () => {
     // Add latest redoable action to actions
     const latestRedoableAction = redoableActions[redoableActions.length - 1];
-    const actionsExceptLast = [...actions, latestRedoableAction].map((a) => ({
-      ...a,
-      dom: undefined,
-    }));
     const parser = new DOMParser();
     const xmlDocRaw = parser.parseFromString(letter_version.xml, "text/xml");
-    applyNewActions(xmlDocRaw, actionsExceptLast);
+    // Temporarily set actions to [] to avoid applying actions to the DOM
+    setActions([]);
     setXmlDoc(xmlDocRaw);
     setActions(
       [...actions, latestRedoableAction].map((a) => ({ ...a, dom: undefined }))
