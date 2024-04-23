@@ -4,6 +4,7 @@ import { ReactNode, useCallback, useEffect } from "react";
 import {
   DebugActionsView,
   EditorContext,
+  LetterState,
   useEditorState,
 } from "./editorContext";
 import { RenderText } from "./rendering";
@@ -86,6 +87,11 @@ const EditorInternal = ({
         <LockOverlay lock={lock} />
         <div className="flex items-stretch space-x-2">
           <div className="p-5 bg-white shadow-xl border">
+            {state.letterState === LetterState.Finished && (
+              <div className="bg-green-100 p-2 mb-2">
+                Dieser Brief wurde als abgeschlossen markiert.
+              </div>
+            )}
             <Toolbar />
             <div className="overflow-y-auto max-h-[calc(100vh-13rem)]">
               <div className="pr-4 mb-4">

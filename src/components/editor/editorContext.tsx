@@ -1,5 +1,5 @@
 import { saveVersion } from "@/lib/actions/citizen";
-import { EditorAction, applyNewActions } from "@/lib/xml";
+import { EditorAction, applyNewActions, getPathFromNode } from "@/lib/xml";
 import { Selectable } from "kysely";
 import {
   createContext,
@@ -27,7 +27,15 @@ export type EditorContextProps = {
   redoableActions: EditorAction[];
   loading: boolean;
   error: string | null;
+  letterState: LetterState;
+  setLetterState: (state: LetterState) => void;
 };
+
+export enum LetterState {
+  Untouched = "untouched",
+  Touched = "touched",
+  Finished = "finished",
+}
 
 export const EditorContext = createContext<EditorContextProps | null>(null);
 
@@ -44,10 +52,11 @@ export const useEditorState = ({
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [actions, setActions] = useState<EditorAction[]>([]);
   const [redoableActions, setRedoableActions] = useState<EditorAction[]>([]);
+  const [saveRequested, setSaveRequested] = useState(false);
 
   const { execute: save, loading, error } = useServerAction(saveVersion);
 
-  const prepareAndSaveVersion = async () => {
+  const prepareAndSaveVersion = useCallback(async () => {
     await save({
       id: letter_version.id,
       version_id: letter_version.version_id,
@@ -55,7 +64,21 @@ export const useEditorState = ({
       actions: actions.map((a) => ({ ...a, dom: undefined })),
     });
     refetch();
-  };
+  }, [
+    xml,
+    actions,
+    letter_version.id,
+    letter_version.version_id,
+    refetch,
+    save,
+  ]);
+
+  useEffect(() => {
+    if (saveRequested) {
+      setSaveRequested(false);
+      prepareAndSaveVersion();
+    }
+  }, [saveRequested, prepareAndSaveVersion]);
 
   useEffect(() => {
     if (!xmlDoc) return;
@@ -162,11 +185,26 @@ export const useEditorState = ({
   useNodeObserver(
     xmlDoc?.querySelector("TEI"),
     useCallback(async () => {
-      console.log("DOM has changed");
       if (!xmlDoc) return;
       setXml(xmlSerializeToString(xmlDoc));
     }, [xmlDoc])
   );
+
+  const revisionDescNode = xmlDoc?.querySelector(
+    "TEI > teiHeader > revisionDesc"
+  );
+  const letterState = revisionDescNode?.getAttribute("status") as LetterState;
+  const setLetterState = (state: LetterState) => {
+    addAction({
+      type: "change-attributes",
+      attributes: { status: state },
+      nodePath: getPathFromNode(revisionDescNode as Node),
+    });
+    // Todo: Hacky way to trigger save after state change
+    setTimeout(() => {
+      setSaveRequested(true);
+    }, 0);
+  };
 
   return {
     xmlDoc,
@@ -182,6 +220,8 @@ export const useEditorState = ({
     redoableActions,
     loading,
     error,
+    letterState,
+    setLetterState,
   };
 };
 

@@ -2,9 +2,16 @@ import { isInRole } from "@/lib/security/isInRole";
 import { getPathFromNode } from "@/lib/xml";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { FaUndo, FaRedo, FaSave, FaPlus, FaMinus } from "react-icons/fa";
+import {
+  FaUndo,
+  FaRedo,
+  FaSave,
+  FaPlus,
+  FaMinus,
+  FaCheck,
+} from "react-icons/fa";
 import Modal from "../common/modal";
-import { EditorContext } from "./editorContext";
+import { EditorContext, LetterState } from "./editorContext";
 import dynamic from "next/dynamic";
 const XmlView = dynamic(
   () => import("./xmlCodeView").then((mod) => mod.XmlView),
@@ -96,6 +103,8 @@ export const Toolbar = () => {
     setSelectedNode,
     loading,
     error,
+    letterState,
+    setLetterState,
   } = useContext(EditorContext)!;
   const [showXmlView, setShowXmlView] = useState(false);
   const { hasMarkableSelection } = useHasMarkableSelection();
@@ -242,8 +251,34 @@ export const Toolbar = () => {
             <div className="text-sm">Änderungen speichern</div>
           </span>
         </ToolbarButton>
+        <ToolbarButton
+          disabled={toolbarDisabled || letterState === LetterState.Finished}
+          onClick={() => {
+            setLetterState(LetterState.Finished);
+          }}
+          title="Abschliessen (alle Personen und Ortschaften im Brief sind markiert)"
+        >
+          <IconButton icon={<FaCheck className="text-xl" />}>
+            Brief abschliessen
+          </IconButton>
+        </ToolbarButton>
       </div>
       {error && <div className="text-red-500">{error}</div>}
+    </div>
+  );
+};
+
+const IconButton = ({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+}) => {
+  return (
+    <div className="flex space-x-2 items-center">
+      {icon}
+      <div className="text-sm">{children}</div>
     </div>
   );
 };

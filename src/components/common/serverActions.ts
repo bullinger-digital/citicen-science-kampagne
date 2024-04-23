@@ -14,6 +14,7 @@ export const useServerAction = <T, R>(action: (props: T) => Promise<R>) => {
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unbekannter Fehler");
         console.error(e);
+        return Promise.reject(e);
       } finally {
         setLoading(false);
       }
