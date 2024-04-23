@@ -57,9 +57,31 @@ export const personById = async ({ id }: { id: string }) => {
   return p;
 };
 
+const latinPersonExtension = [
+  "ae",
+  "am",
+  "arum",
+  "as",
+  "is",
+  "i",
+  "o",
+  "orum",
+  "um",
+  "os",
+] // Sort by length descending
+  .sort((a, b) => b.length - a.length);
+
 export const searchPerson = async ({ query }: { query: string }) => {
   await requireRoleOrThrow("user");
-  const keywords = query.split(" ");
+  const keywords = query.split(" ").map((k) => {
+    const ext = latinPersonExtension.find((e) => k.endsWith(e));
+    // If the keyword ends with a latin extension and has at least 3 characters more than the extension, remove the extension
+    if (ext && k.length > ext.length + 2) {
+      return k.slice(0, -ext.length);
+    }
+    return k;
+  });
+
   const people = await kdb
     .selectFrom("person")
     .innerJoin("person_version", "person_version.id", "person.id")
