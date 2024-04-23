@@ -17,7 +17,6 @@ export type EditorContextProps = {
   selectedNode: Node | null;
   setSelectedNode: (node: Node | null) => void;
   actions: EditorAction[];
-  setActions: (actions: EditorAction[]) => void;
   addAction: (action: EditorAction) => void;
   prepareAndSaveVersion: () => Promise<void>;
   undo: () => void;
@@ -47,8 +46,10 @@ export const useEditorState = ({
   refetch: () => void;
 }) => {
   const [xml, setXml] = useState(letter_version.xml);
-  const [iteration, setIteration] = useState(0);
-  const [xmlDoc, setXmlDoc] = useState<Document | null>(null);
+  const [xmlDoc, setXmlDoc] = useState<Document>(() => {
+    const parser = new DOMParser();
+    return parser.parseFromString(letter_version.xml, "text/xml");
+  });
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [actions, setActions] = useState<EditorAction[]>([]);
   const [redoableActions, setRedoableActions] = useState<EditorAction[]>([]);
@@ -73,6 +74,13 @@ export const useEditorState = ({
     save,
   ]);
 
+  useNodeObserver(
+    xmlDoc?.querySelector("TEI"),
+    useCallback(async () => {
+      setXml(xmlSerializeToString(xmlDoc));
+    }, [xmlDoc])
+  );
+
   useEffect(() => {
     if (saveRequested) {
       setSaveRequested(false);
@@ -81,9 +89,7 @@ export const useEditorState = ({
   }, [saveRequested, prepareAndSaveVersion]);
 
   useEffect(() => {
-    if (!xmlDoc) return;
-    applyNewActions(xmlDoc!, actions);
-    setIteration((i) => i + 1);
+    applyNewActions(xmlDoc, actions);
 
     // Try to select dom node of latest action
     const latestAction = actions[actions.length - 1];
@@ -101,7 +107,6 @@ export const useEditorState = ({
   }, [actions, xmlDoc]);
 
   const addAction = (action: EditorAction) => {
-    if (!xmlDoc) throw new Error("Not ready yet: DOM is null");
     setRedoableActions([]);
     setActions([...actions, action]);
   };
@@ -176,20 +181,6 @@ export const useEditorState = ({
     };
   });
 
-  useEffect(() => {
-    const parser = new DOMParser();
-    const xmlDocRaw = parser.parseFromString(letter_version.xml, "text/xml");
-    setXmlDoc(xmlDocRaw);
-  }, [letter_version.xml]);
-
-  useNodeObserver(
-    xmlDoc?.querySelector("TEI"),
-    useCallback(async () => {
-      if (!xmlDoc) return;
-      setXml(xmlSerializeToString(xmlDoc));
-    }, [xmlDoc])
-  );
-
   const revisionDescNode = xmlDoc?.querySelector(
     "TEI > teiHeader > revisionDesc"
   );
@@ -212,7 +203,6 @@ export const useEditorState = ({
     selectedNode,
     setSelectedNode,
     actions,
-    setActions,
     addAction,
     prepareAndSaveVersion,
     undo,
