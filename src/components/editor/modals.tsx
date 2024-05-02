@@ -252,7 +252,6 @@ export const EditPlaceModal = ({
           label="Ortschaft"
           placeholder="Zürich"
           disabled={id !== undefined}
-          required
         />
         <InputWithLabel
           value={newPlace.district}
