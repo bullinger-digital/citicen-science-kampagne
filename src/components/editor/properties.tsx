@@ -271,7 +271,7 @@ const EntitySelector = <T extends SearchFunction>({
       {loading || !entities ? (
         <Loading />
       ) : (
-        <div className="mt-2">
+        <div className="mt-2 overflow-y-auto max-h-[500px]">
           {entities.map((p) => (
             <AddReferenceButton onClick={() => onSelect(p.id)} key={p.id}>
               <div>

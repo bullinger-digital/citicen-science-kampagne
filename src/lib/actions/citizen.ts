@@ -125,7 +125,7 @@ export const searchPerson = async ({ query }: { query: string }) => {
         ),
       ])
     )
-    .limit(10)
+    .limit(50)
     .selectAll("person_version")
     .select("person.computed_link_counts")
     .select((e) => [
@@ -183,7 +183,7 @@ export const searchPlace = async ({ query }: { query: string }) => {
     .select("place.computed_link_counts")
     // Order by the number of letters the place is linked to (descending)
     .orderBy("computed_link_counts", "desc")
-    .limit(10)
+    .limit(50)
     .execute();
   return places;
 };
