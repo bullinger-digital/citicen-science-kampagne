@@ -143,6 +143,10 @@ const EditorInternal = ({
             <Properties />
             <ContextBox title="Bedeutung der Markierungen">
               <div className="self-center">
+                <div className="flex mb-2 space-x-4 text-sm text-gray-400">
+                  <div className="text-sky-600">Personen</div>
+                  <div className="text-yellow-600">Ortschaften</div>
+                </div>
                 <div className="flex space-x-4 text-sm text-gray-400">
                   <div className="border-gray-400 border-b-4">Verifiziert</div>
                   <div className="border-gray-400 border-b-4 border-dashed">
