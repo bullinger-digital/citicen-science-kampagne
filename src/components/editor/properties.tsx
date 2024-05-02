@@ -132,6 +132,7 @@ const PlaceName = ({ node }: { node: Node }) => {
   if (selectedPlace) {
     return (
       <div>
+        <RemoveReferenceButton node={node} />
         <div>
           <span className="font-bold">
             {[
@@ -146,7 +147,6 @@ const PlaceName = ({ node }: { node: Node }) => {
         </div>
         <EntityLinksList links={selectedPlace.links} />
         <CertToggle node={node} />
-        <RemoveReferenceButton node={node} />
       </div>
     );
   }
