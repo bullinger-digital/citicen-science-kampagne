@@ -19,9 +19,17 @@ export default function Home() {
       </p>
       <p className="mb-2">
         Die Korrekturkampagne startet am <strong>1. Juni 2024</strong>. Zum
-        Auftakt findet ein Workshop in der ZB statt, gleichzeitig wird das
-        Mitmach-Tool an dieser Stelle freigeschaltet. Damit können Sie sich
-        jederzeit übers Internet an der Kampagne beteiligen.
+        Auftakt findet ein{" "}
+        <a
+          href="https://www.zb.uzh.ch/de/events/bullinger-briefwechsel-zuerichs-erbe-erschliessen"
+          target="_blank"
+          className="text-blue-500 underline"
+        >
+          Workshop in der ZB
+        </a>{" "}
+        statt, gleichzeitig wird das Mitmach-Tool an dieser Stelle
+        freigeschaltet. Damit können Sie sich jederzeit übers Internet an der
+        Kampagne beteiligen.
       </p>
       <h3 className="font-light mt-4 mb-2 text-xl">Worum es geht</h3>
       <p className="mb-2">
@@ -29,8 +37,15 @@ export default function Home() {
         Zürich und eine Schlüsselfigur der Reformationszeit. 12&apos;000 Briefe
         von und an Bullinger sind erhalten, in den letzten drei Jahren hat das
         Projekt Bullinger Digital den umfangreichen Briefwechsel digital
-        aufbereitet und auf www.bullinger-digital.ch öffentlich zugänglich
-        gemacht.
+        aufbereitet und auf{" "}
+        <a
+          href="https://www.bullinger-digital.ch"
+          target="_blank"
+          className="text-blue-500 underline"
+        >
+          www.bullinger-digital.ch
+        </a>{" "}
+        öffentlich zugänglich gemacht.
       </p>
       <p className="mb-2">
         Unter anderem haben wir mit Hilfe maschineller Verfahren tausende
