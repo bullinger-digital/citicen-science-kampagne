@@ -150,8 +150,10 @@ export const useEditorState = ({
       if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
         undo();
       }
+
       // Select next/last instance of persName or placeName with arrow keys
       if (["ArrowRight", "ArrowLeft"].includes(e.key)) {
+        if (e.target !== document.body) return;
         const allPersNameAndPlaceNameNodes = Array.from(
           xmlDoc!.querySelectorAll("persName, placeName")
         ).filter((n) => !!(n as any).domNode); // Filter out nodes that are not rendered
