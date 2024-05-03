@@ -21,6 +21,7 @@ const Modal = ({
   closeOnOutsideClick?: boolean;
 }) => {
   const wrapperRef = useRef(null);
+  const modalRef = useRef(null);
   return open
     ? createPortal(
         <div
@@ -34,6 +35,7 @@ const Modal = ({
           }
         >
           <Draggable
+            nodeRef={modalRef}
             handle="#drag-handle"
             defaultPosition={{
               x: window.outerWidth / 2 - (maxWidth || 1200) / 2,
@@ -41,6 +43,7 @@ const Modal = ({
             }}
           >
             <div
+              ref={modalRef}
               className={`bg-white rounded-lg shadow-2xl w-full`}
               style={{ minHeight: "100px", maxWidth: maxWidth || 1200 }}
             >
