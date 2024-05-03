@@ -186,6 +186,14 @@ const useHasMarkableSelection = () => {
             ? selection?.getRangeAt(0)
             : null;
         if (!range) return;
+        // If none of the node's parents has the class ne-editor-text, the selection is not within the editor - skip
+        if (
+          !range.startContainer.parentElement?.closest(".ne-editor-text") ||
+          !range.endContainer.parentElement?.closest(".ne-editor-text")
+        ) {
+          return;
+        }
+
         sanitizeRange(range);
       } catch (e) {
         console.error("Error while sanitizing selection");

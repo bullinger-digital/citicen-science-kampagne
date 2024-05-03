@@ -18,6 +18,14 @@ const NodeTypes = {
 // - change annotation properties
 
 export const RenderText = ({ nodes }: { nodes: ChildNode[] }) => {
+  return (
+    <div className="ne-editor-text">
+      <RenderTextInternal nodes={nodes} />
+    </div>
+  );
+};
+
+const RenderTextInternal = ({ nodes }: { nodes: ChildNode[] }) => {
   return nodes
     .filter(
       (n) =>
@@ -59,14 +67,14 @@ const renderers: {
     return (
       // We can't use <p> here because p cannot contain divs, which is required for footnotes etc.
       <div className="text-paragraph">
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </div>
     );
   },
   s: ({ node }) => {
     return (
       <span>
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
         <span className="ne-prevent-select-inside"> </span>
       </span>
     );
@@ -74,7 +82,7 @@ const renderers: {
   div: ({ node }) => {
     return (
       <div>
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </div>
     );
   },
@@ -82,7 +90,9 @@ const renderers: {
     if (node.getAttribute("type") === "footnote") {
       return (
         <sup className="text-gray-400 ne-prevent-select-inside">
-          <Popover content={<RenderText nodes={Array.from(node.childNodes)} />}>
+          <Popover
+            content={<RenderTextInternal nodes={Array.from(node.childNodes)} />}
+          >
             {node.getAttribute("n")}
           </Popover>
         </sup>
@@ -90,7 +100,7 @@ const renderers: {
     } else {
       return (
         <div className="text-gray-400">
-          <RenderText nodes={Array.from(node.childNodes)} />
+          <RenderTextInternal nodes={Array.from(node.childNodes)} />
         </div>
       );
     }
@@ -115,7 +125,7 @@ const renderers: {
           c?.setSelectedNode(node);
         }}
       >
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </span>
     );
   },
@@ -139,7 +149,7 @@ const renderers: {
           c?.setSelectedNode(node);
         }}
       >
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </span>
     );
   },
@@ -149,7 +159,7 @@ const renderers: {
   foreign: ({ node }) => {
     return (
       <span className="italic">
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </span>
     );
   },
@@ -160,21 +170,21 @@ const renderers: {
         className="text-gray-400"
         target="_blank"
       >
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </a>
     );
   },
   bibl: ({ node }) => {
     return (
       <span className="italic">
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </span>
     );
   },
   hi: ({ node }) => {
     return (
       <span className="italic">
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </span>
     );
   },
@@ -182,21 +192,21 @@ const renderers: {
     // Linebreaks are currently not displayed as such - Todo: check if this is the desired behavior
     return (
       <>
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </>
     );
   },
   ptr: ({ node }) => {
     return (
       <span className="bg-yellow-200">
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </span>
     );
   },
   del: ({ node }) => {
     return (
       <span className="line-through">
-        <RenderText nodes={Array.from(node.childNodes)} />
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </span>
     );
   },
