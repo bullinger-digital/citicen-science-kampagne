@@ -71,6 +71,102 @@ const getXmlStartAndEndNode = (selection: Selection | null) => {
   return { startNode, endNode, isValid, range };
 };
 
+const endAtTextNodeBefore = (range: Range, node: Node) => {
+  let previousTextNode = range.endContainer!;
+  limitedWhile(
+    () =>
+      Array.from(previousTextNode.parentNode?.childNodes || []).indexOf(
+        previousTextNode as ChildNode
+      ) === 0,
+    () => (previousTextNode = previousTextNode.parentNode!)
+  );
+  previousTextNode = previousTextNode.previousSibling!;
+  limitedWhile(
+    () => previousTextNode.nodeType !== Node.TEXT_NODE,
+    () => (previousTextNode = previousTextNode.lastChild!)
+  );
+  range.setEnd(previousTextNode, previousTextNode.textContent?.length || 0);
+};
+
+const startAtTextNodeAfter = (range: Range, node: Node) => {
+  let nextTextNode = range.startContainer!;
+  limitedWhile(
+    () =>
+      Array.from(nextTextNode.parentNode?.childNodes || []).indexOf(
+        nextTextNode as ChildNode
+      ) ===
+      (nextTextNode.parentNode?.childNodes || []).length - 1,
+    () => (nextTextNode = nextTextNode.parentNode!)
+  );
+  nextTextNode = nextTextNode.nextSibling!;
+  limitedWhile(
+    () => nextTextNode.nodeType !== Node.TEXT_NODE,
+    () => (nextTextNode = nextTextNode.firstChild!)
+  );
+  range.setStart(nextTextNode, 0);
+};
+
+const limitedWhile = (
+  condition: (i: number) => boolean,
+  action: (i: number) => void,
+  maxIterations = 20
+) => {
+  let i = 0;
+  while (condition(i) && i < maxIterations) {
+    action(i);
+    i++;
+  }
+  if (i >= maxIterations) {
+    console.error("Limited while loop reached maximum iterations");
+  }
+};
+
+const sanitizeRange = (range: Range) => {
+  // Trim leading and trailing whitespace
+  const charsToTrim = [" ", "\n", "\t"];
+  limitedWhile(
+    () =>
+      charsToTrim.find(
+        (c) => c === range.startContainer.textContent?.[range.startOffset]
+      ) !== undefined,
+    () => range.setStart(range.startContainer, range.startOffset + 1)
+  );
+  limitedWhile(
+    () =>
+      charsToTrim.find(
+        (c) => c === range.endContainer.textContent?.[range.endOffset - 1]
+      ) !== undefined,
+    () => range.setEnd(range.endContainer, range.endOffset - 1)
+  );
+
+  // If endOffset is 0 or endContainer is not a text node, end selection at previous node
+  if (range.endOffset === 0 || range.endContainer.nodeType !== Node.TEXT_NODE) {
+    endAtTextNodeBefore(range, range.endContainer);
+  }
+
+  // If startOffset is the last element or startContainer is not a text node, start selection at next node
+  if (
+    range.startOffset === range.startContainer.textContent?.length ||
+    range.startContainer.nodeType !== Node.TEXT_NODE
+  ) {
+    startAtTextNodeAfter(range, range.startContainer);
+  }
+
+  // Prevent selections inside elements with class ne-prevent-select-inside (currently, footnote elements)
+  let node = range.endContainer;
+  const parents = [];
+  while (node !== document.body) {
+    parents.push(node);
+    node = node.parentNode!;
+  }
+  const parentWithPreventSelect = parents.find((p) =>
+    (p as HTMLElement)?.classList?.contains("ne-prevent-select-inside")
+  );
+  if (parentWithPreventSelect) {
+    endAtTextNodeBefore(range, parentWithPreventSelect);
+  }
+};
+
 const useHasMarkableSelection = () => {
   const [hasMarkableSelection, setHasMarkableSelection] =
     useState<boolean>(false);
@@ -79,12 +175,33 @@ const useHasMarkableSelection = () => {
     const { isValid } = getXmlStartAndEndNode(selection);
     setHasMarkableSelection(isValid);
   }, []);
+
+  const sanitizeSelection = useCallback(() => {
+    // Timeout is required for browser to update selection before sanitizing
+    setTimeout(() => {
+      try {
+        const selection = window.getSelection();
+        const range =
+          selection && selection?.rangeCount > 0
+            ? selection?.getRangeAt(0)
+            : null;
+        if (!range) return;
+        sanitizeRange(range);
+      } catch (e) {
+        console.error("Error while sanitizing selection");
+        console.error(e);
+      }
+    }, 0);
+  }, []);
+
   useEffect(() => {
     document.addEventListener("selectionchange", handleSelectionChange);
+    document.addEventListener("mouseup", sanitizeSelection);
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
+      document.removeEventListener("mouseup", sanitizeSelection);
     };
-  }, [handleSelectionChange]);
+  }, [handleSelectionChange, sanitizeSelection]);
 
   return { hasMarkableSelection };
 };
