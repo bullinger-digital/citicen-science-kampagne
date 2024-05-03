@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 export const useOutsideClick = (
   ref: React.RefObject<HTMLElement>,
   onOutsideClick: (e: MouseEvent) => void
 ) => {
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
+  const handleOutsideClick = useCallback(
+    (e: MouseEvent) => {
       if (
         ref.current &&
         e.target instanceof Node &&
@@ -13,7 +13,11 @@ export const useOutsideClick = (
       ) {
         onOutsideClick(e);
       }
-    };
+    },
+    [ref, onOutsideClick]
+  );
+
+  useEffect(() => {
     window.addEventListener("click", handleOutsideClick);
     return () => {
       window.removeEventListener("click", handleOutsideClick);

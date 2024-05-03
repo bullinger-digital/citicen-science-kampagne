@@ -1,0 +1,281 @@
+"use client";
+
+import {
+  ReactNode,
+  forwardRef,
+  use,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
+import { FaDice } from "react-icons/fa6";
+import { IoFilterSharp } from "react-icons/io5";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { useOutsideClick } from "./common/useOutsideClick";
+import { useServerFetch } from "./common/serverActions";
+import {
+  LetterNavigationFilter,
+  letterNavigation,
+  personById,
+  searchPerson,
+} from "@/lib/actions/citizen";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+
+const INPUT_CLASSNAMES =
+  "w-full px-2 py-2 border-b-2 border-gray-300 outline-none focus:border-beige-500 placeholder-gray-300 text-gray-700";
+
+const DEFAULT_FILTER: LetterNavigationFilter = {
+  status: "notfinished",
+};
+
+export const LetterNavigation = () => {
+  const [showFilter, setShowFilter] = useState(false);
+  const [filter, setFilter] = useState<LetterNavigationFilter>(DEFAULT_FILTER);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+
+  const pathname = usePathname();
+
+  const { data, error, loading, refetch } = useServerFetch(letterNavigation, {
+    filter: filter,
+    current_letter_id: parseInt(pathname.split("/").pop() || ""),
+  });
+
+  useOutsideClick(
+    filterButtonRef,
+    useCallback(() => setShowFilter(false), [setShowFilter])
+  );
+
+  return (
+    <div className="flex">
+      <div className="flex bg-blue-100 rounded-lg">
+        <NavigationButton
+          ref={filterButtonRef}
+          label="Filter"
+          onClick={() => setShowFilter(!showFilter)}
+        >
+          <IoFilterSharp className="text-2xl" />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`text-left absolute top-full w-96 z-40 bg-white shadow-2xl p-3 border-gray-200 border text-base ${showFilter ? "block" : "hidden"}`}
+          >
+            <FilterWithLabel label="Briefsprache">
+              <select
+                className={INPUT_CLASSNAMES}
+                value={filter.language || ""}
+                onChange={(e) =>
+                  setFilter({
+                    ...filter,
+                    language: e.target.value ? e.target.value : undefined,
+                  })
+                }
+              >
+                <option value="">Sprache auswählen</option>
+                <option value="la">Latein</option>
+                <option value="de">Deutsch</option>
+                <option value="el">Griechisch</option>
+                <option value="fr">Französisch</option>
+                <option value="he">Hebräisch</option>
+                <option value="it">Italienisch</option>
+                <option value="en">Englisch</option>
+              </select>
+            </FilterWithLabel>
+            <FilterWithLabel label="Korrespondent">
+              <PersonDropdown
+                personId={filter.person_id}
+                onChange={(personId) =>
+                  setFilter({
+                    ...filter,
+                    person_id: personId,
+                  })
+                }
+              />
+            </FilterWithLabel>
+            <FilterWithLabel label="Brief-Status">
+              <select
+                className={INPUT_CLASSNAMES}
+                value={filter.status || ""}
+                onChange={(e) =>
+                  setFilter({
+                    ...filter,
+                    status: e.target.value ? e.target.value : undefined,
+                  })
+                }
+              >
+                <option value="notfinished">Zu bearbeiten</option>
+                <option value="finished">Abgeschlossen</option>
+                <option value="">Alle</option>
+              </select>
+            </FilterWithLabel>
+
+            <div className="mt-5 text-sm text-gray-500">
+              Die Filter werden bei den Navigations-Aktionen nebenan (zufälligen
+              Brief auswählen, vorheriger Brief, nächster Brief) berücksichtigt.
+            </div>
+            <a
+              className="mt-3 text-gray-500 underline text-sm hover:text-blue-500"
+              onClick={() => {
+                setFilter(DEFAULT_FILTER);
+              }}
+            >
+              Filter zurücksetzen
+            </a>
+          </div>
+        </NavigationButton>
+        <NavigationButton
+          label="Zufälligen Brief auswählen"
+          href={`/letter/${data?.random}`}
+        >
+          <FaDice className="text-3xl" />
+        </NavigationButton>
+        <NavigationButton
+          label="Vorheriger Brief"
+          href={data?.previous ? `/letter/${data.previous}` : undefined}
+          disabled={!data?.previous}
+        >
+          <FaChevronLeft className="text-2xl" />
+        </NavigationButton>
+        <NavigationButton
+          label="Nächster Brief"
+          href={data?.next ? `/letter/${data?.next}` : undefined}
+          disabled={!data?.next}
+        >
+          <FaChevronRight className="text-2xl" />
+        </NavigationButton>
+        <div
+          className="text-sm flex items-center pl-2 pr-4"
+          title="Anzahl Briefe mit den gewählten Filter-Kriterien"
+        >
+          {data?.count} Briefe
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type NavigationButtonProps = {
+  children: ReactNode;
+  label: string;
+  onClick?: () => void | undefined;
+  href?: string;
+  disabled?: boolean;
+};
+
+const NavigationButton = forwardRef<
+  HTMLButtonElement | HTMLAnchorElement,
+  NavigationButtonProps
+>(function NavigationButton(props, ref) {
+  const Component = props.href ? Link : "button";
+  return (
+    <Component
+      title={props.label}
+      ref={ref as any}
+      href={props.href!}
+      className="text-sm min-w-12 h-12 relative first:rounded-l-lg last:rounded-r-lg hover:bg-blue-200 flex items-center justify-center disabled:text-gray-300"
+      onClick={(e) => !props.disabled && props.onClick && props.onClick()}
+      aria-label={props.label}
+      disabled={props.disabled}
+    >
+      <div>{props.children}</div>
+    </Component>
+  );
+});
+
+const FilterWithLabel = ({
+  label,
+  children,
+}: {
+  label: ReactNode;
+  children: ReactNode;
+}) => (
+  <div className="mb-5 last:mb-0">
+    <label className="w-40 shrink-0 grow-0 text-gray-400 text-sm">
+      {label}
+    </label>
+    <div>{children}</div>
+  </div>
+);
+
+import AsyncSelect from "react-select/async";
+
+export default function debounce<T extends (...args: any[]) => any>(
+  fn: T,
+  delay = 250
+) {
+  let timeout: ReturnType<typeof setTimeout>;
+
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+}
+
+const personDisplayName = (
+  p:
+    | Awaited<ReturnType<typeof personById>>
+    | Awaited<ReturnType<typeof searchPerson>>[0]
+) => {
+  const main = p?.aliases.find((a) => a.type === "main");
+  return `${main?.forename} ${main?.surname}`;
+};
+
+const PersonDropdown = ({
+  personId,
+  onChange,
+}: {
+  personId: number | null | undefined;
+  onChange: (personId: number | null | undefined) => void;
+}) => {
+  const { data: selectedPerson } = useServerFetch(
+    personById,
+    { id: personId?.toString() || "" },
+    { skip: !personId }
+  );
+
+  const fetchOptions = useCallback(async (v: string) => {
+    const res = await searchPerson({
+      query: v,
+      includeOnlyCorrespondents: true,
+    });
+    return res.map((p) => {
+      return {
+        value: p.id,
+        label: personDisplayName(p),
+      };
+    });
+  }, []);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const debouncedFetchOptions = useCallback(
+    debounce((inputValue: string, callback: (options: any) => void) => {
+      fetchOptions(inputValue).then((options) => callback(options));
+    }, 500),
+    []
+  );
+
+  return (
+    <AsyncSelect
+      classNames={{
+        control: (i) =>
+          "!w-full !px-2 !py-2 !shadow-none !border-t-0 !border-l-0 !border-r-0 !rounded-none !outline-none !border-b-2 !border-gray-300 !outline-none !focus:border-beige-500 !placeholder-gray-300 !text-gray-300",
+        valueContainer: (i) => "!p-0",
+      }}
+      loadingMessage={() => "Bitte warten..."}
+      noOptionsMessage={() =>
+        "Geben Sie einen Namen ein, um Korrespondenten zu suchen."
+      }
+      placeholder="Korrespondent suchen"
+      value={
+        selectedPerson
+          ? { value: personId, label: personDisplayName(selectedPerson) }
+          : null
+      }
+      onChange={(v) => onChange(v?.value)}
+      isClearable
+      defaultOptions={false}
+      loadOptions={debouncedFetchOptions}
+    />
+  );
+};

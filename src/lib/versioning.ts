@@ -219,6 +219,27 @@ export class Versioning {
       .executeTakeFirst();
   }
 
+  async tempApproveAllChanges() {
+    const logId = await this.createLogId("review");
+    await this.db
+      .updateTable("person_version")
+      .where("review_state", "=", "pending")
+      .set({ review_state: "accepted", reviewed_log_id: logId })
+      .execute();
+
+    await this.db
+      .updateTable("person_alias_version")
+      .where("review_state", "=", "pending")
+      .set({ review_state: "accepted", reviewed_log_id: logId })
+      .execute();
+
+    await this.db
+      .updateTable("place_version")
+      .where("review_state", "=", "pending")
+      .set({ review_state: "accepted", reviewed_log_id: logId })
+      .execute();
+  }
+
   async countUncommitedChanges() {
     const uncommitedChanges = await versionedTables.reduce(
       async (acc, table) => {
@@ -260,7 +281,7 @@ export class Versioning {
     );
   };
 
-  createLogId = async (type: "import" | "user" | "export") => {
+  createLogId = async (type: "import" | "user" | "export" | "review") => {
     return (
       await this.db
         .insertInto("log")
