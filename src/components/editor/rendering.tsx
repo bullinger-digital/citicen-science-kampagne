@@ -18,12 +18,19 @@ const NodeTypes = {
 // - change annotation properties
 
 export const RenderText = ({ nodes }: { nodes: ChildNode[] }) => {
-  return nodes.map((node, index) => {
-    const nodeName =
-      node.nodeType === NodeTypes.text ? "_text" : node.nodeName.toLowerCase();
-    const Renderer = renderers[nodeName] || renderers._error;
-    return <Renderer key={index} node={node} />;
-  });
+  return nodes
+    .filter(
+      (n) =>
+        !(n.nodeType === NodeTypes.text && n.textContent?.match(/^[\n\t]*$/g))
+    )
+    .map((node, index) => {
+      const nodeName =
+        node.nodeType === NodeTypes.text
+          ? "_text"
+          : node.nodeName.toLowerCase();
+      const Renderer = renderers[nodeName] || renderers._error;
+      return <Renderer key={index} node={node} />;
+    });
 };
 
 const linkXmlAndDomNodes = (
@@ -60,6 +67,7 @@ const renderers: {
     return (
       <span>
         <RenderText nodes={Array.from(node.childNodes)} />
+        <span className="ne-prevent-select-inside"> </span>
       </span>
     );
   },
@@ -73,7 +81,7 @@ const renderers: {
   note: ({ node }) => {
     if (node.getAttribute("type") === "footnote") {
       return (
-        <sup className="text-gray-400">
+        <sup className="text-gray-400 ne-prevent-select-inside">
           <Popover content={<RenderText nodes={Array.from(node.childNodes)} />}>
             {node.getAttribute("n")}
           </Popover>
@@ -100,8 +108,8 @@ const renderers: {
           cert === "high" && !!ref
             ? ""
             : !ref
-            ? "border-double"
-            : "border-dashed"
+              ? "border-double"
+              : "border-dashed"
         }`}
         onClick={(e) => {
           c?.setSelectedNode(node);
@@ -124,8 +132,8 @@ const renderers: {
           cert === "high" && !!ref
             ? ""
             : !ref
-            ? "border-double"
-            : "border-dashed"
+              ? "border-double"
+              : "border-dashed"
         }`}
         onClick={(e) => {
           c?.setSelectedNode(node);
