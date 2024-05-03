@@ -11,6 +11,7 @@ type PopoverProps = {
   inline?: boolean;
   pointer?: boolean;
   allowPinning?: boolean;
+  trigger?: "click" | "hover";
 };
 
 const PopoverContent = ({
@@ -75,6 +76,7 @@ export const Popover = ({
   className = "",
   inline = false,
   pointer = true,
+  trigger = "click",
 }: PopoverProps) => {
   const [visible, setVisible] = useState(false);
   const targetRef = useRef<HTMLDivElement>(null);
@@ -87,11 +89,17 @@ export const Popover = ({
       className={`cursor-pointer relative ${
         inline ? "" : "inline-block"
       } ${className}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        setVisible(true);
-      }}
+      onClick={
+        trigger === "click"
+          ? (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setVisible(true);
+            }
+          : undefined
+      }
+      onMouseEnter={trigger === "hover" ? () => setVisible(true) : undefined}
+      onMouseLeave={trigger === "hover" ? () => setVisible(false) : undefined}
       ref={targetRef}
     >
       {children}

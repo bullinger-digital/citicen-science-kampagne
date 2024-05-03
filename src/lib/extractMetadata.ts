@@ -14,8 +14,37 @@ export const extractAndStoreMetadata = async ({
   versionId: number;
   letterId: number;
 }) => {
-  for (const { table, tag, linkType, refPrefix } of extractLinksSpecs) {
-    const entities = Array.from(xmlDom.querySelectorAll(`${tag}[ref]`));
+  // Extract metadata for letter version
+  const source = xmlDom.querySelector("TEI")?.getAttribute("source");
+  const type = xmlDom.querySelector("TEI")?.getAttribute("type");
+  const language = xmlDom.querySelector("TEI > text")?.getAttribute("xml:lang");
+  const state = xmlDom
+    .querySelector("TEI > teiHeader > revisionDesc")
+    ?.getAttribute("status");
+  const dateNode = xmlDom.querySelector(
+    "TEI > teiHeader > profileDesc > correspDesc > correspAction[type='sent'] > date"
+  );
+  const date =
+    dateNode?.getAttribute("when") ||
+    dateNode?.getAttribute("notBefore") ||
+    dateNode?.getAttribute("notAfter") ||
+    null;
+  await db
+    .updateTable("letter_version")
+    .where("version_id", "=", versionId)
+    .where("id", "=", letterId)
+    .set({
+      extract_source: source || null,
+      extract_type: type || null,
+      extract_language: language || null,
+      extract_status: state || null,
+      extract_date: date || null,
+    })
+    .execute();
+
+  // Extract related persons and places
+  for (const { table, selector, linkType, refPrefix } of extractLinksSpecs) {
+    const entities = Array.from(xmlDom.querySelectorAll(selector));
 
     const inserts = entities.map((entity) => {
       const ref = entity.getAttribute("ref");
@@ -67,20 +96,32 @@ export const extractAndStoreMetadata = async ({
 
 const extractLinksSpecs: {
   table: Extract<Versioned, "person" | "place">;
-  tag: string;
+  selector: string;
   linkType: "correspondent" | "mentioned" | "origin";
   refPrefix: string;
 }[] = [
   {
     table: "person",
-    tag: "persName",
+    selector: "TEI > text > persName[ref]",
     linkType: "mentioned",
     refPrefix: "p",
   },
   {
+    table: "person",
+    selector: "correspAction persName[ref]",
+    linkType: "correspondent",
+    refPrefix: "p",
+  },
+  {
     table: "place",
-    tag: "placeName",
+    selector: "TEI > text > placeName[ref]",
     linkType: "mentioned",
+    refPrefix: "l",
+  },
+  {
+    table: "place",
+    selector: "correspAction[type='sent'] placeName[ref]",
+    linkType: "origin",
     refPrefix: "l",
   },
 ];

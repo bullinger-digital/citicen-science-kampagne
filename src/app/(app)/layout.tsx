@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
 import { EmailVerificationInfo, ProfileClient } from "@/components/user/user";
-import { RandomLetterButton } from "@/components/randomLetterButton";
+import { LetterNavigation } from "@/components/letterNavigation";
 import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,7 +27,7 @@ export default function RootLayout({
               <Link href="/">
                 <h2>Bullinger Digital - Mithelfen</h2>
               </Link>
-              <RandomLetterButton />
+              <LetterNavigation />
               <div>Hilfe</div>
             </div>
             <div>

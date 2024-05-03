@@ -47,6 +47,11 @@ export interface LetterLock {
 export interface LetterVersion {
   actions: Generated<Json>;
   created_log_id: number;
+  extract_date: string | null;
+  extract_language: string | null;
+  extract_source: string | null;
+  extract_status: string | null;
+  extract_type: string | null;
   git_export_id: number | null;
   git_import_id: number;
   id: number;

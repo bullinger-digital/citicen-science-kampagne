@@ -7,6 +7,8 @@ import { JSDOM } from "jsdom";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
 import { InferType, object, string } from "yup";
+import { redirect } from "next/navigation";
+import { sql } from "kysely";
 
 if (!globalThis.window) {
   // Hack to make JSDOM window available globally
@@ -71,7 +73,13 @@ const latinPersonExtension = [
 ] // Sort by length descending
   .sort((a, b) => b.length - a.length);
 
-export const searchPerson = async ({ query }: { query: string }) => {
+export const searchPerson = async ({
+  query,
+  includeOnlyCorrespondents = false,
+}: {
+  query: string;
+  includeOnlyCorrespondents?: boolean;
+}) => {
   await requireRoleOrThrow("user");
   const keywords = query.split(" ").map((k) => {
     const ext = latinPersonExtension.find((e) => k.endsWith(e));
@@ -86,6 +94,18 @@ export const searchPerson = async ({ query }: { query: string }) => {
     .selectFrom("person")
     .innerJoin("person_version", "person_version.id", "person.id")
     .where(whereCurrent)
+    .$if(includeOnlyCorrespondents, (e) =>
+      e.where((e) =>
+        e.exists(
+          e
+            .selectFrom("letter_version_extract_person as corr")
+            .where(whereCurrent as any)
+            .where("corr.person_id", "=", e.ref("person.id"))
+            .where("corr.link_type", "=", "correspondent")
+            .selectAll()
+        )
+      )
+    )
     .where((e) =>
       e.or([
         ...(query.match(/^\d+$/) ? [e("person.id", "=", parseInt(query))] : []),
@@ -382,4 +402,134 @@ const countUnacceptedReferences = async (
       .select((e) => e.fn.countAll<string>().as("count"))
       .executeTakeFirstOrThrow()
   ).count;
+};
+
+export type LetterNavigationFilter = {
+  language?: string;
+  person_id?: number | null;
+  status?: string;
+};
+
+export const letterNavigation = async ({
+  filter,
+  current_letter_id,
+}: {
+  filter: LetterNavigationFilter;
+  current_letter_id: number;
+}) => {
+  await requireRoleOrThrow("user");
+
+  const result = await kdb
+    .with("selection", (e) =>
+      e
+        .selectFrom("letter_version")
+        .where(whereCurrent)
+        // Filter out automatic transcriptions
+        .where((e) =>
+          e.or([
+            e("extract_source", "like", "HBBW-%"),
+            e("extract_source", "like", "TUSTEP-%"),
+          ])
+        )
+        .$if(!!filter.language, (e) =>
+          e.where("extract_language", "=", filter.language!)
+        )
+        .$if(!!filter.status, (e) =>
+          e.where(
+            "extract_status",
+            filter.status === "finished" ? "=" : "!=",
+            "finished"
+          )
+        )
+        .$if(!!filter.person_id, (e) =>
+          e.where((eb) =>
+            eb.exists(
+              eb
+                .selectFrom("letter_version_extract_person as p")
+                .where("p.version_id", "=", eb.ref("letter_version.version_id"))
+                .where("p.person_id", "=", filter.person_id!)
+                .where("p.link_type", "=", "correspondent")
+            )
+          )
+        )
+        .select(["id", "extract_date"])
+    )
+    .with("current_letter", (e) =>
+      e
+        .selectFrom("letter_version")
+        .where(whereCurrent)
+        .where("id", "=", current_letter_id)
+        .select("extract_date as d")
+    )
+    .selectNoFrom((e) => [
+      e
+        .selectFrom("selection")
+        .select((e) => e.fn.countAll<number>().as("c"))
+        .as("count"),
+      e
+        .selectFrom("selection")
+        .where((eb) =>
+          eb.or([
+            eb(
+              "extract_date",
+              "<",
+              eb.selectFrom("current_letter").select("d")
+            ),
+            eb.and([
+              eb(
+                "extract_date",
+                "=",
+                eb.selectFrom("current_letter").select("d")
+              ),
+              eb("id", "<", current_letter_id),
+            ]),
+          ])
+        )
+        .where("selection.id", "!=", current_letter_id)
+        .orderBy(["selection.extract_date desc", "selection.id desc"])
+        .limit(1)
+        .select("id")
+        .as("previous"),
+      e
+        .selectFrom("selection")
+        .where((eb) =>
+          eb.or([
+            eb(
+              "extract_date",
+              ">",
+              eb.selectFrom("current_letter").select("d")
+            ),
+            eb.and([
+              eb(
+                "extract_date",
+                "=",
+                eb.selectFrom("current_letter").select("d")
+              ),
+              eb("id", ">", current_letter_id),
+            ]),
+          ])
+        )
+        .where("selection.id", "!=", current_letter_id)
+        .orderBy(["selection.extract_date asc", "selection.id asc"])
+        .limit(1)
+        .select("id")
+        .as("next"),
+      e
+        .selectFrom("selection")
+        .orderBy((e) => sql`random()`)
+        .$if(!!current_letter_id, (e) =>
+          e.where("selection.id", "!=", current_letter_id)
+        )
+        .limit(1)
+        .select("id")
+        .as("random"),
+    ])
+    .executeTakeFirstOrThrow();
+
+  return {
+    random: result.random,
+    previous: result.previous,
+    next: result.next,
+    count: result.count,
+  };
 };
