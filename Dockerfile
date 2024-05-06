@@ -64,8 +64,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
 RUN cd migrations && npm ci
 # -----------------------------
-# Copy @prettier/plugin-xml (NextJS tree shaking removes it because it is not directly imported)
+# Copy @prettier/plugin-xml and dependencies (NextJS tree shaking removes it because it is not directly imported)
 COPY --from=deps /app/node_modules/@prettier/plugin-xml ./node_modules/@prettier/plugin-xml
+COPY --from=deps /app/node_modules/@xml-tools/parser ./node_modules/@xml-tools/parser
 
 # Initialize tei-corpus folder
 RUN mkdir tei-corpus
