@@ -9,6 +9,9 @@ IMAGE=ghcr.io/bullinger-digital/bullinger-citizen-science:latest
 echo "Deploying $APP_NAME..."
 cd citizen-science
 
+# Prepare ssh-config directory
+mkdir -p ./ssh-config
+
 echo " * Login to docker..."
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u $ --password-stdin
 
