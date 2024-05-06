@@ -68,6 +68,7 @@ RUN cd migrations && npm ci
 COPY --from=deps /app/node_modules/@prettier/plugin-xml ./node_modules/@prettier/plugin-xml
 COPY --from=deps /app/node_modules/@xml-tools/parser ./node_modules/@xml-tools/parser
 COPY --from=deps /app/node_modules/chevrotain ./node_modules/chevrotain
+COPY --from=deps /app/node_modules/regexp-to-ast ./node_modules/regexp-to-ast
 
 # Initialize tei-corpus folder
 RUN mkdir tei-corpus
