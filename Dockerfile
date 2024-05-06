@@ -49,6 +49,10 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+RUN mkdir /home/nextjs/.ssh
+RUN chown nextjs:nodejs /home/nextjs/.ssh
+RUN chmod 700 /home/nextjs/.ssh
+
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache

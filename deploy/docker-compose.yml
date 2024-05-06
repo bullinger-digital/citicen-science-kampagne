@@ -24,6 +24,7 @@ services:
         delay: 5s
     volumes:
       - citizen-science-tei-corpus:/app/tei-corpus
+      - ./ssh-config:/home/nextjs/.ssh
   
   citizen-science-db:
     image: postgres:16.2-alpine
