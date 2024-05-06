@@ -290,7 +290,10 @@ export const exportToCurrentCommit = async () => {
 
     // Commit and push
     // Todo: add git_export id to branch name / suffix?
-    await git.deleteLocalBranch("citizen-science-experiments", true);
+    const branches = await git.branchLocal();
+    if (branches.all.includes("citizen-science-experiments")) {
+      await git.deleteLocalBranch("citizen-science-experiments", true);
+    }
     await git.checkoutBranch("citizen-science-experiments", commitHash);
     await git.add(".");
     await git.commit(
