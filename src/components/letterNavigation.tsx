@@ -3,8 +3,8 @@
 import {
   ReactNode,
   forwardRef,
-  use,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -29,9 +29,34 @@ const DEFAULT_FILTER: LetterNavigationFilter = {
   status: "notfinished",
 };
 
+const useLocalStorage = <T,>(key: string, fallbackValue: T) => {
+  const [value, setValue] = useState<T>(fallbackValue);
+
+  // Read from localstorage on first render
+  useEffect(() => {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue) {
+      setValue(JSON.parse(storedValue));
+    }
+  }, [setValue, key, fallbackValue]);
+
+  const setStoredValue = (newValue: T) => {
+    setValue(newValue);
+    localStorage.setItem(key, JSON.stringify(newValue));
+  };
+
+  return [value, setStoredValue] as const;
+};
+
 export const LetterNavigation = () => {
   const [showFilter, setShowFilter] = useState(false);
-  const [filter, setFilter] = useState<LetterNavigationFilter>(DEFAULT_FILTER);
+
+  // Read filter from localstorage if available; otherwise use DEFAULT_FILTER
+  const [filter, setFilter] = useLocalStorage(
+    "letterNavigationFilter",
+    DEFAULT_FILTER
+  );
+
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const pathname = usePathname();
@@ -112,18 +137,27 @@ export const LetterNavigation = () => {
               </select>
             </FilterWithLabel>
 
-            <div className="mt-5 text-sm text-gray-500">
-              Die Filter werden bei den Navigations-Aktionen nebenan (zufälligen
-              Brief auswählen, vorheriger Brief, nächster Brief) berücksichtigt.
+            <div className="flex justify-end">
+              <a
+                className=" bg-emerald-100 hover:bg-emerald-200 py-2 px-3 first:rounded-l-md last:rounded-r-md"
+                onClick={() => {
+                  setFilter(DEFAULT_FILTER);
+                }}
+              >
+                Filter zurücksetzen
+              </a>
+              <Link
+                className={`${data?.random ? "bg-emerald-300 hover:bg-emerald-400" : "bg-gray-200 text-gray-400"} py-2 px-3 first:rounded-l-md last:rounded-r-md`}
+                aria-disabled={!data?.random}
+                href={data?.random ? `/letter/${data?.random}` : ""}
+                title="Mit zufälligem Brief beginnen"
+                onClick={(e) =>
+                  data?.random ? setShowFilter(false) : e.preventDefault()
+                }
+              >
+                Loslegen
+              </Link>
             </div>
-            <a
-              className="mt-3 text-gray-500 underline text-sm hover:text-blue-500"
-              onClick={() => {
-                setFilter(DEFAULT_FILTER);
-              }}
-            >
-              Filter zurücksetzen
-            </a>
           </div>
         </NavigationButton>
         <NavigationButton
@@ -200,7 +234,7 @@ const NavigationButton = forwardRef<
       {props.showActiveIcon && (
         <div
           title="Filter aktiv"
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-300"
+          className="absolute z-30 -top-1 -right-1 w-4 h-4 rounded-full bg-red-300"
         ></div>
       )}
     </Component>
@@ -222,8 +256,9 @@ const FilterWithLabel = ({
   </div>
 );
 
-import AsyncSelect from "react-select/async";
-import { TfiShiftLeft } from "react-icons/tfi";
+import dynamic from "next/dynamic";
+// We need to import react-select asynchronously to avoid SSR issues
+const AsyncSelect = dynamic(() => import("react-select/async"), { ssr: false });
 
 export default function debounce<T extends (...args: any[]) => any>(
   fn: T,
@@ -299,7 +334,7 @@ const PersonDropdown = ({
           ? { value: personId, label: personDisplayName(selectedPerson) }
           : null
       }
-      onChange={(v) => onChange(v?.value)}
+      onChange={(v) => onChange((v as any)?.value)}
       isClearable
       defaultOptions={false}
       loadOptions={debouncedFetchOptions}
