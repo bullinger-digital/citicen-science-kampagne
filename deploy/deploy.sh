@@ -11,7 +11,8 @@ cd citizen-science
 
 # Prepare ssh-config directory and git config file
 mkdir -p ./ssh-config
-touch gitconfig
+# Touch gitconfig file if not exists
+[[ -f gitconfig ]] || touch gitconfig
 
 echo " * Login to docker..."
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u $ --password-stdin
