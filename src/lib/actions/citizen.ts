@@ -516,6 +516,18 @@ export const letterNavigation = async ({
         .as("next"),
       e
         .selectFrom("selection")
+        .orderBy(["selection.extract_date asc", "selection.id asc"])
+        .limit(1)
+        .select("id")
+        .as("first"),
+      e
+        .selectFrom("selection")
+        .orderBy(["selection.extract_date desc", "selection.id desc"])
+        .limit(1)
+        .select("id")
+        .as("last"),
+      e
+        .selectFrom("selection")
         .orderBy((e) => sql`random()`)
         .$if(!!current_letter_id, (e) =>
           e.where("selection.id", "!=", current_letter_id)
@@ -528,8 +540,10 @@ export const letterNavigation = async ({
 
   return {
     random: result.random,
+    first: result.first,
     previous: result.previous,
     next: result.next,
+    last: result.last,
     count: result.count,
   };
 };

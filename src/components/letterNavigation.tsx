@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { FaDice } from "react-icons/fa6";
+import { FaAnglesLeft, FaAnglesRight, FaDice } from "react-icons/fa6";
 import { IoFilterSharp } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useOutsideClick } from "./common/useOutsideClick";
@@ -35,10 +35,11 @@ export const LetterNavigation = () => {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const pathname = usePathname();
+  const current_letter_id = parseInt(pathname.split("/").pop() || "");
 
   const { data, error, loading, refetch } = useServerFetch(letterNavigation, {
     filter: filter,
-    current_letter_id: parseInt(pathname.split("/").pop() || ""),
+    current_letter_id: current_letter_id,
   });
 
   useOutsideClick(
@@ -133,6 +134,13 @@ export const LetterNavigation = () => {
           <FaDice className="text-3xl" />
         </NavigationButton>
         <NavigationButton
+          label="Erster Brief"
+          href={data?.first ? `/letter/${data.first}` : undefined}
+          disabled={!data?.first || data?.first === current_letter_id}
+        >
+          <FaAnglesLeft className="text-2xl" />
+        </NavigationButton>
+        <NavigationButton
           label="Vorheriger Brief"
           href={data?.previous ? `/letter/${data.previous}` : undefined}
           disabled={!data?.previous}
@@ -145,6 +153,13 @@ export const LetterNavigation = () => {
           disabled={!data?.next}
         >
           <FaChevronRight className="text-2xl" />
+        </NavigationButton>
+        <NavigationButton
+          label="Letzter Brief"
+          href={data?.last ? `/letter/${data.last}` : undefined}
+          disabled={!data?.last || data?.last === current_letter_id}
+        >
+          <FaAnglesRight className="text-2xl" />
         </NavigationButton>
         <div
           className="text-sm flex items-center pl-2 pr-4"
@@ -170,7 +185,7 @@ const NavigationButton = forwardRef<
   HTMLButtonElement | HTMLAnchorElement,
   NavigationButtonProps
 >(function NavigationButton(props, ref) {
-  const Component = props.href ? Link : "button";
+  const Component = props.href && !props.disabled ? Link : "button";
   return (
     <Component
       title={props.label}
@@ -208,6 +223,7 @@ const FilterWithLabel = ({
 );
 
 import AsyncSelect from "react-select/async";
+import { TfiShiftLeft } from "react-icons/tfi";
 
 export default function debounce<T extends (...args: any[]) => any>(
   fn: T,
