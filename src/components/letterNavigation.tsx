@@ -53,6 +53,9 @@ export const LetterNavigation = () => {
           ref={filterButtonRef}
           label="Filter"
           onClick={() => setShowFilter(!showFilter)}
+          showActiveIcon={Object.entries(filter).some(
+            ([k, v]) => v !== (DEFAULT_FILTER as any)[k]
+          )}
         >
           <IoFilterSharp className="text-2xl" />
           <div
@@ -125,6 +128,7 @@ export const LetterNavigation = () => {
         <NavigationButton
           label="Zufälligen Brief auswählen"
           href={`/letter/${data?.random}`}
+          disabled={!data?.random}
         >
           <FaDice className="text-3xl" />
         </NavigationButton>
@@ -159,6 +163,7 @@ type NavigationButtonProps = {
   onClick?: () => void | undefined;
   href?: string;
   disabled?: boolean;
+  showActiveIcon?: boolean;
 };
 
 const NavigationButton = forwardRef<
@@ -177,6 +182,12 @@ const NavigationButton = forwardRef<
       disabled={props.disabled}
     >
       <div>{props.children}</div>
+      {props.showActiveIcon && (
+        <div
+          title="Filter aktiv"
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-300"
+        ></div>
+      )}
     </Component>
   );
 });
