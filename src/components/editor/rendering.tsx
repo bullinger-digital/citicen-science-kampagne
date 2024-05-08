@@ -164,7 +164,8 @@ const renderers: {
     );
   },
   ref: ({ node }) => {
-    return (
+    const target = node.getAttribute("target");
+    return target ? (
       <a
         href={`https://tei.bullinger-digital.ch/${node.getAttribute("target")}`}
         className="text-gray-400"
@@ -172,9 +173,18 @@ const renderers: {
       >
         <RenderTextInternal nodes={Array.from(node.childNodes)} />
       </a>
+    ) : (
+      <RenderTextInternal nodes={Array.from(node.childNodes)} />
     );
   },
   bibl: ({ node }) => {
+    return (
+      <span className="italic">
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
+      </span>
+    );
+  },
+  cit: ({ node }) => {
     return (
       <span className="italic">
         <RenderTextInternal nodes={Array.from(node.childNodes)} />
