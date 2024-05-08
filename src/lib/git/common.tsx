@@ -14,3 +14,7 @@ export const placesFilePath = path.join(
   repoPath,
   "./data/index/localities.xml"
 );
+export const orgNamesFilePath = path.join(
+  repoPath,
+  "./data/index/organizations.xml"
+);

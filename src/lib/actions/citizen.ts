@@ -547,3 +547,19 @@ export const letterNavigation = async ({
     count: result.count,
   };
 };
+
+// We decided not to import orgNames into the database, therefore we read them directly from the file system
+export const orgNameByRef = async ({ ref }: { ref: string }) => {
+  await requireRoleOrThrow("user");
+  const orgName = await kdb
+    .selectFrom("org_names")
+    .where("id", "=", ref)
+    .where((eb) =>
+      eb("git_import_id", "=", (e: any) =>
+        e.selectFrom("git_import").select("id").where("is_current", "is", true)
+      )
+    )
+    .select(["id", "xml"])
+    .executeTakeFirst();
+  return orgName;
+};

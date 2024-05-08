@@ -91,6 +91,14 @@ export interface Log {
   timestamp: Generated<Timestamp>;
 }
 
+export interface OrgNames {
+  created_log_id: number;
+  git_import_id: number | null;
+  id: string;
+  id_int: Generated<number>;
+  xml: string;
+}
+
 export interface Person {
   computed_link_counts: Generated<number>;
   created_log_id: number;
@@ -181,6 +189,7 @@ export interface DB {
   letter_version_extract_person: LetterVersionExtractPerson;
   letter_version_extract_place: LetterVersionExtractPlace;
   log: Log;
+  org_names: OrgNames;
   person: Person;
   person_alias: PersonAlias;
   person_alias_version: PersonAliasVersion;

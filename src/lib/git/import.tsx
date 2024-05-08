@@ -12,6 +12,7 @@ import {
   personsFilePath,
   placesFilePath,
   letterPath,
+  orgNamesFilePath,
 } from "./common";
 
 const fileOrDirectoryExists = async (path: string) => {
@@ -177,6 +178,28 @@ export const importFromCurrentCommit = async () => {
         },
         gitImportSpecs
       );
+    }
+
+    // Import orgNames
+    const xmlOrgsString = await fs.promises.readFile(orgNamesFilePath, "utf-8");
+    const xmlOrgs = xmlParseFromString(xmlOrgsString);
+    const orgs = Array.from(xmlOrgs.querySelectorAll("orgName"));
+    for (const org of orgs) {
+      const id = org.getAttribute("xml:id");
+      if (!id) {
+        console.error("Error: No id for orgName", org.outerHTML);
+        continue;
+      }
+      console.log("Importing orgName", id);
+      await v.db
+        .insertInto("org_names")
+        .values({
+          id: id,
+          git_import_id: git_import!.id,
+          created_log_id: logId,
+          xml: org.outerHTML,
+        })
+        .execute();
     }
 
     await iterateFiles(async (name, fileContents) => {

@@ -18,6 +18,7 @@ import { isInRole } from "@/lib/security/isInRole";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { useServerFetch } from "../common/serverActions";
 import { LockOverlay, useLetterLock } from "./locking";
+import { LetterMetaData } from "./metaData";
 
 export const Editor = ({ letterId }: { letterId: number }) => {
   const {
@@ -94,16 +95,7 @@ const EditorInternal = ({
             )}
             <Toolbar />
             <div className="overflow-y-auto max-h-[calc(100vh-13rem)]">
-              <div className="pr-4 mb-4">
-                Brief {letter_version.id} -{" "}
-                <a
-                  target="_blank"
-                  className=" text-emerald-400"
-                  href={`https://tei.bullinger-digital.ch/file${letter_version.id}`}
-                >
-                  Im TEI-Publisher ansehen
-                </a>
-              </div>
+              <LetterMetaData xml={xmlDoc} letterId={letter_version.id} />
               <div className="pr-4">
                 {regestNode && (
                   <div className="mb-8">
