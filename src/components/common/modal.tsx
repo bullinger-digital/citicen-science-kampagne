@@ -9,7 +9,7 @@ const Modal = ({
   save,
   title = "Dialog",
   children,
-  maxWidth,
+  maxWidth = 1200,
   closeOnOutsideClick = false,
 }: {
   open: boolean;
@@ -38,14 +38,14 @@ const Modal = ({
             nodeRef={modalRef}
             handle="#drag-handle"
             defaultPosition={{
-              x: window.outerWidth / 2 - (maxWidth || 1200) / 2,
+              x: window.innerWidth / 2 - maxWidth / 2,
               y: 100,
             }}
           >
             <div
               ref={modalRef}
               className={`bg-white rounded-lg shadow-2xl w-full`}
-              style={{ minHeight: "100px", maxWidth: maxWidth || 1200 }}
+              style={{ minHeight: "100px", maxWidth: maxWidth }}
             >
               <div className="flex justify-between">
                 <header
