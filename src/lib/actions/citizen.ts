@@ -311,6 +311,8 @@ const updateOrInsertPlaceSchema = object({
   settlement: string(),
   district: string(),
   country: string(),
+  longitude: number().nullable(),
+  latitude: number().nullable(),
 });
 
 export const insertOrUpdatePlace = async (

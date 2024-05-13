@@ -4,7 +4,7 @@ import {
   searchPerson,
   searchPlace,
 } from "@/lib/actions/citizen";
-import { ReactNode, useContext, useEffect, useState } from "react";
+import { ReactNode, useContext, useState } from "react";
 import { InfoIcon, Popover } from "../common/info";
 import { EditorContext } from "./editorContext";
 import { ContextBox } from "./editor";
@@ -13,7 +13,7 @@ import { FaLink } from "react-icons/fa6";
 import { getPathFromNode } from "@/lib/xml";
 import Link from "next/link";
 import { Loading } from "../common/loadingIndicator";
-import { EditPersonModal, EditPlaceModal } from "./modals";
+import { EditPersonModal, EditPlaceModal } from "./modals/modals";
 import { useServerFetch } from "../common/serverActions";
 
 const PersName = ({ node }: { node: Node }) => {
