@@ -102,7 +102,7 @@ const extractLinksSpecs: {
 }[] = [
   {
     table: "person",
-    selector: "TEI > text > persName[ref]",
+    selector: "TEI > text persName[ref]",
     linkType: "mentioned",
     refPrefix: "p",
   },
@@ -114,7 +114,7 @@ const extractLinksSpecs: {
   },
   {
     table: "place",
-    selector: "TEI > text > placeName[ref]",
+    selector: "TEI > text placeName[ref]",
     linkType: "mentioned",
     refPrefix: "l",
   },

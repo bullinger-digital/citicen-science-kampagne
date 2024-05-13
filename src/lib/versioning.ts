@@ -123,6 +123,7 @@ export class Versioning {
         id,
         null,
         data as UpdateObject<DB, TV>,
+        true,
         logId,
         false
       );
@@ -135,6 +136,7 @@ export class Versioning {
     id: number,
     parent_version_id: number | null,
     data: Omit<UpdateObject<DB, TV>, InternalVersioningKeys>,
+    isNew: boolean,
     logId?: number | undefined,
     autoAccept: boolean = true
   ) {
@@ -180,7 +182,7 @@ export class Versioning {
         created_log_id: logId,
         is_touched: true,
         is_latest: true,
-        is_new: parent_version_id ? false : true,
+        is_new: isNew,
         version_id: undefined,
         review_state: autoAccept ? "accepted" : "pending",
         git_import_id: gitImportId,
@@ -238,6 +240,59 @@ export class Versioning {
       .where("review_state", "=", "pending")
       .set({ review_state: "accepted", reviewed_log_id: logId })
       .execute();
+
+    await this.db
+      .updateTable("letter_version")
+      .where("review_state", "=", "pending")
+      .set({ review_state: "accepted", reviewed_log_id: logId })
+      .execute();
+  }
+
+  async acceptChange({
+    table,
+    versionId,
+  }: {
+    table: Versioned;
+    versionId: number;
+  }) {
+    await wrapTransaction(this.db, async (db) => {
+      const versions_table = `${table}_version` as VersionedTable;
+      await db
+        .updateTable<VersionedTable>(versions_table)
+        .set({
+          review_state: "accepted",
+          reviewed_log_id: await this.createLogId("review"),
+        })
+        .where("version_id", "=", versionId)
+        .execute();
+    });
+  }
+
+  async rejectChange({
+    table,
+    versionId,
+  }: {
+    table: Versioned;
+    versionId: number;
+  }) {
+    await wrapTransaction(this.db, async (db) => {
+      // Todo: Prevent rejection if item is in use?
+
+      const versions_table = `${table}_version` as VersionedTable;
+      await db
+        .updateTable<VersionedTable>(versions_table)
+        .set({
+          review_state: "rejected",
+          reviewed_log_id: await this.createLogId("review"),
+          is_latest: false,
+        })
+        .where("version_id", "=", versionId)
+        .execute();
+
+      throw new Error(
+        "Not implemented yet - Todo: make sure unmodified version becomes latest"
+      );
+    });
   }
 
   async countUncommitedChanges() {

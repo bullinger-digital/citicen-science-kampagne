@@ -271,6 +271,7 @@ export const insertOrUpdatePerson = async (
           hist_hub: newPerson.hist_hub,
           wiki: newPerson.wiki,
         },
+        false,
         logId,
         false
       );
@@ -334,7 +335,10 @@ export const insertOrUpdatePlace = async (
           settlement: newPlace.settlement,
           district: newPlace.district,
           country: newPlace.country,
+          longitude: newPlace.longitude,
+          latitude: newPlace.latitude,
         },
+        false,
         logId,
         false
       );
@@ -347,6 +351,8 @@ export const insertOrUpdatePlace = async (
           settlement: newPlace.settlement || "",
           district: newPlace.district || "",
           country: newPlace.country || "",
+          longitude: newPlace.longitude || null,
+          latitude: newPlace.latitude || null,
         },
         logId
       );
@@ -390,17 +396,6 @@ export const saveVersion = async ({
 
   if (newXml !== xml) throw new Error("XML does not match applied actions");
 
-  // If any of the linked persName and placeName references point to person or places have review_state != accepted, the new version should have review_state = pending
-  const linkedPersonIds = getReferencedIds(existingXml, "person");
-  const linkedPlaceIds = getReferencedIds(existingXml, "place");
-
-  const allLinkedPersonAccepted =
-    linkedPersonIds.length === 0 ||
-    (await countUnacceptedReferences(linkedPersonIds, "person")) === "0";
-  const allLinkedPlaceAccepted =
-    linkedPlaceIds.length === 0 ||
-    (await countUnacceptedReferences(linkedPlaceIds, "place")) === "0";
-
   await v.createNewVersion(
     "letter",
     id,
@@ -411,8 +406,9 @@ export const saveVersion = async ({
         return { ...a, dom: undefined };
       }),
     },
+    false,
     undefined,
-    allLinkedPersonAccepted && allLinkedPlaceAccepted
+    true
   );
 
   await v.updateComputedLinkCounts({
@@ -426,21 +422,6 @@ const getReferencedIds = (xmlDom: Document, type: "person" | "place") => {
   return Array.from(xmlDom.querySelectorAll(`${elementName}[ref]`)).map((n) =>
     parseInt(n.getAttribute("ref")?.replace(refPrefix, "")!)
   );
-};
-
-const countUnacceptedReferences = async (
-  ids: number[],
-  table: "person" | "place"
-) => {
-  return (
-    await kdb
-      .selectFrom(`${table}_version`)
-      .where(whereCurrent)
-      .where("id", "in", ids)
-      .where("review_state", "!=", "accepted")
-      .select((e) => e.fn.countAll<string>().as("count"))
-      .executeTakeFirstOrThrow()
-  ).count;
 };
 
 export type LetterNavigationFilter = {

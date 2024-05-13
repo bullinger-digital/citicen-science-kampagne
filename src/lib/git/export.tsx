@@ -91,28 +91,38 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
   const h = domExportHelpers(personsDom);
 
   for (const person of persons) {
-    h.findOrCreateNode(personsRoot, "person", `P${person.id}`, (personNode) => {
-      personNode.setAttribute("xml:id", `P${person.id}`);
-      h.textContentNode(personNode, `idno[subtype='gnd']`, "idno", person.gnd);
-      h.textContentNode(
-        personNode,
-        `idno[subtype='histHub']`,
-        "idno",
-        person.hist_hub
-      );
-      h.textContentNode(
-        personNode,
-        `idno[subtype='portrait']`,
-        "idno",
-        person.portrait
-      );
-      h.textContentNode(
-        personNode,
-        `idno[subtype='wiki']`,
-        "idno",
-        person.wiki
-      );
-    });
+    h.findOrCreateNode(
+      personsRoot,
+      "person",
+      `person[xml:id=P${person.id}]`,
+      (personNode) => {
+        personNode.setAttribute("xml:id", `P${person.id}`);
+        h.textContentNode(
+          personNode,
+          `idno[subtype='gnd']`,
+          "idno",
+          person.gnd
+        );
+        h.textContentNode(
+          personNode,
+          `idno[subtype='histHub']`,
+          "idno",
+          person.hist_hub
+        );
+        h.textContentNode(
+          personNode,
+          `idno[subtype='portrait']`,
+          "idno",
+          person.portrait
+        );
+        h.textContentNode(
+          personNode,
+          `idno[subtype='wiki']`,
+          "idno",
+          person.wiki
+        );
+      }
+    );
   }
 
   const personAliases = await db
@@ -131,7 +141,7 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
     h.findOrCreateNode(
       personParent,
       "persName",
-      `p${alias.id}`,
+      `persName[xml:id=p${alias.id}]`,
       (aliasNode) => {
         aliasNode.setAttribute("xml:id", `p${alias.id}`);
         aliasNode.setAttribute("type", alias.type);
@@ -188,22 +198,27 @@ const exportPlaces = async (db: Kysely<DB>, gitExportId: number) => {
   const h = domExportHelpers(placesDom);
 
   for (const place of places) {
-    h.findOrCreateNode(placesRoot, "place", `l${place.id}`, (placeNode) => {
-      placeNode.setAttribute("xml:id", `l${place.id}`);
-      h.textContentNode(
-        placeNode,
-        "settlement",
-        "settlement",
-        place.settlement
-      );
-      h.textContentNode(placeNode, "district", "district", place.district);
-      h.textContentNode(placeNode, "country", "country", place.country);
-      const geo =
-        place.latitude && place.longitude
-          ? `${place.latitude} ${place.longitude}`
-          : null;
-      h.textContentNode(placeNode, "geo", "geo", geo);
-    });
+    h.findOrCreateNode(
+      placesRoot,
+      "place",
+      `place[xml:id=l${place.id}]`,
+      (placeNode) => {
+        placeNode.setAttribute("xml:id", `l${place.id}`);
+        h.textContentNode(
+          placeNode,
+          "settlement",
+          "settlement",
+          place.settlement
+        );
+        h.textContentNode(placeNode, "district", "district", place.district);
+        h.textContentNode(placeNode, "country", "country", place.country);
+        const geo =
+          place.latitude && place.longitude
+            ? `${place.latitude} ${place.longitude}`
+            : null;
+        h.textContentNode(placeNode, "geo", "geo", geo);
+      }
+    );
   }
 
   await fs.promises.writeFile(
@@ -271,6 +286,46 @@ export const exportToCurrentCommit = async () => {
     const letters = await db
       .selectFrom("letter_version")
       .where(whereExportFilter)
+      .where((e) =>
+        e.and([
+          e.not(
+            e.exists(
+              e
+                .selectFrom("person_version")
+                .where(whereCurrent)
+                .where("person_version.review_state", "<>", "accepted")
+                .leftJoin(
+                  "letter_version_extract_person",
+                  "letter_version_extract_person.person_id",
+                  "person_version.id"
+                )
+                .where(
+                  "letter_version_extract_person.version_id",
+                  "=",
+                  e.ref("letter_version.version_id")
+                )
+            )
+          ),
+          e.not(
+            e.exists(
+              e
+                .selectFrom("place_version")
+                .where(whereCurrent)
+                .where("place_version.review_state", "<>", "accepted")
+                .leftJoin(
+                  "letter_version_extract_place",
+                  "letter_version_extract_place.place_id",
+                  "place_version.id"
+                )
+                .where(
+                  "letter_version_extract_place.version_id",
+                  "=",
+                  e.ref("letter_version.version_id")
+                )
+            )
+          ),
+        ])
+      )
       .select(["id", "xml"])
       .execute();
 
