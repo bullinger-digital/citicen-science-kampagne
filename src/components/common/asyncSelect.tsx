@@ -1,18 +1,7 @@
-import dynamic from "next/dynamic";
-import { ComponentType, useCallback } from "react";
+import { useCallback } from "react";
 import { GroupBase, OptionsOrGroups } from "react-select";
 import AsyncReactSelect, { AsyncProps } from "react-select/async";
-
-function debounce<T extends (...args: any[]) => any>(fn: T, delay = 250) {
-  let timeout: ReturnType<typeof setTimeout>;
-
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      fn(...args);
-    }, delay);
-  };
-}
+import { debounce } from "./debounce";
 
 export type AsyncSelectProps<
   OptionType,

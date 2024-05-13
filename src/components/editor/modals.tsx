@@ -3,8 +3,8 @@ import Modal from "../common/modal";
 import { insertPerson, insertPlace } from "@/lib/actions/citizen";
 import { useServerAction } from "../common/serverActions";
 import { Loading } from "../common/loadingIndicator";
-import { OptionProps } from "react-select";
-import { DynamicAsyncSelect } from "../common/dynamicAsyncSelect";
+import { TiDeleteOutline } from "react-icons/ti";
+import { SearchInput } from "../common/searchInput";
 
 const Label = ({ children }: { children: React.ReactNode }) => (
   <label className="w-60">{children}</label>
@@ -23,46 +23,29 @@ const WithLabel = ({
   </div>
 );
 
+const InputField = ({
+  ...props
+}: React.DetailedHTMLProps<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+>) => (
+  <input
+    className="w-full p-1 border border-gray-300 rounded-md invalid:border-red-500"
+    {...props}
+  />
+);
+
 const InputWithLabel = ({
-  value,
-  onChange,
   label,
-  placeholder,
-  disabled = false,
-  required = false,
-  pattern,
-  title,
-  children,
-  onFocus,
-  onBlur,
+  ...props
 }: {
-  value: string | undefined;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   label: string;
-  placeholder?: string;
-  disabled?: boolean;
-  required?: boolean;
-  pattern?: string;
-  title?: string;
-  children?: React.ReactNode;
-  onFocus?: () => void;
-  onBlur?: () => void;
-}) => (
+} & React.DetailedHTMLProps<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+>) => (
   <WithLabel label={label}>
-    <input
-      onFocus={onFocus}
-      onBlur={onBlur}
-      className="w-full p-1 border border-gray-300 rounded-md invalid:border-red-500"
-      type="text"
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      disabled={disabled}
-      required={required}
-      pattern={pattern}
-      title={title}
-    />
-    {children}
+    <InputField {...props} />
   </WithLabel>
 );
 
@@ -155,17 +138,124 @@ export const EditPersonModal = ({
             .filter((n) => !!n)
             .join(" ")}
         />
-        <InputWithLabel
+        <HistHubField
           value={newPerson.hist_hub}
-          onChange={(e) =>
-            setNewPerson({ ...newPerson, hist_hub: e.target.value })
-          }
-          label="HistHub-ID"
-          placeholder="123456789"
-          title="HistHub-ID im Format 123456789"
+          onChange={(v) => setNewPerson({ ...newPerson, hist_hub: v })}
+          searchTerm={[newPerson.forename, newPerson.surname]
+            .filter((n) => !!n)
+            .join(" ")}
         />
       </form>
     </Modal>
+  );
+};
+
+const HistHubField = ({
+  value,
+  onChange,
+  searchTerm,
+}: {
+  value: string | undefined;
+  onChange: (e: string) => void;
+  searchTerm?: string;
+}) => {
+  const loadOptions = useCallback(async (inputValue: string) => {
+    const res = await fetch(`https://data.histhub.ch/api/search/person/`, {
+      headers: {
+        "User-Agent": "Bullinger Digital - Citizen Science Kampagne",
+      },
+      method: "POST",
+      body: JSON.stringify({
+        version: 1,
+        "names.fullname": inputValue,
+      }),
+    });
+    const data = await res.json();
+    console.log(data);
+    return data.map((m: any) => {
+      const infoArray = [
+        m.label_name,
+        m.titles?.map((t: any) => t?.term?.labels?.deu).join(", "),
+        m.occupations?.map((a: any) => a?.term?.labels?.deu).join(", "),
+        getYear(m.existences?.[0]?.start?.date) +
+          "-" +
+          getYear(m.existences?.[0]?.end?.date),
+      ].filter((i) => !!i);
+
+      return {
+        value: "https://data.histhub.ch/person/" + m.hhb_id,
+        label: infoArray.join(" | "),
+      };
+    }) as { value: string; label: string }[];
+  }, []);
+
+  const histHubId = value?.replace("https://data.histhub.ch/person/", "");
+
+  const [histHubResult, setHistHubResult] = useState<any | null>(null);
+  useEffect(() => {
+    if (histHubId && typeof histHubId === "string") {
+      fetch(
+        `https://data.histhub.ch/api/person/${encodeURIComponent(histHubId)}`,
+        {
+          headers: {
+            "User-Agent": "Bullinger Digital - Citizen Science Kampagne",
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setHistHubResult(data))
+        .catch(() => setHistHubResult(null));
+    } else {
+      setHistHubResult(null);
+    }
+  }, [histHubId]);
+
+  return (
+    <WithLabel label={"HistHub-ID"}>
+      {value ? (
+        <div className="flex justify-between">
+          <div>
+            {histHubId}
+            {histHubResult && (
+              <div>
+                <a
+                  target="_blank"
+                  className="text-emerald-400"
+                  href={`https://data.histhub.ch/person/${histHubId}`}
+                >
+                  {histHubResult.label_name}
+                </a>
+              </div>
+            )}
+            {/* {gndId && !isValidGndIdentifier(gndId || "") && (
+              <div>Ungültige GND-ID</div>
+            )} */}
+          </div>
+          <button
+            onClick={() => onChange("")}
+            className="ml-2 text-2xl p-2 text-emerald-400"
+            title="HistHub-ID entfernen"
+          >
+            <TiDeleteOutline />
+          </button>
+        </div>
+      ) : (
+        <SearchInput
+          fallbackTerm={searchTerm}
+          searchFn={loadOptions}
+          onSelect={(result) => onChange(result.value)}
+          SelectionComponent={({ item, isFocused }) => {
+            return (
+              <div className={`p-2 ${isFocused ? "bg-emerald-100" : ""}`}>
+                <div>{item.label}</div>
+                <div>{item.value}</div>
+              </div>
+            );
+          }}
+          InputComponent={InputField}
+        ></SearchInput>
+      )}
+    </WithLabel>
   );
 };
 
@@ -188,18 +278,6 @@ const isValidGndIdentifier = (value: string) => {
   return checksum === (value.slice(-1) === "X" ? 10 : Number(value.slice(-1)));
 };
 
-const GndOptions = (props: OptionProps<{ value: string; label: string }>) => {
-  return (
-    <div ref={props.innerRef} {...props.innerProps}>
-      <div
-        className={`p-2 cursor-pointer ${props.isFocused ? "bg-emerald-100" : ""}`}
-      >
-        {props.data.label}
-      </div>
-    </div>
-  );
-};
-
 const GndField = ({
   value,
   onChange,
@@ -209,8 +287,6 @@ const GndField = ({
   onChange: (e: string) => void;
   searchTerm?: string;
 }) => {
-  const [term, setTerm] = useState(searchTerm);
-
   const loadOptions = useCallback(async (inputValue: string) => {
     const filter = "type:Person AND dateOfBirth:[-2000 TO 1700]";
     const res = await fetch(
@@ -260,49 +336,51 @@ const GndField = ({
   }, [gndId]);
 
   return (
-    <>
-      <WithLabel label={"GND-ID"}>
-        {value ? (
-          <>
+    <WithLabel label={"GND-ID"}>
+      {value ? (
+        <div className="flex justify-between">
+          <div>
             {gndId}
-            <button onClick={() => onChange("")} className="ml-2 text-red-500">
-              X
-            </button>
             {gndResult && (
-              <a
-                target="_blank"
-                className="text-emerald-400"
-                href={`https://d-nb.info/gnd/${value}`}
-              >
-                {gndResult.preferredName}
-              </a>
+              <div>
+                <a
+                  target="_blank"
+                  className="text-emerald-400"
+                  href={`https://d-nb.info/gnd/${gndId}`}
+                >
+                  {gndResult.preferredName}
+                </a>
+              </div>
             )}
             {gndId && !isValidGndIdentifier(gndId || "") && (
               <div>Ungültige GND-ID</div>
             )}
-          </>
-        ) : (
-          <DynamicAsyncSelect
-            inputValue={term}
-            onInputChange={(v, m) => m.action === "input-change" && setTerm(v)}
-            onFocus={() => {
-              if (term === "") {
-                setTerm(searchTerm || "");
-              }
-            }}
-            loadOptions={loadOptions}
-            components={{
-              Option: GndOptions,
-            }}
-            isMulti={false}
-            isSearchable={true}
-            onChange={(e) => onChange(e?.value || "")}
-          ></DynamicAsyncSelect>
-        )}
-      </WithLabel>
-
-      <div className="relative"></div>
-    </>
+          </div>
+          <button
+            onClick={() => onChange("")}
+            className="ml-2 text-2xl p-2 text-emerald-400"
+            title="GND-ID entfernen"
+          >
+            <TiDeleteOutline />
+          </button>
+        </div>
+      ) : (
+        <SearchInput
+          fallbackTerm={searchTerm}
+          searchFn={loadOptions}
+          onSelect={(result) => onChange(result.value)}
+          SelectionComponent={({ item, isFocused }) => {
+            return (
+              <div className={`p-2 ${isFocused ? "bg-emerald-100" : ""}`}>
+                <div>{item.label}</div>
+                <div>{item.value}</div>
+              </div>
+            );
+          }}
+          InputComponent={InputField}
+        ></SearchInput>
+      )}
+    </WithLabel>
   );
 };
 
