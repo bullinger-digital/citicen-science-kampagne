@@ -6,7 +6,7 @@ import { EditorAction, applyNewActions } from "../xml";
 import { JSDOM } from "jsdom";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
-import { InferType, object, string } from "yup";
+import { InferType, number, object, string } from "yup";
 import { redirect } from "next/navigation";
 import { sql } from "kysely";
 
@@ -235,11 +235,12 @@ export const placeById = async ({ id }: { id: string }) => {
 };
 
 const updateOrInsertPersonSchema = object({
-  gnd: string().matches(/^[0-9]{8,10}$/, {
+  id: number().nullable(),
+  gnd: string().matches(/\/?[0-9X]{8,11}$/, {
     message: "Ungültige GND ID",
     excludeEmptyString: true,
   }),
-  hist_hub: string().matches(/^[0-9]{8,10}$/, {
+  hist_hub: string().matches(/\/?[0-9]{6,12}$/, {
     message: "Ungültige HistHub ID",
     excludeEmptyString: true,
   }),
@@ -251,69 +252,106 @@ const updateOrInsertPersonSchema = object({
   surname: string().required(),
 });
 
-export const insertPerson = async (
+export const insertOrUpdatePerson = async (
   newPerson: InferType<typeof updateOrInsertPersonSchema>
 ) => {
   await updateOrInsertPersonSchema.validate(newPerson);
-
   await requireRoleOrThrow("user");
+
   const result = await kdb.transaction().execute(async (t) => {
     const v = new Versioning(t);
-
     const logId = await v.createLogId("user");
-    const personVersion = await v.insertAndCreateNewVersion(
-      "person",
-      {
-        gnd: newPerson.gnd,
-        hist_hub: newPerson.hist_hub,
-        wiki: newPerson.wiki,
-      },
-      logId
-    );
 
-    await v.insertAndCreateNewVersion(
-      "person_alias",
-      {
-        forename: newPerson.forename,
-        surname: newPerson.surname,
-        person_id: personVersion.id,
-        type: "main",
-      },
-      logId
-    );
+    if (newPerson.id) {
+      await v.createNewVersion(
+        "person",
+        newPerson.id,
+        null,
+        {
+          gnd: newPerson.gnd,
+          hist_hub: newPerson.hist_hub,
+          wiki: newPerson.wiki,
+        },
+        logId,
+        false
+      );
 
-    return personVersion;
+      // Editing aliases is currently not supported
+
+      return await v.getCurrentVersion("person", newPerson.id);
+    } else {
+      const personVersion = await v.insertAndCreateNewVersion(
+        "person",
+        {
+          gnd: newPerson.gnd,
+          hist_hub: newPerson.hist_hub,
+          wiki: newPerson.wiki,
+        },
+        logId
+      );
+
+      await v.insertAndCreateNewVersion(
+        "person_alias",
+        {
+          forename: newPerson.forename,
+          surname: newPerson.surname,
+          person_id: personVersion.id,
+          type: "main",
+        },
+        logId
+      );
+
+      return await v.getCurrentVersion("person", personVersion.id);
+    }
   });
   return result;
 };
 
 const updateOrInsertPlaceSchema = object({
+  id: number().nullable(),
   settlement: string(),
   district: string(),
   country: string(),
 });
 
-export const insertPlace = async (
+export const insertOrUpdatePlace = async (
   newPlace: InferType<typeof updateOrInsertPlaceSchema>
 ) => {
   await updateOrInsertPlaceSchema.validate(newPlace);
-
   await requireRoleOrThrow("user");
+
   const result = await kdb.transaction().execute(async (t) => {
     const v = new Versioning(t);
-
     const logId = await v.createLogId("user");
-    const placeVersion = await v.insertAndCreateNewVersion(
-      "place",
-      {
-        settlement: newPlace.settlement || "",
-        district: newPlace.district || "",
-        country: newPlace.country || "",
-      },
-      logId
-    );
 
-    return placeVersion;
+    if (newPlace.id) {
+      await v.createNewVersion(
+        "place",
+        newPlace.id,
+        null,
+        {
+          settlement: newPlace.settlement,
+          district: newPlace.district,
+          country: newPlace.country,
+        },
+        logId,
+        false
+      );
+
+      return await v.getCurrentVersion("place", newPlace.id);
+    } else {
+      const placeVersion = await v.insertAndCreateNewVersion(
+        "place",
+        {
+          settlement: newPlace.settlement || "",
+          district: newPlace.district || "",
+          country: newPlace.country || "",
+        },
+        logId
+      );
+
+      return await v.getCurrentVersion("place", placeVersion.id);
+    }
   });
   return result;
 };

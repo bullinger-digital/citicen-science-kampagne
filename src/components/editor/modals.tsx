@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Modal from "../common/modal";
-import { insertPerson, insertPlace } from "@/lib/actions/citizen";
+import {
+  insertOrUpdatePerson,
+  insertOrUpdatePlace,
+  personById,
+  placeById,
+} from "@/lib/actions/citizen";
 import { useServerAction } from "../common/serverActions";
 import { Loading } from "../common/loadingIndicator";
 import { TiDeleteOutline } from "react-icons/ti";
@@ -65,14 +70,32 @@ export const EditPersonModal = ({
   open,
   close,
 }: {
-  id?: number;
+  id?: number | null;
   open: boolean;
   close: (savedPerson?: Awaited<ReturnType<typeof execute>>) => void;
 }) => {
   const formRef = useRef<HTMLFormElement>(null);
-  const { execute, loading, error } = useServerAction(insertPerson);
+  const { execute, loading, error } = useServerAction(insertOrUpdatePerson);
+  const [isLoading, setIsLoading] = useState(false);
   const [newPerson, setNewPerson] =
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PERSON);
+
+  useEffect(() => {
+    if (id) {
+      setIsLoading(true);
+      personById({ id: id.toString() }).then((p) => {
+        const primaryAlias = p.aliases.find((a) => a.type === "main");
+        setNewPerson({
+          forename: primaryAlias?.forename || "",
+          surname: primaryAlias?.surname || "",
+          gnd: p.gnd || "",
+          hist_hub: p.hist_hub || "",
+          wiki: p.wiki || "",
+        });
+        setIsLoading(false);
+      });
+    }
+  }, [id]);
 
   return !open ? null : (
     <Modal
@@ -92,11 +115,14 @@ export const EditPersonModal = ({
       maxWidth={600}
     >
       {error && <div className="bg-red-100 p-2 mb-4">{error}</div>}
-      {loading && <Loading />}
+      {(loading || isLoading) && <Loading />}
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          const savedPerson = await execute(newPerson);
+          const savedPerson = await execute({
+            ...newPerson,
+            id: id,
+          });
           if (savedPerson) {
             close(savedPerson);
           }
@@ -404,19 +430,32 @@ export const EditPlaceModal = ({
   open,
   close,
 }: {
-  id?: number;
+  id?: number | null;
   open: boolean;
   close: (savedPlace?: Awaited<ReturnType<typeof execute>>) => void;
 }) => {
   const formRef = useRef<HTMLFormElement>(null);
-  const { execute, loading, error } = useServerAction(insertPlace);
+
+  const { execute, loading, error } = useServerAction(insertOrUpdatePlace);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [newPlace, setNewPlace] =
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PLACE);
+
+  useEffect(() => {
+    if (id) {
+      setIsLoading(true);
+      placeById({ id: id.toString() }).then((p) => {
+        setNewPlace(p);
+        setIsLoading(false);
+      });
+    }
+  }, [id]);
 
   return !open ? null : (
     <Modal
       open={open}
-      title={id ? "Ortschaft bearbeiten" : "Neue Ortschaft erfassen"}
+      title={id ? `Ortschaft ${id} bearbeiten` : "Neue Ortschaft erfassen"}
       save={() => {
         if (formRef.current?.checkValidity()) {
           formRef.current?.requestSubmit();
@@ -431,11 +470,14 @@ export const EditPlaceModal = ({
       maxWidth={600}
     >
       {error && <div className="bg-red-100 p-2 mb-4">{error}</div>}
-      {loading && <Loading />}
+      {(loading || isLoading) && <Loading />}
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          const savedPlace = await execute(newPlace);
+          const savedPlace = await execute({
+            ...newPlace,
+            id: id,
+          });
           if (savedPlace) {
             close(savedPlace);
           }

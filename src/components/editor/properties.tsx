@@ -8,7 +8,7 @@ import { ReactNode, useContext, useEffect, useState } from "react";
 import { InfoIcon, Popover } from "../common/info";
 import { EditorContext } from "./editorContext";
 import { ContextBox } from "./editor";
-import { FaSearch, FaUnlink } from "react-icons/fa";
+import { FaEdit, FaSearch, FaUnlink } from "react-icons/fa";
 import { FaLink } from "react-icons/fa6";
 import { getPathFromNode } from "@/lib/xml";
 import Link from "next/link";
@@ -19,8 +19,13 @@ import { useServerFetch } from "../common/serverActions";
 const PersName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
   const id = node.getAttribute("ref")?.replace("p", "");
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
-  const { loading, data: selectedPerson } = useServerFetch(
+  const {
+    loading,
+    data: selectedPerson,
+    refetch,
+  } = useServerFetch(
     personById,
     { id },
     {
@@ -60,6 +65,23 @@ const PersName = ({ node }: { node: Node }) => {
                 <div className="text-sm">{aliases.length} Namensvarianten</div>
               </Popover>
             </div>
+          )}
+          <button
+            onClick={() => {
+              setEditModalOpen(true);
+            }}
+          >
+            <FaEdit />
+          </button>
+          {editModalOpen && (
+            <EditPersonModal
+              open={editModalOpen}
+              close={() => {
+                setEditModalOpen(false);
+                refetch();
+              }}
+              id={parseInt(id)}
+            />
           )}
         </div>
         <EntityLinksList links={selectedPerson.links} />
@@ -116,8 +138,13 @@ const EntityLinksList = ({
 const PlaceName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
   const id = node.getAttribute("ref")?.replace("l", "");
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
-  const { loading, data: selectedPlace } = useServerFetch(
+  const {
+    loading,
+    data: selectedPlace,
+    refetch,
+  } = useServerFetch(
     placeById,
     { id },
     {
@@ -143,7 +170,23 @@ const PlaceName = ({ node }: { node: Node }) => {
               .filter((s) => !!s)
               .join(", ")}
           </span>{" "}
-          ({id})
+          <button
+            onClick={() => {
+              setEditModalOpen(true);
+            }}
+          >
+            <FaEdit />
+          </button>
+          {editModalOpen && (
+            <EditPlaceModal
+              open={editModalOpen}
+              close={() => {
+                setEditModalOpen(false);
+                refetch();
+              }}
+              id={parseInt(id)}
+            />
+          )}
         </div>
         <EntityLinksList links={selectedPlace.links} />
         <CertToggle node={node} />
