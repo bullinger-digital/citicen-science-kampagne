@@ -91,13 +91,13 @@ const RenderCorrespondents = ({
   return targets.length === 0
     ? "[...]"
     : targets.map((node, i) => (
-        <>
+        <span key={i}>
           <RenderSingleCorrespondent
             persNameOrOrgNameNode={node as Element}
             key={i}
           />
           {targets.indexOf(node) < targets.length - 1 && ", "}
-        </>
+        </span>
       ));
 };
 

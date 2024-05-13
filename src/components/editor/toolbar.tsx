@@ -232,6 +232,7 @@ export const Toolbar = () => {
     setLetterState,
   } = useContext(EditorContext)!;
   const [showXmlView, setShowXmlView] = useState(false);
+  const [finishLetterModalOpen, setFinishLetterModalOpen] = useState(false);
   const { hasMarkableSelection } = useHasMarkableSelection();
   const session = useUser();
 
@@ -379,7 +380,7 @@ export const Toolbar = () => {
         <ToolbarButton
           disabled={toolbarDisabled || letterState === LetterState.Finished}
           onClick={() => {
-            setLetterState(LetterState.Finished);
+            setFinishLetterModalOpen(true);
           }}
           title="Abschliessen (alle Personen und Ortschaften im Brief sind markiert)"
         >
@@ -387,9 +388,57 @@ export const Toolbar = () => {
             Brief abschliessen
           </IconButton>
         </ToolbarButton>
+        <FinishLetterModal
+          open={finishLetterModalOpen}
+          setOpen={setFinishLetterModalOpen}
+          finish={() => {
+            setFinishLetterModalOpen(false);
+            setLetterState(LetterState.Finished);
+          }}
+        />
       </div>
       {error && <div className="text-red-500">{error}</div>}
     </div>
+  );
+};
+
+const FinishLetterModal = ({
+  open,
+  setOpen,
+  finish,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  finish: () => void;
+}) => {
+  return (
+    <>
+      {open && (
+        <Modal
+          maxWidth={500}
+          open={open}
+          cancel={() => setOpen(false)}
+          title="Brief abschliessen"
+        >
+          <div>
+            <div className="mb-4">
+              Markieren Sie den Brief als abgeschlossen, wenn Sie der Ansicht
+              sind, dass alle Personen und Ortschaften in diesem Brief markiert
+              und verifiziert sind.
+            </div>
+            <div className="mb-4">Möchten Sie diesen Brief abschliessen?</div>
+            <div className="flex justify-end">
+              <button
+                className="bg-emerald-400 text-white p-2 rounded-md"
+                onClick={finish}
+              >
+                Ja, Brief abschliessen
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 };
 

@@ -13,6 +13,7 @@ export function Link({
   href,
   children,
   replace,
+  onClick,
   ...rest
 }: Parameters<typeof NextLink>[0]) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export function Link({
   return (
     <NextLink
       href={href}
-      onMouseDown={(e) => {
+      onClick={(e) => {
         if (rest.target === "_blank" || e.button !== 0) {
           return;
         }
@@ -37,6 +38,8 @@ export function Link({
         ) {
           return;
         }
+
+        onClick ? onClick(e) : null;
 
         startTransition(() => {
           const url = href.toString();
