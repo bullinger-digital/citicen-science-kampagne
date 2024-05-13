@@ -7,7 +7,6 @@ import { JSDOM } from "jsdom";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
 import { InferType, number, object, string } from "yup";
-import { redirect } from "next/navigation";
 import { sql } from "kysely";
 
 if (!globalThis.window) {
@@ -248,8 +247,8 @@ const updateOrInsertPersonSchema = object({
     message: "Ungültiger Wikipedia-Link",
     excludeEmptyString: true,
   }),
-  forename: string().required(),
-  surname: string().required(),
+  forename: string(),
+  surname: string(),
 });
 
 export const insertOrUpdatePerson = async (
@@ -293,8 +292,8 @@ export const insertOrUpdatePerson = async (
       await v.insertAndCreateNewVersion(
         "person_alias",
         {
-          forename: newPerson.forename,
-          surname: newPerson.surname,
+          forename: newPerson.forename || "",
+          surname: newPerson.surname || "",
           person_id: personVersion.id,
           type: "main",
         },
