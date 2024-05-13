@@ -218,10 +218,10 @@ const PersonItem = ({
   entity: Awaited<ReturnType<typeof searchPerson>>[0];
 }) => {
   return (
-    <>
+    <span title={"ID: " + entity.id}>
       {entity.aliases.find((a) => a.type === "main")?.forename}{" "}
-      {entity.aliases.find((a) => a.type === "main")?.surname} ({entity.id})
-    </>
+      {entity.aliases.find((a) => a.type === "main")?.surname}
+    </span>
   );
 };
 
@@ -231,12 +231,11 @@ const PlaceItem = ({
   entity: Awaited<ReturnType<typeof searchPlace>>[0];
 }) => {
   return (
-    <>
+    <span title={"ID: " + entity.id}>
       {[entity.settlement, entity.district, entity.country]
         .filter((s) => !!s)
-        .join(", ")}{" "}
-      ({entity.id})
-    </>
+        .join(", ")}
+    </span>
   );
 };
 
