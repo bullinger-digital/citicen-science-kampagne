@@ -21,6 +21,7 @@ import {
 } from "@/lib/actions/citizen";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { DynamicAsyncSelect } from "./common/dynamicAsyncSelect";
 
 const INPUT_CLASSNAMES =
   "w-full px-2 py-2 border-b-2 border-gray-300 outline-none focus:border-beige-500 placeholder-gray-300 text-gray-700";
@@ -256,24 +257,6 @@ const FilterWithLabel = ({
   </div>
 );
 
-import dynamic from "next/dynamic";
-// We need to import react-select asynchronously to avoid SSR issues
-const AsyncSelect = dynamic(() => import("react-select/async"), { ssr: false });
-
-export default function debounce<T extends (...args: any[]) => any>(
-  fn: T,
-  delay = 250
-) {
-  let timeout: ReturnType<typeof setTimeout>;
-
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      fn(...args);
-    }, delay);
-  };
-}
-
 const personDisplayName = (
   p:
     | Awaited<ReturnType<typeof personById>>
@@ -309,22 +292,8 @@ const PersonDropdown = ({
     });
   }, []);
 
-  /* eslint-disable react-hooks/exhaustive-deps */
-  const debouncedFetchOptions = useCallback(
-    debounce((inputValue: string, callback: (options: any) => void) => {
-      fetchOptions(inputValue).then((options) => callback(options));
-    }, 500),
-    []
-  );
-
   return (
-    <AsyncSelect
-      classNames={{
-        control: (i) =>
-          "!w-full !px-2 !py-2 !shadow-none !border-t-0 !border-l-0 !border-r-0 !rounded-none !outline-none !border-b-2 !border-gray-300 !outline-none !focus:border-beige-500 !placeholder-gray-300 !text-gray-300",
-        valueContainer: (i) => "!p-0",
-      }}
-      loadingMessage={() => "Bitte warten..."}
+    <DynamicAsyncSelect
       noOptionsMessage={() =>
         "Geben Sie einen Namen ein, um Korrespondenten zu suchen."
       }
@@ -337,7 +306,7 @@ const PersonDropdown = ({
       onChange={(v) => onChange((v as any)?.value)}
       isClearable
       defaultOptions={false}
-      loadOptions={debouncedFetchOptions}
+      loadOptions={fetchOptions}
     />
   );
 };

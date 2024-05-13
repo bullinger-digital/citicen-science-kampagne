@@ -1,11 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Modal from "../common/modal";
 import { insertPerson, insertPlace } from "@/lib/actions/citizen";
 import { useServerAction } from "../common/serverActions";
 import { Loading } from "../common/loadingIndicator";
+import { OptionProps } from "react-select";
+import { DynamicAsyncSelect } from "../common/dynamicAsyncSelect";
 
 const Label = ({ children }: { children: React.ReactNode }) => (
   <label className="w-60">{children}</label>
+);
+
+const WithLabel = ({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) => (
+  <div className="flex mb-4">
+    <Label>{label}</Label>
+    <div className="w-full">{children}</div>
+  </div>
 );
 
 const InputWithLabel = ({
@@ -18,6 +33,8 @@ const InputWithLabel = ({
   pattern,
   title,
   children,
+  onFocus,
+  onBlur,
 }: {
   value: string | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -28,24 +45,25 @@ const InputWithLabel = ({
   pattern?: string;
   title?: string;
   children?: React.ReactNode;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }) => (
-  <div className="flex mb-4">
-    <Label>{label}</Label>
-    <div className="w-full">
-      <input
-        className="w-full p-1 border border-gray-300 rounded-md invalid:border-red-500"
-        type="text"
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        required={required}
-        pattern={pattern}
-        title={title}
-      />
-      {children}
-    </div>
-  </div>
+  <WithLabel label={label}>
+    <input
+      onFocus={onFocus}
+      onBlur={onBlur}
+      className="w-full p-1 border border-gray-300 rounded-md invalid:border-red-500"
+      type="text"
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled}
+      required={required}
+      pattern={pattern}
+      title={title}
+    />
+    {children}
+  </WithLabel>
 );
 
 const EMPTY_NEW_PERSON = {
@@ -123,9 +141,19 @@ export const EditPersonModal = ({
           disabled={id !== undefined}
           required
         />
+        <InputWithLabel
+          value={newPerson.wiki}
+          onChange={(e) => setNewPerson({ ...newPerson, wiki: e.target.value })}
+          label="Wikipedia-Link"
+          placeholder="https://de.wikipedia.org/wiki/Musterseite"
+          title="Wikipedia-Link im Format https://de.wikipedia.org/wiki/Musterseite"
+        />
         <GndField
           value={newPerson.gnd}
           onChange={(v) => setNewPerson({ ...newPerson, gnd: v })}
+          searchTerm={[newPerson.forename, newPerson.surname]
+            .filter((n) => !!n)
+            .join(" ")}
         />
         <InputWithLabel
           value={newPerson.hist_hub}
@@ -136,59 +164,152 @@ export const EditPersonModal = ({
           placeholder="123456789"
           title="HistHub-ID im Format 123456789"
         />
-        <InputWithLabel
-          value={newPerson.wiki}
-          onChange={(e) => setNewPerson({ ...newPerson, wiki: e.target.value })}
-          label="Wikipedia-Link"
-          placeholder="https://de.wikipedia.org/wiki/Musterseite"
-          title="Wikipedia-Link im Format https://de.wikipedia.org/wiki/Musterseite"
-        />
       </form>
     </Modal>
+  );
+};
+
+// Source: https://de.wikipedia.org/wiki/Hilfe:GND#Format_der_Personen-GND-Nummern_oder:_%E2%80%9EWas_bedeutet_das_X?%E2%80%9C
+// A GND is valid if it is a number with 9 or 10 digits, whereby the last digit is the modulo checksum of the other digits.
+// If the modulo is 10, the last digit is X.
+const isValidGndIdentifier = (value: string) => {
+  if (!/\d{8,9}[0-9X]$/.test(value)) {
+    return false;
+  }
+  // The checksum is calculated by multiplying each digit with its index and summing up the results modulo 11.
+  // I have not found a source for this, but it seems that the index is 1-based for 10-digit GNDs and 2-based for 9-digit GNDs.
+  const indexShift = value.length === 10 ? 1 : 2;
+  const digits = value.slice(0, -1).split("").map(Number);
+  const checksum =
+    digits.reduce(
+      (sum, digit, index) => sum + digit * (index + indexShift),
+      0
+    ) % 11;
+  return checksum === (value.slice(-1) === "X" ? 10 : Number(value.slice(-1)));
+};
+
+const GndOptions = (props: OptionProps<{ value: string; label: string }>) => {
+  return (
+    <div ref={props.innerRef} {...props.innerProps}>
+      <div
+        className={`p-2 cursor-pointer ${props.isFocused ? "bg-emerald-100" : ""}`}
+      >
+        {props.data.label}
+      </div>
+    </div>
   );
 };
 
 const GndField = ({
   value,
   onChange,
+  searchTerm,
 }: {
   value: string | undefined;
   onChange: (e: string) => void;
+  searchTerm?: string;
 }) => {
+  const [term, setTerm] = useState(searchTerm);
+
+  const loadOptions = useCallback(async (inputValue: string) => {
+    const filter = "type:Person AND dateOfBirth:[-2000 TO 1700]";
+    const res = await fetch(
+      `https://lobid.org/gnd/search?q=${encodeURIComponent(
+        inputValue
+      )}&filter=${encodeURIComponent(filter)}&format=json`,
+      {
+        headers: {
+          "User-Agent": "Bullinger Digital - Citizen Science Kampagne",
+        },
+      }
+    );
+    const data = await res.json();
+
+    return data.member.map((m: any) => {
+      const infoArray = [
+        m.preferredName,
+        m.biographicalOrHistoricalInformation,
+        m.professionOrOccupation?.map((o: any) => o.label).join(", "),
+        getYear(m.dateOfBirth?.[0]) + " - " + getYear(m.dateOfDeath?.[0]),
+        m.placeOfActivity?.map((p: any) => p.label).join(", "),
+      ].filter((i) => !!i);
+
+      return {
+        value: m.id,
+        label: infoArray.join(" | "),
+      };
+    }) as { value: string; label: string }[];
+  }, []);
+
+  const gndId = value?.replace("https://d-nb.info/gnd/", "");
+
   const [gndResult, setGndResult] = useState<any | null>(null);
   useEffect(() => {
-    if (value && typeof value === "string" && value.match(/^\d{9}$/)) {
-      fetch(`https://lobid.org/gnd/${value}.json`, {
+    if (gndId && typeof gndId === "string" && isValidGndIdentifier(gndId)) {
+      fetch(`https://lobid.org/gnd/${encodeURIComponent(gndId)}.json`, {
         headers: {
           "User-Agent": "Bullinger Digital - Citizen Science Kampagne",
         },
       })
         .then((res) => res.json())
-        .then((data) => setGndResult(data));
+        .then((data) => setGndResult(data))
+        .catch(() => setGndResult(null));
+    } else {
+      setGndResult(null);
     }
-  }, [value]);
+  }, [gndId]);
 
   return (
     <>
-      <InputWithLabel
-        value={value}
-        onChange={(v) => onChange(v.currentTarget.value)}
-        label="GND-ID"
-        placeholder="123456789"
-        title="GND-ID im Format 123456789"
-      >
-        {gndResult && (
-          <a
-            target="_blank"
-            className="text-emerald-400"
-            href={`https://d-nb.info/gnd/${value}`}
-          >
-            {gndResult.preferredName}
-          </a>
+      <WithLabel label={"GND-ID"}>
+        {value ? (
+          <>
+            {gndId}
+            <button onClick={() => onChange("")} className="ml-2 text-red-500">
+              X
+            </button>
+            {gndResult && (
+              <a
+                target="_blank"
+                className="text-emerald-400"
+                href={`https://d-nb.info/gnd/${value}`}
+              >
+                {gndResult.preferredName}
+              </a>
+            )}
+            {gndId && !isValidGndIdentifier(gndId || "") && (
+              <div>Ungültige GND-ID</div>
+            )}
+          </>
+        ) : (
+          <DynamicAsyncSelect
+            inputValue={term}
+            onInputChange={(v, m) => m.action === "input-change" && setTerm(v)}
+            onFocus={() => {
+              if (term === "") {
+                setTerm(searchTerm || "");
+              }
+            }}
+            loadOptions={loadOptions}
+            components={{
+              Option: GndOptions,
+            }}
+            isMulti={false}
+            isSearchable={true}
+            onChange={(e) => onChange(e?.value || "")}
+          ></DynamicAsyncSelect>
         )}
-      </InputWithLabel>
+      </WithLabel>
+
+      <div className="relative"></div>
     </>
   );
+};
+
+const getYear = (date: string) => {
+  // Dates can be in the format "yyyy", "yyyy-mm", "yyyy-mm-dd"
+  // Return only the year
+  return date?.split("-")[0] || "";
 };
 
 const EMPTY_NEW_PLACE = {
