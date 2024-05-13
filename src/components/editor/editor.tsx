@@ -19,6 +19,7 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import { useServerFetch } from "../common/serverActions";
 import { LockOverlay, useLetterLock } from "./locking";
 import { LetterMetaData } from "./metaData";
+import { Blocker } from "../common/navigation-block/navigation-block";
 
 export const Editor = ({ letterId }: { letterId: number }) => {
   const {
@@ -49,20 +50,20 @@ const EditorInternal = ({
   const session = useUser();
   const { xmlDoc, actions } = state;
 
-  const onBeforeUnload = useCallback(
-    (e: BeforeUnloadEvent) => {
-      if (actions.length > 0) {
-        e.preventDefault();
-        e.returnValue = "Sie haben ungespeicherte Änderungen.";
-      }
-    },
-    [actions]
-  );
+  // const onBeforeUnload = useCallback(
+  //   (e: BeforeUnloadEvent) => {
+  //     if (actions.length > 0) {
+  //       e.preventDefault();
+  //       e.returnValue = "Sie haben ungespeicherte Änderungen.";
+  //     }
+  //   },
+  //   [actions]
+  // );
 
-  useEffect(() => {
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  });
+  // useEffect(() => {
+  //   window.addEventListener("beforeunload", onBeforeUnload);
+  //   return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  // });
 
   if (!xmlDoc) return <Loading />;
 
@@ -84,6 +85,7 @@ const EditorInternal = ({
 
   return (
     <EditorContext.Provider value={state}>
+      {actions.length > 0 && <Blocker />}
       <div className="relative">
         <LockOverlay lock={lock} />
         <div className="flex items-stretch space-x-2">

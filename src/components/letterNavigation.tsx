@@ -20,7 +20,7 @@ import {
   searchPerson,
 } from "@/lib/actions/citizen";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { Link } from "./common/navigation-block/link";
 import { DynamicAsyncSelect } from "./common/dynamicAsyncSelect";
 
 const INPUT_CLASSNAMES =

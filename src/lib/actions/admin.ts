@@ -50,7 +50,7 @@ export const getLogs = async () => {
 
 const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
   return await kdb
-    .selectFrom(table as "letter_version") // table can be any versioned table, but we need to cast it to letter_version to support typing
+    .selectFrom<VersionedTable>(table)
     // Todo: Fix typing
     .innerJoin("log", "created_log_id", "log.id")
     .where(whereCurrent)
