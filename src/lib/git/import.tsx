@@ -161,6 +161,9 @@ export const importFromCurrentCommit = async () => {
     const places = Array.from(xmlPlaces.querySelectorAll("place"));
     for (const place of places) {
       const id = parseInt(place.getAttribute("xml:id")?.replace("l", "") || "");
+      const coordinates = place.querySelector("geo")?.textContent?.split(" ");
+      const latitudeString = coordinates?.[0] || "";
+      const longitudeString = coordinates?.[1] || "";
       console.log("Importing place", id);
       await v.importVersioned(
         "place",
@@ -169,12 +172,8 @@ export const importFromCurrentCommit = async () => {
           settlement: place.querySelector("settlement")?.textContent || "",
           district: place.querySelector("district")?.textContent || "",
           country: place.querySelector("country")?.textContent || "",
-          latitude: parseFloat(
-            place.querySelector("geo")?.textContent?.split(" ")[0] || ""
-          ),
-          longitude: parseFloat(
-            place.querySelector("geo")?.textContent?.split(" ")[1] || ""
-          ),
+          latitude: latitudeString ? parseFloat(latitudeString) : null,
+          longitude: longitudeString ? parseFloat(longitudeString) : null,
         },
         gitImportSpecs
       );
