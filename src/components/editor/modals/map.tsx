@@ -5,6 +5,7 @@ import L from "leaflet";
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import { useMemo, useRef } from "react";
 
 let DefaultIcon = L.icon({
   iconUrl: icon.src,
@@ -15,7 +16,29 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-export const LeafletMap = ({ position }: { position: LatLngExpression }) => {
+export const LeafletMap = ({
+  position,
+  setPosition,
+  readOnly,
+}: {
+  position: LatLngExpression;
+  setPosition: (pos: [lat: number, lng: number]) => void;
+  readOnly: boolean;
+}) => {
+  const markerRef = useRef<L.Marker<any>>(null);
+  const eventHandlers = useMemo(
+    () => ({
+      dragend() {
+        const marker = markerRef.current;
+        if (marker != null) {
+          const position = marker.getLatLng();
+          setPosition([position.lat, position.lng]);
+        }
+      },
+    }),
+    [setPosition]
+  );
+
   return (
     <MapContainer
       center={position}
@@ -27,7 +50,12 @@ export const LeafletMap = ({ position }: { position: LatLngExpression }) => {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Marker position={position}>
+      <Marker
+        position={position}
+        draggable={!readOnly}
+        ref={markerRef}
+        eventHandlers={eventHandlers}
+      >
         <Popup>
           A pretty CSS3 popup. <br /> Easily customizable.
         </Popup>

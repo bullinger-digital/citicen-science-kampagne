@@ -360,6 +360,17 @@ export const EditPlaceModal = ({
     }
   }, [id]);
 
+  const setPosition = useCallback(
+    (position: [number, number]) => {
+      setNewPlace({
+        ...newPlace,
+        latitude: position[0],
+        longitude: position[1],
+      });
+    },
+    [setNewPlace, newPlace]
+  );
+
   return !open ? null : (
     <Modal
       open={open}
@@ -418,9 +429,14 @@ export const EditPlaceModal = ({
           placeholder="Schweiz"
         />
         <div>
-          Karte &mdash; {newPlace.latitude}, {newPlace.longitude}
+          Karte &mdash; {newPlace.latitude?.toFixed(7)},{" "}
+          {newPlace.longitude?.toFixed(7)}
           {newPlace.latitude && newPlace.longitude && (
-            <LeafletMap position={[newPlace.latitude, newPlace.longitude]} />
+            <LeafletMap
+              position={[newPlace.latitude, newPlace.longitude]}
+              readOnly={false}
+              setPosition={setPosition}
+            />
           )}
         </div>
       </form>
