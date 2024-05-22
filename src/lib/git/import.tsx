@@ -56,6 +56,7 @@ export const importFromCurrentCommit = async () => {
   const commitHash = await getCommitHash();
 
   await kdb.transaction().execute(async (db) => {
+    await sql`SET LOCAL lock_timeout = '1s';`.execute(db);
     for (const t of versionedTables) {
       await sql`LOCK TABLE ${sql.ref(t)} IN EXCLUSIVE MODE;`.execute(db);
       await sql`LOCK TABLE ${sql.ref(
