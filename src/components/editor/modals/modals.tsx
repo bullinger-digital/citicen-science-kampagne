@@ -15,6 +15,7 @@ import { searchHistHub, singleHistHubResult } from "./histHub";
 import dynamic from "next/dynamic";
 import { Comments } from "@/components/common/comments";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
+import { LinksPopup } from "../properties";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -88,6 +89,7 @@ export const EditPersonModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [newPerson, setNewPerson] =
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PERSON);
+  const [usages, setUsages] = useState<number[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -102,6 +104,7 @@ export const EditPersonModal = ({
           wiki: p.wiki || "",
           portrait: p.portrait || "",
         });
+        setUsages(p.links.map((l) => l.id));
         setIsLoading(false);
       });
     }
@@ -124,6 +127,7 @@ export const EditPersonModal = ({
       }}
       maxWidth={700}
     >
+      <EditWarning id={id} usages={usages} />
       {error && <div className="bg-red-100 p-2 mb-4">{error}</div>}
       {(loading || isLoading) && <Loading />}
       <form
@@ -380,6 +384,7 @@ export const EditPlaceModal = ({
 
   const { execute, loading, error } = useServerAction(insertOrUpdatePlace);
   const [isLoading, setIsLoading] = useState(false);
+  const [usages, setUsages] = useState<number[]>([]);
 
   const [newPlace, setNewPlace] =
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PLACE);
@@ -390,6 +395,7 @@ export const EditPlaceModal = ({
       placeById({ id: id.toString() }).then((p) => {
         setNewPlace(p);
         setIsLoading(false);
+        setUsages(p.links.map((l) => l.id));
       });
     }
   }, [id]);
@@ -422,6 +428,7 @@ export const EditPlaceModal = ({
       }}
       maxWidth={600}
     >
+      <EditWarning id={id} usages={usages} />
       {error && <div className="bg-red-100 p-2 mb-4">{error}</div>}
       {(loading || isLoading) && <Loading />}
       <form
@@ -476,5 +483,26 @@ export const EditPlaceModal = ({
       </form>
       {id && <CommentsWrapper target={"place/" + id} />}
     </Modal>
+  );
+};
+
+const EditWarning = ({
+  id,
+  usages,
+}: {
+  id?: number | null;
+  usages: number[];
+}) => {
+  if (!id || usages.length === 0) {
+    return null;
+  }
+  return (
+    <div className="bg-yellow-100 p-2 mb-4 text-sm">
+      Achtung: Sie verändern einen bestehenden Eintrag, der in{" "}
+      <LinksPopup links={usages} /> verwendet wird. Änderungen betreffen alle
+      Verwendungen. Falls Sie nur die Person oder den Ort an einer Stelle ändern
+      möchten, entfernen Sie die aktuelle Zuweisung und erstellen Sie einen
+      neuen Eintrag.
+    </div>
   );
 };

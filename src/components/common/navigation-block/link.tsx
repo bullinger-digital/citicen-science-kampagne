@@ -23,7 +23,28 @@ export function Link({
     <NextLink
       href={href}
       onClick={(e) => {
+        const navigate = () => {
+          onClick ? onClick(e) : null;
+
+          if (href.toString()) {
+            if (rest.target === "_blank") {
+              // Open in new tab
+              window.open(href.toString(), "_blank");
+              return;
+            }
+            startTransition(() => {
+              const url = href.toString();
+              if (replace) {
+                router.replace(url);
+              } else {
+                router.push(url);
+              }
+            });
+          }
+        };
+
         if (rest.target === "_blank" || e.button !== 0) {
+          navigate();
           return;
         }
 
@@ -39,16 +60,7 @@ export function Link({
           return;
         }
 
-        onClick ? onClick(e) : null;
-
-        startTransition(() => {
-          const url = href.toString();
-          if (replace) {
-            router.replace(url);
-          } else {
-            router.push(url);
-          }
-        });
+        navigate();
       }}
       {...rest}
     >

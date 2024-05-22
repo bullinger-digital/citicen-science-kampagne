@@ -11,10 +11,10 @@ import { ContextBox } from "./editor";
 import { FaEdit, FaSearch, FaUnlink } from "react-icons/fa";
 import { FaLink } from "react-icons/fa6";
 import { getPathFromNode } from "@/lib/xml";
-import Link from "next/link";
 import { Loading } from "../common/loadingIndicator";
 import { EditPersonModal, EditPlaceModal } from "./modals/modals";
 import { useServerFetch } from "../common/serverActions";
+import { Link } from "../common/navigation-block/link";
 
 const PersName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
@@ -119,19 +119,34 @@ const EntityLinksList = ({
 
   return (
     <div className="text-sm">
-      Verwendet in weiteren Briefen:{" "}
-      {links.map((l) => (
-        <Link
-          className="inline-block mr-2 text-emerald-400 "
-          href={`/letter/${l.id}`}
-          target="_blank"
-          key={l.id}
-        >
-          {l.id}
-        </Link>
-      ))}{" "}
-      ...
+      Verwendet in <LinksPopup links={links.map((l) => l.id)} />
     </div>
+  );
+};
+
+export const LinksPopup = ({ links }: { links: number[] }) => {
+  return (
+    <Popover
+      content={
+        <div className="max-h-32 px-3 overflow-y-auto text-left">
+          <ul>
+            {links.map((link) => (
+              <li key={link}>
+                <Link
+                  className="underline text-emerald-400"
+                  href={`/letter/${link}`}
+                  target="_blank"
+                >
+                  Brief {link}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      }
+    >
+      <strong>{links.length} Briefen</strong>
+    </Popover>
   );
 };
 

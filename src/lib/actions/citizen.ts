@@ -51,7 +51,6 @@ export const personById = async ({ id }: { id: string }) => {
           .select(["v2.id"])
           .distinct()
           .orderBy("v2.id", "asc")
-          .limit(10)
       ).as("links"),
     ])
     .executeTakeFirstOrThrow();
@@ -226,7 +225,6 @@ export const placeById = async ({ id }: { id: string }) => {
           .select(["v2.id"])
           .distinct()
           .orderBy("v2.id", "asc")
-          .limit(10)
       ).as("links"),
     ])
     .executeTakeFirstOrThrow();
