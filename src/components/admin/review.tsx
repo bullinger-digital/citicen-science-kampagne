@@ -40,11 +40,13 @@ export const Review = () => {
               </th>
               <th>
                 {log.usages?.length}
-                <ul>
-                  {log.usages?.map((usage) => (
-                    <li key={usage.id}>{usage.id}</li>
-                  ))}
-                </ul>
+                <div className="max-h-40 overflow-y-auto">
+                  <ul>
+                    {log.usages?.map((usage) => (
+                      <li key={usage.id}>{usage.id}</li>
+                    ))}
+                  </ul>
+                </div>
               </th>
               <th>
                 <button
@@ -114,9 +116,6 @@ const Diff = ({
         }
         const oldV = oldObject?.[key] || null;
         const newV = newObject?.[key] || null;
-        if (oldObject && oldV === newV) {
-          return null;
-        }
         return (
           <>
             <div className="flex" key={key}>
@@ -124,8 +123,14 @@ const Diff = ({
                 <span className="font-bold">{key}</span>
               </div>
               <div>
-                <span className="text-red-500 line-through">{oldV}</span>
-                <span className="text-green-500">{newV}</span>
+                {oldV === newV ? (
+                  <>{newV}</>
+                ) : (
+                  <>
+                    <span className="text-red-500 line-through">{oldV}</span>
+                    <span className="text-green-500">{newV}</span>
+                  </>
+                )}
               </div>
             </div>
           </>
