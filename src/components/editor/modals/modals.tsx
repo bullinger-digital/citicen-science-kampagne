@@ -496,12 +496,13 @@ const EditWarning = ({
   if (!id || usages.length === 0) {
     return null;
   }
+  // Todo: add possibility to create a new entry directly
   return (
     <div className="bg-yellow-100 p-2 mb-4 text-sm">
       Achtung: Sie verändern einen bestehenden Eintrag, der in{" "}
       <LinksPopup links={usages} /> verwendet wird. Änderungen betreffen alle
-      Verwendungen. Falls Sie nur die Person oder den Ort an einer Stelle ändern
-      möchten, entfernen Sie die aktuelle Zuweisung und erstellen Sie einen
+      Verwendungen. Falls Sie die Person oder den Ort lediglich an der aktuellen
+      Stelle ändern möchten, entfernen Sie die Zuweisung und erstellen Sie einen
       neuen Eintrag.
     </div>
   );
