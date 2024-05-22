@@ -13,6 +13,8 @@ import { SearchInput } from "../../common/searchInput";
 import { getSingleGndResult, isValidGndIdentifier, searchGnd } from "./gnd";
 import { searchHistHub, singleHistHubResult } from "./histHub";
 import dynamic from "next/dynamic";
+import { Comments } from "@/components/common/comments";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -66,6 +68,7 @@ const EMPTY_NEW_PERSON = {
   gnd: "",
   hist_hub: "",
   wiki: "",
+  portrait: "",
 };
 
 /**
@@ -97,6 +100,7 @@ export const EditPersonModal = ({
           gnd: p.gnd || "",
           hist_hub: p.hist_hub || "",
           wiki: p.wiki || "",
+          portrait: p.portrait || "",
         });
         setIsLoading(false);
       });
@@ -118,7 +122,7 @@ export const EditPersonModal = ({
         setNewPerson(EMPTY_NEW_PERSON);
         close();
       }}
-      maxWidth={600}
+      maxWidth={700}
     >
       {error && <div className="bg-red-100 p-2 mb-4">{error}</div>}
       {(loading || isLoading) && <Loading />}
@@ -178,7 +182,37 @@ export const EditPersonModal = ({
             .join(" ")}
         />
       </form>
+      {id && <CommentsWrapper target={"person/" + id.toString()} />}
     </Modal>
+  );
+};
+
+const CommentsWrapper = ({ target }: { target: string }) => {
+  const [showComments, setShowComments] = useState(false);
+
+  return (
+    <div className="mt-4">
+      <button
+        className="text-gray-600"
+        onClick={() => setShowComments(!showComments)}
+      >
+        {showComments ? (
+          <>
+            <FaChevronUp className="inline-block" /> Kommentare ausblenden
+          </>
+        ) : (
+          <>
+            <FaChevronDown className="inline-block" /> Kommentare anzeigen
+          </>
+        )}
+      </button>
+
+      {showComments && (
+        <div>
+          <Comments target={target} />
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -440,6 +474,7 @@ export const EditPlaceModal = ({
           )}
         </div>
       </form>
+      {id && <CommentsWrapper target={"place/" + id} />}
     </Modal>
   );
 };

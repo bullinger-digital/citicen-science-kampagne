@@ -20,6 +20,7 @@ import { useServerFetch } from "../common/serverActions";
 import { LockOverlay, useLetterLock } from "./locking";
 import { LetterMetaData } from "./metaData";
 import { Blocker } from "../common/navigation-block/navigation-block";
+import { Comments } from "../common/comments";
 
 export const Editor = ({ letterId }: { letterId: number }) => {
   const {
@@ -133,7 +134,7 @@ const EditorInternal = ({
               </div>
             </div>
           </div>
-          <div className="grow-0 shrink-0 basis-[26rem]">
+          <div className="grow-0 shrink-0 w-[26rem] basis-[26rem]">
             <Properties />
             <ContextBox title="Bedeutung der Markierungen">
               <div className="self-center">
@@ -151,6 +152,9 @@ const EditorInternal = ({
                   </div>
                 </div>
               </div>
+            </ContextBox>
+            <ContextBox title="Kommentare">
+              <Comments target={"letter/" + letter_version.id.toString()} />
             </ContextBox>
             {isInRole(session, "admin") && (
               <ContextBox title="Debug">

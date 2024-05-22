@@ -18,6 +18,16 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface Comment {
+  content: string;
+  created_log_id: number;
+  deleted_log_id: number | null;
+  id: Generated<number>;
+  resolved_log_id: number | null;
+  target: string;
+  updated_log_id: number | null;
+}
+
 export interface GitExport {
   base_commit_hash: string;
   created_log_id: number;
@@ -180,6 +190,7 @@ export interface User {
 }
 
 export interface DB {
+  comment: Comment;
   git_export: GitExport;
   git_import: GitImport;
   letter: Letter;
