@@ -249,6 +249,7 @@ const updateOrInsertPersonSchema = object({
   }),
   forename: string(),
   surname: string(),
+  portrait: string(),
 });
 
 export const insertOrUpdatePerson = async (
@@ -270,6 +271,7 @@ export const insertOrUpdatePerson = async (
           gnd: newPerson.gnd,
           hist_hub: newPerson.hist_hub,
           wiki: newPerson.wiki,
+          portrait: newPerson.portrait,
         },
         false,
         logId,
