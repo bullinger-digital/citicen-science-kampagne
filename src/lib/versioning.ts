@@ -33,7 +33,7 @@ type InternalVersioningKeys =
 
 export class Versioning {
   db: Kysely<DB> | Transaction<DB>;
-  constructor(transaction?: Transaction<DB>) {
+  constructor(transaction?: Transaction<DB> | Kysely<DB>) {
     this.db = transaction || kdb2;
   }
 
@@ -279,19 +279,62 @@ export class Versioning {
       // Todo: Prevent rejection if item is in use?
 
       const versions_table = `${table}_version` as VersionedTable;
-      await db
+      const logId = await this.createLogId("review");
+
+      // Get (master) id of entry
+      const { id: masterId, git_import_id: gitImportId } = await db
+        .selectFrom<VersionedTable>(versions_table)
+        .where("version_id", "=", versionId)
+        .select(["id", "git_import_id"])
+        .executeTakeFirstOrThrow();
+
+      // Set version to rejected
+      const modifiedVersion = await db
         .updateTable<VersionedTable>(versions_table)
         .set({
           review_state: "rejected",
-          reviewed_log_id: await this.createLogId("review"),
-          is_latest: false,
+          reviewed_log_id: logId,
         })
         .where("version_id", "=", versionId)
+        .returningAll()
         .execute();
 
-      throw new Error(
-        "Not implemented yet - Todo: make sure unmodified version becomes latest"
-      );
+      // If the entry existed before, we need to create a new approved version with the content of the latest accepted version
+      if (!modifiedVersion[0].is_new) {
+        const latestAcceptedVersion = await db
+          .selectFrom<VersionedTable>(versions_table)
+          .where("git_import_id", "=", gitImportId)
+          .where("id", "=", masterId)
+          .where("review_state", "=", "accepted")
+          .orderBy("version_id", "desc")
+          .limit(1)
+          .selectAll()
+          .executeTakeFirstOrThrow();
+
+        if (!latestAcceptedVersion?.id) {
+          throw new Error("Entry is not new, but no accepted version found.");
+        }
+
+        // Set is_latest to false for the target version
+        await db
+          .updateTable<VersionedTable>(versions_table)
+          .set({
+            is_latest: false,
+          })
+          .where("version_id", "=", versionId)
+          .execute();
+
+        // Create new version with the content of the latest accepted version
+        await db
+          .insertInto<VersionedTable>(versions_table)
+          .values({
+            ...latestAcceptedVersion,
+            created_log_id: logId,
+            is_latest: true,
+            version_id: undefined,
+          })
+          .execute();
+      }
     });
   }
 
