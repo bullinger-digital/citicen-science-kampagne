@@ -56,18 +56,18 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
     .where(whereCurrent)
     .where("review_state", "=", "pending")
     .selectAll("log")
+    // Select the last accepted version
     .select((e) =>
       jsonObjectFrom(
         e
           .selectFrom(`${table as "letter_version"} as unmodified`)
           .where("git_import_id", "=", (e) =>
-            e
-              .selectFrom("git_import")
-              .select("id")
-              .where("is_current", "is", true)
+            e.ref(`${table as "letter_version"}.git_import_id`)
           )
-          .where("is_touched", "=", false)
+          .where("review_state", "=", "accepted")
           .where("unmodified.id", "=", e.ref(`${table as "letter_version"}.id`))
+          .orderBy("unmodified.version_id", "desc")
+          .limit(1)
           .selectAll()
       ).as("unmodified")
     )
