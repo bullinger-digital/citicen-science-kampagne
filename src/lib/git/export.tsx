@@ -45,11 +45,15 @@ const domExportHelpers = (personsDom: Document) => {
     parent: Element,
     selector: string,
     element: string,
-    textContent: string | undefined | null
+    textContent: string | undefined | null,
+    callback?: (node: Element) => void
   ) => {
     if (textContent) {
       findOrCreateNode(parent, element, selector, (node) => {
         node.textContent = textContent;
+        if (callback) {
+          callback(node);
+        }
       });
     } else {
       removeNode(parent, selector);
@@ -101,25 +105,37 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
           personNode,
           `idno[subtype='gnd']`,
           "idno",
-          person.gnd
+          person.gnd,
+          (node) => {
+            node.setAttribute("subtype", "gnd");
+          }
         );
         h.textContentNode(
           personNode,
           `idno[subtype='histHub']`,
           "idno",
-          person.hist_hub
+          person.hist_hub,
+          (node) => {
+            node.setAttribute("subtype", "histHub");
+          }
         );
         h.textContentNode(
           personNode,
           `idno[subtype='portrait']`,
           "idno",
-          person.portrait
+          person.portrait,
+          (node) => {
+            node.setAttribute("subtype", "portrait");
+          }
         );
         h.textContentNode(
           personNode,
           `idno[subtype='wiki']`,
           "idno",
-          person.wiki
+          person.wiki,
+          (node) => {
+            node.setAttribute("subtype", "wiki");
+          }
         );
       }
     );
@@ -241,7 +257,7 @@ const formatXml = (xml: string) => {
     plugins: ["@prettier/plugin-xml"],
     xmlWhitespaceSensitivity: "preserve",
     useTabs: true,
-    printWidth: 120,
+    printWidth: 200,
   });
 };
 
