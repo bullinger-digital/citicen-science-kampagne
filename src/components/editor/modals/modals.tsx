@@ -477,7 +477,7 @@ export const EditPlaceModal = ({
           onChange={(v) =>
             setNewPlace({
               ...newPlace,
-              geonames: v.id,
+              geonames: v.id ? "https://www.geonames.org/" + v.id : "",
               latitude: v.lat || newPlace.latitude,
               longitude: v.lng || newPlace.longitude,
             })
