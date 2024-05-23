@@ -87,7 +87,7 @@ export const SearchInput = <T,>({
         }
       }}
     >
-      <div className="relative">
+      <div className="relative z-[500]">
         <Input
           value={term}
           onChange={(v) => setTerm(v.currentTarget.value)}

@@ -164,6 +164,7 @@ export interface PlaceVersion {
   country: string;
   created_log_id: number;
   district: string;
+  geonames: Generated<string>;
   git_export_id: number | null;
   git_import_id: number;
   id: number;

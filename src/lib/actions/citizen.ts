@@ -314,6 +314,7 @@ const updateOrInsertPlaceSchema = object({
   country: string(),
   longitude: number().nullable(),
   latitude: number().nullable(),
+  geonames: string(),
 });
 
 export const insertOrUpdatePlace = async (
@@ -337,6 +338,7 @@ export const insertOrUpdatePlace = async (
           country: newPlace.country,
           longitude: newPlace.longitude,
           latitude: newPlace.latitude,
+          geonames: newPlace.geonames,
         },
         false,
         logId,
@@ -353,6 +355,7 @@ export const insertOrUpdatePlace = async (
           country: newPlace.country || "",
           longitude: newPlace.longitude || null,
           latitude: newPlace.latitude || null,
+          geonames: newPlace.geonames || "",
         },
         logId
       );

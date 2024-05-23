@@ -16,6 +16,8 @@ import dynamic from "next/dynamic";
 import { Comments } from "@/components/common/comments";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
 import { LinksPopup } from "../properties";
+import { getGeoname, searchGeonames } from "@/lib/actions/geonames";
+import type { Geoname } from "@/lib/actions/geonames";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -24,7 +26,7 @@ const Label = ({ children }: { children: React.ReactNode }) => (
   <label className="w-60">{children}</label>
 );
 
-const WithLabel = ({
+export const WithLabel = ({
   children,
   label,
 }: {
@@ -366,6 +368,7 @@ const EMPTY_NEW_PLACE = {
   settlement: "",
   district: "",
   country: "",
+  geonames: "",
 };
 
 /**
@@ -469,20 +472,183 @@ export const EditPlaceModal = ({
           label="Land"
           placeholder="Schweiz"
         />
+        <GeonamesField
+          value={newPlace.geonames}
+          onChange={(v) =>
+            setNewPlace({
+              ...newPlace,
+              geonames: v.id,
+              latitude: v.lat || newPlace.latitude,
+              longitude: v.lng || newPlace.longitude,
+            })
+          }
+          searchTerm={[newPlace.settlement, newPlace.district, newPlace.country]
+            .filter((n) => !!n)
+            .join(" ")}
+        ></GeonamesField>
         <div>
-          Karte &mdash; {newPlace.latitude?.toFixed(7)},{" "}
-          {newPlace.longitude?.toFixed(7)}
-          {newPlace.latitude && newPlace.longitude && (
-            <LeafletMap
-              position={[newPlace.latitude, newPlace.longitude]}
-              readOnly={false}
-              setPosition={setPosition}
-            />
-          )}
+          <WithLabel label="Koordinaten">
+            {newPlace.latitude && newPlace.longitude ? (
+              <>
+                <div className="w-full flex">
+                  <div>
+                    {[
+                      newPlace.latitude?.toFixed(7),
+                      newPlace.longitude?.toFixed(7),
+                    ].join(", ")}
+                  </div>
+                  {!newPlace.geonames && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setNewPlace({
+                          ...newPlace,
+                          latitude: undefined,
+                          longitude: undefined,
+                        });
+                      }}
+                      className="w-8 ml-2 relative text-2xl text-emerald-400"
+                      title="Koordinaten entfernen"
+                    >
+                      <TiDeleteOutline />
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <span className="text-gray-400">Keine Angabe</span>
+            )}
+          </WithLabel>
+          <LeafletMap
+            key={newPlace.geonames}
+            position={
+              newPlace.latitude && newPlace.longitude
+                ? [newPlace.latitude, newPlace.longitude]
+                : undefined
+            }
+            readOnly={!!newPlace.geonames}
+            setPosition={setPosition}
+          />
         </div>
       </form>
       {id && <CommentsWrapper target={"place/" + id} />}
     </Modal>
+  );
+};
+
+const isValidGeonamesIdentifier = (id: string) => {
+  return /^\d+$/.test(id);
+};
+
+const GeonamesField = ({
+  value,
+  onChange,
+  searchTerm,
+}: {
+  value: string | undefined;
+  onChange: (e: {
+    id: string;
+    lat: number | undefined;
+    lng: number | undefined;
+  }) => void;
+  searchTerm?: string;
+}) => {
+  const geonamesId = value
+    ?.replace("https://www.geonames.org/", "")
+    .split("/")[0];
+
+  const [result, setResult] = useState<Awaited<
+    ReturnType<typeof getGeoname>
+  > | null>(null);
+  useEffect(() => {
+    if (
+      geonamesId &&
+      typeof geonamesId === "string" &&
+      isValidGeonamesIdentifier(geonamesId)
+    ) {
+      getGeoname(geonamesId)
+        .then((data) => setResult(data))
+        .catch(() => setResult(null));
+    } else {
+      setResult(null);
+    }
+  }, [geonamesId]);
+
+  return (
+    <WithLabel label={"Geonames-ID"}>
+      {value ? (
+        <div className="flex justify-between">
+          <div>
+            {geonamesId}
+            {result && (
+              <div>
+                <a
+                  target="_blank"
+                  className="text-emerald-400"
+                  href={`https://www.geonames.org/${geonamesId}`}
+                >
+                  <DisplayGenoname geoname={result} />
+                </a>
+              </div>
+            )}
+            {geonamesId && !isValidGeonamesIdentifier(geonamesId || "") && (
+              <div>Ungültige Geonames-ID</div>
+            )}
+          </div>
+          <button
+            onClick={() =>
+              onChange({
+                id: "",
+                lat: undefined,
+                lng: undefined,
+              })
+            }
+            className="ml-2 text-2xl p-2 text-emerald-400"
+            title="Geonames-ID entfernen"
+          >
+            <TiDeleteOutline />
+          </button>
+        </div>
+      ) : (
+        <SearchInput
+          fallbackTerm={searchTerm}
+          searchFn={searchGeonames}
+          onSelect={(result) =>
+            onChange({
+              id: result.geonameId.toString(),
+              lat: parseFloat(result.lat),
+              lng: parseFloat(result.lng),
+            })
+          }
+          SelectionComponent={({ item, isFocused }) => {
+            return (
+              <div className={`p-2 ${isFocused ? "bg-emerald-100" : ""}`}>
+                <DisplayGenoname geoname={item} />
+              </div>
+            );
+          }}
+          InputComponent={InputField}
+        ></SearchInput>
+      )}
+    </WithLabel>
+  );
+};
+
+const DisplayGenoname = ({ geoname }: { geoname: Geoname }) => {
+  return (
+    <div>
+      {[
+        geoname.name,
+        geoname.adminName1,
+        geoname.adminName2,
+        geoname.adminName3,
+        geoname.adminName4,
+        geoname.adminName5,
+        geoname.countryCode,
+      ]
+        .filter((i) => !!i)
+        .join(", ")}
+    </div>
   );
 };
 
