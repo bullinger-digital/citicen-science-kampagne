@@ -175,6 +175,8 @@ export const importFromCurrentCommit = async () => {
           country: place.querySelector("country")?.textContent || "",
           latitude: latitudeString ? parseFloat(latitudeString) : null,
           longitude: longitudeString ? parseFloat(longitudeString) : null,
+          geonames:
+            place.querySelector("idno[subtype='geonames']")?.textContent || "",
         },
         gitImportSpecs
       );
