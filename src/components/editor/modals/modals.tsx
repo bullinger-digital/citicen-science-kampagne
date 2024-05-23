@@ -520,12 +520,8 @@ export const EditPlaceModal = ({
             )}
           </WithLabel>
           <LeafletMap
-            key={newPlace.geonames}
-            position={
-              newPlace.latitude && newPlace.longitude
-                ? [newPlace.latitude, newPlace.longitude]
-                : undefined
-            }
+            latitude={newPlace.latitude}
+            longitude={newPlace.longitude}
             readOnly={!!newPlace.geonames}
             setPosition={setPosition}
           />

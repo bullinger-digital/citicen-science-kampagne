@@ -19,11 +19,13 @@ const CH_COORDS: LatLngExpression = [46.8182, 8.2275];
 L.Marker.prototype.options.icon = DefaultIcon;
 
 export const LeafletMap = ({
-  position,
+  latitude,
+  longitude,
   setPosition,
   readOnly,
 }: {
-  position: LatLngExpression | undefined;
+  latitude?: number | null;
+  longitude?: number | null;
   setPosition: (pos: [lat: number, lng: number]) => void;
   readOnly: boolean;
 }) => {
@@ -48,12 +50,13 @@ export const LeafletMap = ({
     [setPosition, readOnly]
   );
 
-  useEffect(() => {
-    mapRef.current?.flyTo(position || CH_COORDS, !position ? 7 : undefined);
-  }, [position]);
+  const position: LatLngExpression | undefined = useMemo(
+    () => (latitude && longitude ? [latitude, longitude] : undefined),
+    [latitude, longitude]
+  );
 
   return (
-    <>
+    <div key={position?.join(",")}>
       <MapContainer
         center={position || CH_COORDS}
         zoom={position ? 13 : 7}
@@ -79,6 +82,6 @@ export const LeafletMap = ({
           Bewegen Sie den Marker, um eine Position zu setzen.
         </span>
       )}
-    </>
+    </div>
   );
 };
