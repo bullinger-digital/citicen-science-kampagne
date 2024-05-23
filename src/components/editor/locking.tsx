@@ -33,7 +33,7 @@ export const useLetterLock = (letterId: number, onReleased: () => void) => {
     error,
     refetch,
     success: lockResult?.success,
-    lockedByName: lockResult?.lockedByName,
+    lockedById: lockResult?.lockedById,
   };
 };
 
@@ -44,9 +44,9 @@ export const LockOverlay = (props: {
   return !lock.success && !lock.loading ? (
     <div className="absolute z-50 top-0 left-0 w-full h-full bg-opacity-30 bg-gray-300">
       <div className="mx-auto shadow-lg max-w-screen-md text-center mt-10 bg-white p-6 rounded-lg">
-        {lock.lockedByName && (
+        {lock.lockedById && (
           <>
-            Dieser Brief wird gerade von Benutzer <i>{lock.lockedByName}</i>{" "}
+            Dieser Brief wird gerade von Benutzer <i>{lock.lockedById}</i>{" "}
             bearbeitet.
             <TryAgain onTryAgain={lock.refetch} />
           </>

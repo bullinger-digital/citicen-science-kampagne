@@ -22,7 +22,7 @@ export const aquireLetterLock = async ({ id }: { id: number }) => {
           .selectFrom("letter_lock")
           .where("letter_lock.id", "=", id)
           .leftJoin("user", "locked_by_id", "user.id")
-          .select(["locked_at", "user.user_name", "user.sub as user_sub"])
+          .select(["locked_at", "user.id", "user.sub as user_sub"])
           .executeTakeFirst();
 
       const existingLock = await queryExistingLock();
@@ -69,7 +69,7 @@ export const aquireLetterLock = async ({ id }: { id: number }) => {
       return {
         success: false,
         type: "already_locked",
-        lockedByName: existingLock.user_name,
+        lockedById: existingLock.id,
       };
     });
 };
