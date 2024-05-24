@@ -14,6 +14,9 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Build image
+        env:
+          TINA_CLIENT_ID: ${{ secrets.TINA_CLIENT_ID }}
+          TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
         run: docker build . --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
       - name: (main branch only) Log in to registry
         if: github.ref == 'refs/heads/main'
