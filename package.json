@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"next dev\"",
+    "build": "tinacms build && next build",
     "start": "next start",
     "lint": "next lint",
     "migrate-prod": "cd migrations && npm run migrate",
@@ -15,6 +15,7 @@
     "@auth0/nextjs-auth0": "^3.5.0",
     "@codemirror/lang-xml": "^6.0.2",
     "@prettier/plugin-xml": "^3.4.1",
+    "@tinacms/auth": "^1.0.4",
     "@types/jsdom": "^21.1.6",
     "@types/leaflet": "^1.9.12",
     "@uiw/react-codemirror": "^4.21.21",
@@ -31,10 +32,12 @@
     "react-leaflet": "^4.2.1",
     "react-select": "^5.8.0",
     "simple-git": "^3.22.0",
+    "tinacms": "^1.6.3",
     "yup": "^1.4.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@tinacms/cli": "^1.5.45",
+    "@types/node": "^20.12.12",
     "@types/pg": "^8.11.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",

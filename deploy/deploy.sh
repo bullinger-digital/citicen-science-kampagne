@@ -36,6 +36,8 @@ AUTH0_BASE_URL="$AUTH0_BASE_URL" \
 AUTH0_ISSUER_BASE_URL="$AUTH0_ISSUER_BASE_URL" \
 AUTH0_CLIENT_ID="$AUTH0_CLIENT_ID" \
 AUTH0_CLIENT_SECRET="$AUTH0_CLIENT_SECRET" \
+TINA_CLIENT_ID="$TINA_CLIENT_ID" \
+TINA_TOKEN="$TINA_TOKEN" \
   docker stack deploy --compose-file docker-compose.yml --prune $STACK_NAME --detach=false --with-registry-auth
 
 echo " * Awaiting docker stack... (timeout: $DEPLOYMENT_TIMEOUT_SECONDS seconds)"
