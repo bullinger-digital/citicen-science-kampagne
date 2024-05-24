@@ -18,6 +18,8 @@ RUN \
 
 # Rebuild the source code only when needed
 FROM base AS builder
+ARG NEXT_PUBLIC_TINA_CLIENT_ID
+ARG TINA_TOKEN
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
