@@ -11,6 +11,8 @@ import {
   BlockBrowserNavigation,
   NavigationBlockerProvider,
 } from "@/components/common/navigation-block/navigation-block";
+import { MdMenuBook, MdOutlineRule } from "react-icons/md";
+import { Menu } from "@/components/menu";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,14 +31,34 @@ export default function RootLayout({
       <NavigationBlockerProvider>
         <BlockBrowserNavigation />
         <UserProvider>
-          <body className={inter.className + " text-gray-700 bg-zinc-50"}>
-            <div className="flex justify-between px-5 py-3">
-              <div className="flex space-x-8 items-center self-center text-lg font-light">
+          <body
+            className={
+              inter.className + " text-gray-700 bg-zinc-50 print:bg-white"
+            }
+          >
+            <div className="flex justify-between px-5 py-3 print:hidden">
+              <div className="flex space-x-5 items-center self-center text-lg font-light">
+                <Menu />
                 <Link href="/">
                   <h2>Bullinger Digital - Mithelfen</h2>
                 </Link>
                 <LetterNavigation />
-                <div>Hilfe</div>
+                <Link
+                  href="/pages/hilfe"
+                  target="_blank"
+                  className="flex space-x-2 items-center hover:text-emerald-400"
+                >
+                  <MdMenuBook className="-top-0.5 relative" />
+                  <span>Hilfe</span>
+                </Link>
+                <Link
+                  href="/pages/regeln"
+                  target="_blank"
+                  className="flex space-x-2 items-center hover:text-emerald-400"
+                >
+                  <MdOutlineRule className="-top-0.5 relative" />
+                  <span>Regeln</span>
+                </Link>
               </div>
               <div>
                 <ProfileClient />

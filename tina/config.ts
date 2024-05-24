@@ -100,6 +100,40 @@ export default defineConfig({
         //   filename: ({ document }) => `${document.slug}.mdx`,
         // },
       },
+      {
+        name: "menu",
+        label: "Menu",
+        format: "md",
+        path: "content/menu",
+        fields: [
+          {
+            type: "string",
+            name: "menu_id",
+            label: "Menu ID",
+            isTitle: true,
+            required: true,
+          },
+          {
+            type: "object",
+            name: "menu",
+            label: "Menu",
+            list: true,
+            ui: {
+              itemProps: (item) => ({
+                label: item.page,
+              }),
+            },
+            fields: [
+              {
+                type: "reference",
+                name: "page",
+                label: "Seite",
+                collections: ["page"],
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
 });
