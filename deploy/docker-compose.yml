@@ -28,6 +28,8 @@ services:
       - citizen-science-tei-corpus:/app/tei-corpus
       - ./ssh-config:/home/nextjs/.ssh
       - ./gitconfig:/home/nextjs/.gitconfig
+    networks:
+      - citizen_science
   
   citizen-science-db:
     image: postgres:16.2-alpine
@@ -39,6 +41,8 @@ services:
       POSTGRES_DB: citizen-science
     volumes:
       - citizen-science-database-data:/var/lib/postgresql/data/
+    networks:
+      - citizen_science
 
 
 volumes:
@@ -46,7 +50,7 @@ volumes:
   citizen-science-tei-corpus:
 
 networks:
-  default:
-    driver: bridge
+  citizen_science:
+    driver: overlay
     driver_opts: 
       com.docker.network.driver.mtu: 1450
