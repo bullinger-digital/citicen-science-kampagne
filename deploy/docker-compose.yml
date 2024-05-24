@@ -44,3 +44,9 @@ services:
 volumes:
   citizen-science-database-data:
   citizen-science-tei-corpus:
+
+networks:
+  default:
+    driver: bridge
+    driver_opts: 
+      com.docker.network.driver.mtu: 1450
