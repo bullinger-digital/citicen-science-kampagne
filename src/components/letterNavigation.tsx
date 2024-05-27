@@ -22,6 +22,7 @@ import {
 import { usePathname } from "next/navigation";
 import { Link } from "./common/navigation-block/link";
 import { DynamicAsyncSelect } from "./common/dynamicAsyncSelect";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 const INPUT_CLASSNAMES =
   "w-full px-2 py-2 border-b-2 border-gray-300 outline-none focus:border-beige-500 placeholder-gray-300 text-gray-700";
@@ -51,6 +52,7 @@ const useLocalStorage = <T,>(key: string, fallbackValue: T) => {
 
 export const LetterNavigation = () => {
   const [showFilter, setShowFilter] = useState(false);
+  const session = useUser();
 
   // Read filter from localstorage if available; otherwise use DEFAULT_FILTER
   const [filter, setFilter] = useLocalStorage(
@@ -63,17 +65,25 @@ export const LetterNavigation = () => {
   const pathname = usePathname();
   const current_letter_id = parseInt(pathname.split("/").pop() || "");
 
-  const { data, error, loading, refetch } = useServerFetch(letterNavigation, {
-    filter: filter,
-    current_letter_id: current_letter_id,
-  });
+  const { data, error, loading, refetch } = useServerFetch(
+    letterNavigation,
+    {
+      filter: filter,
+      current_letter_id: current_letter_id,
+    },
+    {
+      skip: !session.user,
+    }
+  );
 
   useOutsideClick(
     filterButtonRef,
     useCallback(() => setShowFilter(false), [setShowFilter])
   );
 
-  return (
+  return !session.user ? (
+    <div className="border-l border-gray-300">&nbsp;</div>
+  ) : (
     <div className="flex">
       <div className="flex bg-blue-100 rounded-lg">
         <NavigationButton

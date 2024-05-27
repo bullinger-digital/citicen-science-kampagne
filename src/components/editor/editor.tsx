@@ -156,7 +156,7 @@ const EditorInternal = ({
             <ContextBox title="Kommentare">
               <Comments target={"letter/" + letter_version.id.toString()} />
             </ContextBox>
-            {isInRole(session, "admin") && (
+            {isInRole(session, "data-admin") && (
               <ContextBox title="Debug">
                 <DebugActionsView />
               </ContextBox>
