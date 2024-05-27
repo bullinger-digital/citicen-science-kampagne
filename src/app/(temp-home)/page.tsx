@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Logo from "../../../public/bullinger-digital.svg";
 
-export default function Home() {
+export const HomeText = () => {
   return (
-    <main className="p-10 bg-white shadow-lg max-w-screen-md mx-auto">
+    <div className="p-10 bg-white shadow-lg text-base font-normal text-left max-w-screen-md mx-auto">
       <Image
         src={Logo}
         width="270"
@@ -90,6 +90,10 @@ export default function Home() {
         Wir freuen uns, wenn sie am 1. Juni 2024 auf diese Website zurückkehren
         und unser Projekt durch Ihre Mitarbeit voranbringen. Vielen Dank!
       </p>
-    </main>
+    </div>
   );
+};
+
+export default function Home() {
+  return <HomeText />;
 }

@@ -48,5 +48,11 @@ export const GET = handleAuth({
     refetch: true,
   }),
   callback: handleCallback({ afterCallback: afterCallback }),
-  signup: handleLogin({ authorizationParams: { screen_hint: "signup" } }),
+  signup: handleLogin({
+    authorizationParams: { screen_hint: "signup" },
+    returnTo: "/insider",
+  }),
+  login: handleLogin({
+    returnTo: "/insider",
+  }),
 });

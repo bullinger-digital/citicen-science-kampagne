@@ -571,7 +571,6 @@ export const letterNavigation = async ({
   };
 };
 
-// We decided not to import orgNames into the database, therefore we read them directly from the file system
 export const orgNameByRef = async ({ ref }: { ref: string }) => {
   await requireRoleOrThrow("user");
   const orgName = await kdb
