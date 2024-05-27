@@ -3,7 +3,7 @@
 import { Link } from "@/components/common/navigation-block/link";
 import { HomeText } from "@/components/homeText";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { IoFilterSharp } from "react-icons/io5";
+import { FaDice } from "react-icons/fa6";
 
 export default function InsiderPage() {
   const user = useUser();
@@ -14,9 +14,9 @@ export default function InsiderPage() {
           {user.user?.email ? (
             <div>
               Sie sind als <em>{user.user.name}</em> angemeldet. Klicken Sie auf
-              das Filter-Symbol{" "}
-              <IoFilterSharp className="text-2xl inline-block mr-2" /> in der
-              Menuleiste, um zu beginnen.
+              das Würfel-Symbol{" "}
+              <FaDice className="text-2xl inline-block mr-2 -mt-1" />
+              in der Menuleiste, um mit einem zufälligen Brief zu beginnen.
             </div>
           ) : (
             <div>
