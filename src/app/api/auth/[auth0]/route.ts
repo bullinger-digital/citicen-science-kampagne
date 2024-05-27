@@ -11,7 +11,7 @@ const afterCallback: AfterCallbackAppRoute = async (req, session, state) => {
   if (session.user) {
     const existingUser = await kdb
       .selectFrom("user")
-      .where("sub", "=", session.user.sub)
+      .where("email", "=", session.user.email)
       .selectAll()
       .executeTakeFirst();
 
@@ -21,19 +21,19 @@ const afterCallback: AfterCallbackAppRoute = async (req, session, state) => {
       updated_at: new Date().toISOString(),
       last_login_at: new Date().toISOString(),
       roles: JSON.stringify((session.user as any)?.["citizen-science/roles"]),
+      sub: session.user.sub,
     };
 
     if (existingUser) {
       await kdb
         .updateTable("user")
         .set(updatedUser)
-        .where("sub", "=", session.user.sub)
+        .where("email", "=", session.user.email)
         .execute();
     } else {
       await kdb
         .insertInto("user")
         .values({
-          sub: session.user.sub,
           ...updatedUser,
         })
         .execute();
