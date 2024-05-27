@@ -349,6 +349,7 @@ export class Versioning {
                 e("is_touched", "is", true),
                 e("git_export_id", "is", null),
                 e("is_latest", "is", true),
+                e("review_state", "<>", "rejected"),
               ])
             )
             .select((e) => {

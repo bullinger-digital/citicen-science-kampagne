@@ -41,6 +41,7 @@ export const initRepository = async () => {
 
 export const pullRepository = async () => {
   const git = simpleGit(repoPath);
+  await git.checkout("main");
   await git.pull();
 };
 
@@ -63,6 +64,9 @@ export const importFromCurrentCommit = async () => {
         t + "_version"
       )} IN EXCLUSIVE MODE;`.execute(db);
     }
+
+    await initRepository();
+    await pullRepository();
 
     const v = new Versioning(db);
     const hasUncommitedTouches = await v.countUncommitedChanges();
