@@ -233,7 +233,11 @@ const exportPlaces = async (db: Kysely<DB>, gitExportId: number) => {
           place.latitude && place.longitude
             ? `${place.latitude} ${place.longitude}`
             : null;
-        h.textContentNode(placeNode, "geo", "geo", geo);
+        if (geo) {
+          h.findOrCreateNode(placeNode, "location", "location", (node) => {
+            h.textContentNode(node, "geo", "geo", geo);
+          });
+        }
         h.textContentNode(
           placeNode,
           "idno[subtype='geonames']",
