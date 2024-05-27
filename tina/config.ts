@@ -92,6 +92,19 @@ export default defineConfig({
             name: "body",
             label: "Body",
             isBody: true,
+            templates: [
+              {
+                name: "FAQ",
+                label: "FAQ",
+                fields: [
+                  {
+                    name: "title",
+                    type: "string",
+                    label: "Title",
+                  },
+                ],
+              },
+            ],
           },
         ],
         // ui: {
@@ -131,6 +144,34 @@ export default defineConfig({
                 collections: ["page"],
               },
             ],
+          },
+        ],
+      },
+      {
+        name: "faq",
+        label: "FAQ",
+        format: "mdx",
+        path: "content/faq",
+        fields: [
+          {
+            type: "string",
+            name: "slug",
+            label:
+              "Slug (kurzer Name zur Identifikation, wird nicht angezeigt)",
+            required: true,
+            isTitle: true,
+          },
+          {
+            type: "string",
+            name: "question",
+            label: "Frage",
+            required: true,
+          },
+          {
+            type: "rich-text",
+            name: "answer",
+            label: "Antwort",
+            isBody: true,
           },
         ],
       },
