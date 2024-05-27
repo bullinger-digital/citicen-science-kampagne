@@ -87,14 +87,14 @@ export const SearchInput = <T,>({
         }
       }}
     >
-      <div className="relative z-[500]">
+      <div className="relative">
         <Input
           value={term}
           onChange={(v) => setTerm(v.currentTarget.value)}
           placeholder="Suche"
         />
         {
-          <div className="absolute z-50 text-sm bg-gray-50 overflow-auto max-h-72 w-full shadow-2xl">
+          <div className="absolute z-[501] text-sm bg-gray-50 overflow-auto max-h-72 w-full shadow-2xl">
             {isLoading && (
               <div className="w-full">
                 <Loading />
