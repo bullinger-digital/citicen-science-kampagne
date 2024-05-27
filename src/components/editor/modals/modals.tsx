@@ -643,7 +643,10 @@ const DisplayGenoname = ({ geoname }: { geoname: Geoname }) => {
         geoname.countryCode,
       ]
         .filter((i) => !!i)
-        .join(", ")}
+        .join(", ")}{" "}
+      <span className="bg-gray-200 inline-block py-0.5 px-1 rounded-sm">
+        {geoname.fclName}
+      </span>
     </div>
   );
 };
