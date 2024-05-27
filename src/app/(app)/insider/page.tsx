@@ -1,7 +1,7 @@
 "use client";
 
-import { HomeText } from "@/app/(temp-home)/page";
 import { Link } from "@/components/common/navigation-block/link";
+import { HomeText } from "@/components/homeText";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { IoFilterSharp } from "react-icons/io5";
 
