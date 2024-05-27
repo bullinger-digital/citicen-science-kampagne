@@ -41,6 +41,13 @@ export const initRepository = async () => {
 
 export const pullRepository = async () => {
   const git = simpleGit(repoPath);
+
+  const s = await git.status();
+  if (!s.isClean || s.files.length > 0)
+    throw new Error(
+      "Pull failed - there are uncommited changes in the repository"
+    );
+
   await git.checkout("main");
   await git.pull();
 };
