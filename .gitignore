@@ -44,3 +44,5 @@ migrations/node_modules
 migrations/npm-debug.log*
 
 /media
+# Sentry Config File
+.env.sentry-build-plugin
