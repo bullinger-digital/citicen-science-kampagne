@@ -48,24 +48,7 @@ const PersName = ({ node }: { node: Node }) => {
           <span className="font-bold">
             {mainAlias?.forename} {mainAlias?.surname}
           </span>{" "}
-          ({id})
-          {aliases.length > 1 && (
-            <div>
-              <Popover
-                content={
-                  <div className="overflow-auto text-left max-h-36">
-                    {aliases.map((a) => (
-                      <div key={a.id}>
-                        {a.forename} {a.surname}
-                      </div>
-                    ))}
-                  </div>
-                }
-              >
-                <div className="text-sm">{aliases.length} Namensvarianten</div>
-              </Popover>
-            </div>
-          )}
+          ({id}){" "}
           <button
             onClick={() => {
               setEditModalOpen(true);
@@ -82,6 +65,23 @@ const PersName = ({ node }: { node: Node }) => {
               }}
               id={parseInt(id)}
             />
+          )}
+          {aliases.length > 1 && (
+            <div>
+              <Popover
+                content={
+                  <div className="overflow-auto text-left max-h-36">
+                    {aliases.map((a) => (
+                      <div key={a.id}>
+                        {a.forename} {a.surname}
+                      </div>
+                    ))}
+                  </div>
+                }
+              >
+                <div className="text-sm">{aliases.length} Namensvarianten</div>
+              </Popover>
+            </div>
           )}
         </div>
         <EntityLinksList links={selectedPerson.links} />
