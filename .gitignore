@@ -42,3 +42,5 @@ next-env.d.ts
 # Migrations
 migrations/node_modules
 migrations/npm-debug.log*
+
+/media
