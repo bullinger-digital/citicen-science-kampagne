@@ -147,6 +147,9 @@ export default defineConfig({
           },
           {
             type: "datetime",
+            ui: {
+              timeFormat: "HH:mm",
+            },
             name: "showFrom",
             label: "Anzeigen ab",
           },
