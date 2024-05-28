@@ -4,7 +4,7 @@ import {
   searchPerson,
   searchPlace,
 } from "@/lib/actions/citizen";
-import { ReactNode, useContext, useState } from "react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 import { InfoIcon, Popover } from "../common/info";
 import { EditorContext } from "./editorContext";
 import { ContextBox } from "./editor";
@@ -284,6 +284,23 @@ const CertToggle = ({ node }: { node: Node }) => {
 
 type SearchFunction = typeof searchPerson | typeof searchPlace;
 
+const useDequeued = (value: string, intervalMs: number) => {
+  const [dequeuedValue, setDequeuedValue] = useState(value);
+  const [queueing, setQueueing] = useState(false);
+
+  useEffect(() => {
+    setQueueing(true);
+    const timeout = setTimeout(() => {
+      setDequeuedValue(value);
+      console.log("Dequeued value", value);
+      setQueueing(false);
+    }, intervalMs);
+    return () => clearTimeout(timeout);
+  }, [value, intervalMs]);
+
+  return { dequeuedValue, queueing };
+};
+
 const EntitySelector = <T extends SearchFunction>({
   initialSearch,
   onSelect,
@@ -307,13 +324,15 @@ const EntitySelector = <T extends SearchFunction>({
       .trim()
   );
 
+  const { queueing, dequeuedValue } = useDequeued(query, 500);
+
   const { loading, data: entities } = useServerFetch<
     Parameters<T>[0],
     Awaited<ReturnType<T>>
   >(
     // Todo: fix typing
     searchFn as any,
-    { query }
+    { query: dequeuedValue }
   );
 
   const [newModalOpen, setNewModalOpen] = useState(false);
@@ -325,7 +344,7 @@ const EntitySelector = <T extends SearchFunction>({
       <div className="mb-2 italic">Nicht zugewiesen</div>
       <SearchField query={query} setQuery={setQuery} />
 
-      {loading || !entities ? (
+      {loading || queueing || !entities ? (
         <Loading />
       ) : (
         <div className="mt-2 overflow-y-auto max-h-[500px]">
