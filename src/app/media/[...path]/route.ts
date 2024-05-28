@@ -2,6 +2,19 @@ import path from "path";
 import fs from "fs";
 export const dynamic = "force-dynamic"; // defaults to auto
 
+const CONTENT_TYPE_MAP: {
+  [key: string]: string;
+} = {
+  svg: "image/svg+xml",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp",
+  pdf: "application/pdf",
+  _default: "application/octet-stream",
+};
+
 // Tina CMS media handler
 export async function GET(request: Request) {
   if (request.url.includes("..")) {
@@ -9,13 +22,19 @@ export async function GET(request: Request) {
   }
   const currentUrl = new URL(request.url);
   const mediaPath = currentUrl.pathname.replace("/media/", "");
+  const contentType =
+    CONTENT_TYPE_MAP[mediaPath.split(".").pop() || "_default"];
 
   // If we're in development, we can just return the file from the file system
   if (process.env.NODE_ENV === "development") {
     // Return response with file content (binary)
     const localPath = path.join(process.cwd(), "media", mediaPath);
     const stream = await fs.promises.readFile(localPath);
-    return new Response(stream);
+    return new Response(stream, {
+      headers: {
+        "Content-Type": contentType,
+      },
+    });
   }
 
   // Get file from GitHub
@@ -35,5 +54,10 @@ export async function GET(request: Request) {
   }
 
   // Return response with file content (binary)
-  return new Response(await response.blob());
+  return new Response(await response.blob(), {
+    headers: {
+      "Content-Type": contentType,
+      "Content-Disposition": contentType === "application/pdf" ? "inline" : "",
+    },
+  });
 }

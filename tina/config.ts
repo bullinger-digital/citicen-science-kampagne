@@ -1,4 +1,4 @@
-import { defineConfig } from "tinacms";
+import { TinaField, defineConfig } from "tinacms";
 
 // Your hosting provider likely exposes this as an environment variable
 const branch =
@@ -6,6 +6,104 @@ const branch =
   process.env.VERCEL_GIT_COMMIT_REF ||
   process.env.HEAD ||
   "main";
+
+const defaultRichTextField: Partial<TinaField<false>> & { type: "rich-text" } =
+  {
+    type: "rich-text",
+    templates: [
+      {
+        name: "FAQ",
+        label: "FAQ",
+        fields: [
+          {
+            name: "title",
+            type: "string",
+            label: "Title",
+          },
+          {
+            name: "faq",
+            label: "FAQ",
+            type: "object",
+            list: true,
+            ui: {
+              itemProps: (item) => ({
+                label: flattenText(item.question),
+              }),
+            },
+            fields: [
+              {
+                name: "question",
+                type: "rich-text",
+                label: "Question",
+                isBody: true,
+              },
+              {
+                name: "answer",
+                type: "rich-text",
+                label: "Answer",
+                isBody: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: "collapsible",
+        label: "Collapsible List",
+        fields: [
+          {
+            name: "collapsibles",
+            type: "object",
+            list: true,
+            label: "Collapsibles",
+            ui: {
+              itemProps: (item) => ({
+                label: item.title,
+              }),
+            },
+            fields: [
+              {
+                name: "title",
+                type: "string",
+                label: "Title",
+                isTitle: true,
+                required: true,
+              },
+              {
+                name: "content",
+                type: "rich-text",
+                label: "Content",
+                isBody: true,
+              },
+              {
+                name: "isExpanded",
+                type: "boolean",
+                label: "Is Expanded",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: "button_pdf",
+        label: "PDF-Button (Link)",
+        fields: [
+          {
+            name: "title",
+            type: "string",
+            label: "Title",
+            isTitle: true,
+            required: true,
+          },
+          {
+            name: "pdf",
+            type: "image",
+            label: "PDF",
+          },
+        ],
+      },
+    ],
+  };
 
 export default defineConfig({
   branch,
@@ -88,85 +186,10 @@ export default defineConfig({
             label: "Description",
           },
           {
-            type: "rich-text",
+            ...defaultRichTextField,
             name: "body",
             label: "Body",
             isBody: true,
-            templates: [
-              {
-                name: "FAQ",
-                label: "FAQ",
-                fields: [
-                  {
-                    name: "title",
-                    type: "string",
-                    label: "Title",
-                  },
-                  {
-                    name: "faq",
-                    label: "FAQ",
-                    type: "object",
-                    list: true,
-                    ui: {
-                      itemProps: (item) => ({
-                        label: flattenText(item.question),
-                      }),
-                    },
-                    fields: [
-                      {
-                        name: "question",
-                        type: "rich-text",
-                        label: "Question",
-                        isBody: true,
-                      },
-                      {
-                        name: "answer",
-                        type: "rich-text",
-                        label: "Answer",
-                        isBody: true,
-                      },
-                    ],
-                  },
-                ],
-              },
-              {
-                name: "collapsible",
-                label: "Collapsible List",
-                fields: [
-                  {
-                    name: "collapsibles",
-                    type: "object",
-                    list: true,
-                    label: "Collapsibles",
-                    ui: {
-                      itemProps: (item) => ({
-                        label: item.title,
-                      }),
-                    },
-                    fields: [
-                      {
-                        name: "title",
-                        type: "string",
-                        label: "Title",
-                        isTitle: true,
-                        required: true,
-                      },
-                      {
-                        name: "content",
-                        type: "rich-text",
-                        label: "Content",
-                        isBody: true,
-                      },
-                      {
-                        name: "isExpanded",
-                        type: "boolean",
-                        label: "Is Expanded",
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
           },
         ],
         // ui: {

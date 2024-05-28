@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Components, TinaMarkdown } from "tinacms/dist/rich-text";
 import { Collapsible } from "../common/collapsible";
+import { Link } from "../common/navigation-block/link";
 
 export const components: Components<{
   FAQ: {
@@ -16,6 +17,10 @@ export const components: Components<{
       content: any;
       isExpanded: boolean;
     }[];
+  };
+  button_pdf: {
+    title: string;
+    pdf?: string;
   };
 }> = {
   p: (props) => <p className="mb-4">{props?.children}</p>,
@@ -84,6 +89,17 @@ export const components: Components<{
           );
         })}
       </div>
+    );
+  },
+  button_pdf: (props) => {
+    return (
+      <Link
+        href={props.pdf || "#"}
+        className="inline-block hover:underline mb-4 bg-emerald-300 p-3 hover:bg-emerald-400 rounded-md"
+        target="_blank"
+      >
+        {props.title}
+      </Link>
     );
   },
 };
