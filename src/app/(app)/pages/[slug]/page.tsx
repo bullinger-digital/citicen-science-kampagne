@@ -1,23 +1,20 @@
 import { TinaMarkdown, TinaMarkdownContent } from "tinacms/dist/rich-text";
-import client from "../../../../../tina/__generated__/client";
 import { components } from "@/components/content/markdownComponents";
+import { PageContent } from "@/components/content/pageContent";
 
 const Page = async ({ params }: { params: { slug: string } }) => {
-  const { data } = await client.queries.page({
-    relativePath: `${params.slug.toLowerCase()}.mdx`,
-  });
-
   return (
-    <>
-      <div>
+    <PageContent
+      relativePath={`${params.slug.toLowerCase()}.mdx`}
+      DisplayComponent={({ page }) => (
         <div>
           <h1 className="text-3xl m-8 text-center leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            {data?.page.title}
+            {page?.page.title}
           </h1>
-          <ContentSection content={data.page.body}></ContentSection>
+          <ContentSection content={page.page.body}></ContentSection>
         </div>
-      </div>
-    </>
+      )}
+    />
   );
 };
 

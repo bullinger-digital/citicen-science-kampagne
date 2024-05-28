@@ -1,40 +1,40 @@
-"use client";
-
-import { Link } from "@/components/common/navigation-block/link";
-import { HomeText } from "@/components/homeText";
-import { useUser } from "@auth0/nextjs-auth0/client";
-import { FaDice } from "react-icons/fa6";
+import Image from "next/image";
+import Logo from "../../../../public/bullinger-digital.svg";
+import client from "../../../../tina/__generated__/client";
+import { TinaMarkdown } from "tinacms/dist/rich-text";
+import { components } from "@/components/content/markdownComponents";
+import LoginRegisterInfo from "@/components/common/loginRegisterInfo";
+import { PageContent } from "@/components/content/pageContent";
 
 export default function InsiderPage() {
-  const user = useUser();
   return (
     <main className="px-5 pb-5 text-center font-light mt-5 text-2xl">
-      {!user.isLoading && (
-        <div className="text-base bg-blue-100 max-w-3xl p-5 mb-5 mx-auto">
-          {user.user?.email ? (
-            <div>
-              Sie sind als <em>{user.user.name}</em> angemeldet. Klicken Sie auf
-              das Würfel-Symbol{" "}
-              <FaDice className="text-2xl inline-block mr-2 -mt-1" />
-              in der Menuleiste, um mit einem zufälligen Brief zu beginnen.
-            </div>
-          ) : (
-            <div>
-              Um an der Kampagne teilzunehmen, müssen Sie sich mit ihrem
-              persönlichen Login anmelden.
-              <br />
-              <Link href="/api/auth/login" className="underline">
-                Anmelden
-              </Link>{" "}
-              oder{" "}
-              <Link href="/api/auth/signup" className="underline">
-                Registrieren
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-      <HomeText />
+      <LoginRegisterInfo />
+      <HomePageContent />
     </main>
   );
 }
+
+const HomePageContent = async () => {
+  return (
+    <PageContent
+      relativePath="home.mdx"
+      DisplayComponent={({ page }) => {
+        return (
+          <div className="p-10 bg-white shadow-lg text-base font-normal text-left max-w-screen-md mx-auto">
+            <Image
+              src={Logo}
+              width="270"
+              className="mb-7"
+              alt="Bullinger Digital Logo"
+            />
+            <div>
+              <h1 className="text-3xl font-bold mb-5">{page.page.title}</h1>
+              <TinaMarkdown content={page.page.body} components={components} />
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+};

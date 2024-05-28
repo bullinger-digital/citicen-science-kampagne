@@ -1,8 +1,22 @@
-import { Components } from "tinacms/dist/rich-text";
-import { FAQ } from "./FAQ";
+import { useState } from "react";
+import { Components, TinaMarkdown } from "tinacms/dist/rich-text";
+import { Collapsible } from "../common/collapsible";
 
 export const components: Components<{
-  FAQ: { title: string };
+  FAQ: {
+    title: string;
+    faq: {
+      question: any;
+      answer: any;
+    }[];
+  };
+  collapsible: {
+    collapsibles: {
+      title: string;
+      content: any;
+      isExpanded: boolean;
+    }[];
+  };
 }> = {
   p: (props) => <p className="mb-4">{props?.children}</p>,
   ol: (props) => (
@@ -40,6 +54,36 @@ export const components: Components<{
     </>
   ),
   FAQ: (props) => {
-    return <FAQ title={props.title} />;
+    return (
+      <div>
+        <h3 className="text-xl mb-2">{props.title}</h3>
+        <ul>
+          {props.faq.map((f, i) => (
+            <li key={i}>
+              <h4 className="font-bold mb-1">
+                <TinaMarkdown content={f.question} components={components} />
+              </h4>
+              <TinaMarkdown content={f.answer} components={components} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  },
+  collapsible: (props) => {
+    return (
+      <div className="mt-6">
+        {props.collapsibles?.map((c, i) => {
+          return (
+            <Collapsible
+              key={i}
+              title={c.title}
+              content={c.content}
+              isExpanded={c.isExpanded}
+            />
+          );
+        })}
+      </div>
+    );
   },
 };

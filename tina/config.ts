@@ -102,6 +102,68 @@ export default defineConfig({
                     type: "string",
                     label: "Title",
                   },
+                  {
+                    name: "faq",
+                    label: "FAQ",
+                    type: "object",
+                    list: true,
+                    ui: {
+                      itemProps: (item) => ({
+                        label: flattenText(item.question),
+                      }),
+                    },
+                    fields: [
+                      {
+                        name: "question",
+                        type: "rich-text",
+                        label: "Question",
+                        isBody: true,
+                      },
+                      {
+                        name: "answer",
+                        type: "rich-text",
+                        label: "Answer",
+                        isBody: true,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                name: "collapsible",
+                label: "Collapsible List",
+                fields: [
+                  {
+                    name: "collapsibles",
+                    type: "object",
+                    list: true,
+                    label: "Collapsibles",
+                    ui: {
+                      itemProps: (item) => ({
+                        label: item.title,
+                      }),
+                    },
+                    fields: [
+                      {
+                        name: "title",
+                        type: "string",
+                        label: "Title",
+                        isTitle: true,
+                        required: true,
+                      },
+                      {
+                        name: "content",
+                        type: "rich-text",
+                        label: "Content",
+                        isBody: true,
+                      },
+                      {
+                        name: "isExpanded",
+                        type: "boolean",
+                        label: "Is Expanded",
+                      },
+                    ],
+                  },
                 ],
               },
             ],
@@ -147,34 +209,20 @@ export default defineConfig({
           },
         ],
       },
-      {
-        name: "faq",
-        label: "FAQ",
-        format: "mdx",
-        path: "content/faq",
-        fields: [
-          {
-            type: "string",
-            name: "slug",
-            label:
-              "Slug (kurzer Name zur Identifikation, wird nicht angezeigt)",
-            required: true,
-            isTitle: true,
-          },
-          {
-            type: "string",
-            name: "question",
-            label: "Frage",
-            required: true,
-          },
-          {
-            type: "rich-text",
-            name: "answer",
-            label: "Antwort",
-            isBody: true,
-          },
-        ],
-      },
     ],
   },
 });
+
+// Accpets a nested object and concatenates all strings in .text-properties
+const flattenText = (obj: Record<string, any>): string => {
+  if (!obj) return "(ohne Titel)";
+  return Object.keys(obj).reduce<string>((acc, key) => {
+    if (key === "text" && typeof obj[key] === "string") {
+      return acc + " " + obj[key];
+    }
+    if (typeof obj[key] === "object") {
+      return acc + flattenText(obj[key]);
+    }
+    return acc;
+  }, "");
+};

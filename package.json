@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"next dev\"",
+    "testx": "next dev",
     "build": "tinacms build && next build",
     "start": "next start",
     "lint": "next lint",
