@@ -94,7 +94,7 @@ export const Popover = ({
           ? (e) => {
               e.stopPropagation();
               e.preventDefault();
-              setVisible(true);
+              setVisible(!visible);
             }
           : undefined
       }

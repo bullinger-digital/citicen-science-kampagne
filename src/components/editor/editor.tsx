@@ -21,6 +21,7 @@ import { LockOverlay, useLetterLock } from "./locking";
 import { LetterMetaData } from "./metaData";
 import { Blocker } from "../common/navigation-block/navigation-block";
 import { Comments } from "../common/comments";
+import { InfoIcon } from "../common/info";
 
 export const Editor = ({ letterId }: { letterId: number }) => {
   const {
@@ -83,6 +84,17 @@ const EditorInternal = ({
   );
   const textNode = xmlDoc.querySelector("TEI > text > body");
   const footNotes = xmlDoc.querySelectorAll("TEI note[type=footnote]");
+  const sourceDesc = xmlDoc.querySelector(
+    "TEI > teiHeader > fileDesc > sourceDesc"
+  );
+  const sourceText = sourceDesc?.querySelector(
+    "sourceDesc > bibl[type=transcription]"
+  )?.textContent;
+  const sourceRegest =
+    sourceDesc?.querySelector("bibl[type=regest]")?.textContent;
+  const sourceFootNotes = sourceDesc?.querySelector(
+    "bibl[type=footnotes]"
+  )?.textContent;
 
   return (
     <EditorContext.Provider value={state}>
@@ -102,7 +114,15 @@ const EditorInternal = ({
               <div className="pr-4">
                 {regestNode && (
                   <div className="mb-8">
-                    <h2 className="text-xl mb-3">Regest</h2>
+                    <div className="flex">
+                      <h2 className="text-xl mb-3">Regest</h2>
+                      {sourceRegest && (
+                        <InfoIcon
+                          className="text-gray-300 ml-2 top-0.5"
+                          content={`Quelle: ${sourceRegest}`}
+                        />
+                      )}
+                    </div>
                     <div className="leading-8 font-serif">
                       <RenderText
                         nodes={Array.from(regestNode.childNodes || [])}
@@ -110,13 +130,29 @@ const EditorInternal = ({
                     </div>
                   </div>
                 )}
-                <h2 className="text-xl mb-3">Brieftext</h2>
+                <div className="flex">
+                  <h2 className="text-xl mb-3">Brieftext</h2>
+                  {sourceText && (
+                    <InfoIcon
+                      className="text-gray-300 ml-2 top-0.5"
+                      content={`Quelle: ${sourceText}`}
+                    />
+                  )}
+                </div>
                 <div className="leading-8 font-serif">
                   <RenderText nodes={Array.from(textNode?.childNodes || [])} />
                 </div>
                 {footNotes.length > 0 && (
                   <>
-                    <h2 className="text-xl mb-3 mt-7">Fussnoten</h2>
+                    <div className="flex mt-7">
+                      <h2 className="text-xl mb-3">Fussnoten</h2>
+                      {sourceFootNotes && (
+                        <InfoIcon
+                          className="text-gray-300 ml-2 top-0.5"
+                          content={`Quelle: ${sourceFootNotes}`}
+                        />
+                      )}
+                    </div>
                     <ol className="leading-8 font-serif">
                       {Array.from(footNotes).map((node, i) => (
                         <li className="flex" key={i}>
