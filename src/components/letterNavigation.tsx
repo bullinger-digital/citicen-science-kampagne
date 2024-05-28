@@ -63,7 +63,7 @@ export const LetterNavigation = () => {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const pathname = usePathname();
-  const current_letter_id = parseInt(pathname.split("/").pop() || "");
+  const current_letter_id = parseInt(pathname?.split("/").pop() || "");
 
   const { data, error, loading, refetch } = useServerFetch(
     letterNavigation,
@@ -85,7 +85,7 @@ export const LetterNavigation = () => {
     <div className="border-l border-gray-300">&nbsp;</div>
   ) : (
     <div className="flex">
-      <div className="flex bg-blue-100 rounded-lg">
+      <div className="flex bg-blue-100 rounded-lg relative">
         <NavigationButton
           ref={filterButtonRef}
           label="Filter"
@@ -95,82 +95,82 @@ export const LetterNavigation = () => {
           )}
         >
           <IoFilterSharp className="text-2xl" />
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`text-left absolute top-full w-96 z-40 bg-white shadow-2xl p-3 border-gray-200 border text-base ${showFilter ? "block" : "hidden"}`}
-          >
-            <FilterWithLabel label="Briefsprache">
-              <select
-                className={INPUT_CLASSNAMES}
-                value={filter.language || ""}
-                onChange={(e) =>
-                  setFilter({
-                    ...filter,
-                    language: e.target.value ? e.target.value : undefined,
-                  })
-                }
-              >
-                <option value="">Sprache auswählen</option>
-                <option value="la">Latein</option>
-                <option value="de">Deutsch</option>
-                <option value="el">Griechisch</option>
-                <option value="fr">Französisch</option>
-                <option value="he">Hebräisch</option>
-                <option value="it">Italienisch</option>
-                <option value="en">Englisch</option>
-              </select>
-            </FilterWithLabel>
-            <FilterWithLabel label="Korrespondent">
-              <PersonDropdown
-                personId={filter.person_id}
-                onChange={(personId) =>
-                  setFilter({
-                    ...filter,
-                    person_id: personId,
-                  })
-                }
-              />
-            </FilterWithLabel>
-            <FilterWithLabel label="Brief-Status">
-              <select
-                className={INPUT_CLASSNAMES}
-                value={filter.status || ""}
-                onChange={(e) =>
-                  setFilter({
-                    ...filter,
-                    status: e.target.value ? e.target.value : undefined,
-                  })
-                }
-              >
-                <option value="notfinished">Zu bearbeiten</option>
-                <option value="finished">Abgeschlossen</option>
-                <option value="">Alle</option>
-              </select>
-            </FilterWithLabel>
-
-            <div className="flex justify-end">
-              <a
-                className=" bg-emerald-100 hover:bg-emerald-200 py-2 px-3 first:rounded-l-md last:rounded-r-md"
-                onClick={() => {
-                  setFilter(DEFAULT_FILTER);
-                }}
-              >
-                Filter zurücksetzen
-              </a>
-              <Link
-                className={`${data?.random ? "bg-emerald-300 hover:bg-emerald-400" : "bg-gray-200 text-gray-400"} py-2 px-3 first:rounded-l-md last:rounded-r-md`}
-                aria-disabled={!data?.random}
-                href={data?.random ? `/letter/${data?.random}` : ""}
-                title="Mit zufälligem Brief beginnen"
-                onClick={(e) =>
-                  data?.random ? setShowFilter(false) : e.preventDefault()
-                }
-              >
-                Loslegen
-              </Link>
-            </div>
-          </div>
         </NavigationButton>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`text-left absolute top-full w-96 z-40 bg-white shadow-2xl p-3 border-gray-200 border text-base ${showFilter ? "block" : "hidden"}`}
+        >
+          <FilterWithLabel label="Briefsprache">
+            <select
+              className={INPUT_CLASSNAMES}
+              value={filter.language || ""}
+              onChange={(e) =>
+                setFilter({
+                  ...filter,
+                  language: e.target.value ? e.target.value : undefined,
+                })
+              }
+            >
+              <option value="">Sprache auswählen</option>
+              <option value="la">Latein</option>
+              <option value="de">Deutsch</option>
+              <option value="el">Griechisch</option>
+              <option value="fr">Französisch</option>
+              <option value="he">Hebräisch</option>
+              <option value="it">Italienisch</option>
+              <option value="en">Englisch</option>
+            </select>
+          </FilterWithLabel>
+          <FilterWithLabel label="Korrespondent">
+            <PersonDropdown
+              personId={filter.person_id}
+              onChange={(personId) =>
+                setFilter({
+                  ...filter,
+                  person_id: personId,
+                })
+              }
+            />
+          </FilterWithLabel>
+          <FilterWithLabel label="Brief-Status">
+            <select
+              className={INPUT_CLASSNAMES}
+              value={filter.status || ""}
+              onChange={(e) =>
+                setFilter({
+                  ...filter,
+                  status: e.target.value ? e.target.value : undefined,
+                })
+              }
+            >
+              <option value="notfinished">Zu bearbeiten</option>
+              <option value="finished">Abgeschlossen</option>
+              <option value="">Alle</option>
+            </select>
+          </FilterWithLabel>
+
+          <div className="flex justify-end">
+            <a
+              className=" bg-emerald-100 hover:bg-emerald-200 py-2 px-3 first:rounded-l-md last:rounded-r-md"
+              onClick={() => {
+                setFilter(DEFAULT_FILTER);
+              }}
+            >
+              Filter zurücksetzen
+            </a>
+            <Link
+              className={`${data?.random ? "bg-emerald-300 hover:bg-emerald-400" : "bg-gray-200 text-gray-400"} py-2 px-3 first:rounded-l-md last:rounded-r-md`}
+              aria-disabled={!data?.random}
+              href={data?.random ? `/letter/${data?.random}` : ""}
+              title="Mit zufälligem Brief beginnen"
+              onClick={(e) =>
+                data?.random ? setShowFilter(false) : e.preventDefault()
+              }
+            >
+              Loslegen
+            </Link>
+          </div>
+        </div>
         <NavigationButton
           label="Zufälligen Brief auswählen"
           href={`/letter/${data?.random}`}
