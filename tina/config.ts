@@ -80,7 +80,6 @@ const defaultRichTextField: RichTextType = {
               name: "title",
               type: "string",
               label: "Title",
-              isTitle: true,
             },
             {
               name: "content",
@@ -106,7 +105,6 @@ const defaultRichTextField: RichTextType = {
           name: "title",
           type: "string",
           label: "Title",
-          isTitle: true,
         },
         {
           name: "pdf",
