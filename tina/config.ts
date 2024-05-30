@@ -7,103 +7,120 @@ const branch =
   process.env.HEAD ||
   "main";
 
-const defaultRichTextField: Partial<TinaField<false>> & { type: "rich-text" } =
-  {
-    type: "rich-text",
-    templates: [
-      {
-        name: "FAQ",
-        label: "FAQ",
-        fields: [
-          {
-            name: "title",
-            type: "string",
-            label: "Title",
+type RichTextType = Partial<TinaField<false>> & { type: "rich-text" };
+type TemplateType = Required<RichTextType>["templates"][0];
+
+const blockYoutubeVideo: TemplateType = {
+  name: "youtube_video",
+  label: "YouTube Video",
+  fields: [
+    {
+      name: "url",
+      type: "string",
+      label: "URL",
+      required: true,
+    },
+  ],
+};
+
+const defaultRichTextField: RichTextType = {
+  type: "rich-text",
+  templates: [
+    {
+      name: "FAQ",
+      label: "FAQ",
+      fields: [
+        {
+          name: "title",
+          type: "string",
+          label: "Title",
+        },
+        {
+          name: "faq",
+          label: "FAQ",
+          type: "object",
+          list: true,
+          ui: {
+            itemProps: (item) => ({
+              label: flattenText(item.question),
+            }),
           },
-          {
-            name: "faq",
-            label: "FAQ",
-            type: "object",
-            list: true,
-            ui: {
-              itemProps: (item) => ({
-                label: flattenText(item.question),
-              }),
+          fields: [
+            {
+              name: "question",
+              type: "rich-text",
+              label: "Question",
+              isBody: true,
             },
-            fields: [
-              {
-                name: "question",
-                type: "rich-text",
-                label: "Question",
-                isBody: true,
-              },
-              {
-                name: "answer",
-                type: "rich-text",
-                label: "Answer",
-                isBody: true,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        name: "collapsible",
-        label: "Collapsible List",
-        fields: [
-          {
-            name: "collapsibles",
-            type: "object",
-            list: true,
-            label: "Collapsibles",
-            ui: {
-              itemProps: (item) => ({
-                label: item.title,
-              }),
+            {
+              name: "answer",
+              type: "rich-text",
+              label: "Answer",
+              isBody: true,
             },
-            fields: [
-              {
-                name: "title",
-                type: "string",
-                label: "Title",
-                isTitle: true,
-                required: true,
-              },
-              {
-                name: "content",
-                type: "rich-text",
-                label: "Content",
-                isBody: true,
-              },
-              {
-                name: "isExpanded",
-                type: "boolean",
-                label: "Is Expanded",
-              },
-            ],
+          ],
+        },
+      ],
+    },
+    {
+      name: "collapsible",
+      label: "Collapsible List",
+      fields: [
+        {
+          name: "collapsibles",
+          type: "object",
+          list: true,
+          label: "Collapsibles",
+          ui: {
+            itemProps: (item) => ({
+              label: item.title,
+            }),
           },
-        ],
-      },
-      {
-        name: "button_pdf",
-        label: "PDF-Button (Link)",
-        fields: [
-          {
-            name: "title",
-            type: "string",
-            label: "Title",
-            isTitle: true,
-            required: true,
-          },
-          {
-            name: "pdf",
-            type: "image",
-            label: "PDF",
-          },
-        ],
-      },
-    ],
-  };
+          fields: [
+            {
+              name: "title",
+              type: "string",
+              label: "Title",
+              isTitle: true,
+              required: true,
+            },
+            {
+              name: "content",
+              type: "rich-text",
+              label: "Content",
+              isBody: true,
+              templates: [blockYoutubeVideo],
+            },
+            {
+              name: "isExpanded",
+              type: "boolean",
+              label: "Is Expanded",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "button_pdf",
+      label: "PDF-Button (Link)",
+      fields: [
+        {
+          name: "title",
+          type: "string",
+          label: "Title",
+          isTitle: true,
+          required: true,
+        },
+        {
+          name: "pdf",
+          type: "image",
+          label: "PDF",
+        },
+      ],
+    },
+    blockYoutubeVideo,
+  ],
+};
 
 export default defineConfig({
   branch,

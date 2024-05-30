@@ -22,6 +22,9 @@ export const components: Components<{
     title: string;
     pdf?: string;
   };
+  youtube_video: {
+    url: string;
+  };
 }> = {
   p: (props) => <p className="mb-4">{props?.children}</p>,
   ol: (props) => (
@@ -100,6 +103,24 @@ export const components: Components<{
       >
         {props.title}
       </Link>
+    );
+  },
+  youtube_video: (props) => {
+    const videoId = props.url.split("v=")[1];
+    return (
+      <div>
+        <iframe
+          width="560"
+          height="315"
+          className="max-w-full"
+          src={`https://www.youtube.com/embed/${videoId}`}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+          allowFullScreen
+          referrerPolicy="no-referrer"
+        ></iframe>
+      </div>
     );
   },
 };
