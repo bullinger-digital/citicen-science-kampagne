@@ -106,7 +106,8 @@ export const components: Components<{
     );
   },
   youtube_video: (props) => {
-    const videoId = props.url.split("v=")[1];
+    // Extract video id from URL
+    const videoId = props.url.split("v=")[1] || props.url.split("youtu.be/")[1];
     return (
       <div>
         <iframe
