@@ -18,7 +18,6 @@ const blockYoutubeVideo: TemplateType = {
       name: "url",
       type: "string",
       label: "URL",
-      required: true,
     },
   ],
 };
@@ -82,7 +81,6 @@ const defaultRichTextField: RichTextType = {
               type: "string",
               label: "Title",
               isTitle: true,
-              required: true,
             },
             {
               name: "content",
@@ -109,7 +107,6 @@ const defaultRichTextField: RichTextType = {
           type: "string",
           label: "Title",
           isTitle: true,
-          required: true,
         },
         {
           name: "pdf",

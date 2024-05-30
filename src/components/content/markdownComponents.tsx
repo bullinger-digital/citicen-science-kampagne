@@ -5,17 +5,17 @@ import { Link } from "../common/navigation-block/link";
 
 export const components: Components<{
   FAQ: {
-    title: string;
-    faq: {
-      question: any;
-      answer: any;
+    title?: string;
+    faq?: {
+      question?: any;
+      answer?: any;
     }[];
   };
   collapsible: {
-    collapsibles: {
-      title: string;
-      content: any;
-      isExpanded: boolean;
+    collapsibles?: {
+      title?: string;
+      content?: any;
+      isExpanded?: boolean;
     }[];
   };
   button_pdf: {
@@ -23,7 +23,7 @@ export const components: Components<{
     pdf?: string;
   };
   youtube_video: {
-    url: string;
+    url?: string;
   };
 }> = {
   p: (props) => <p className="mb-4">{props?.children}</p>,
@@ -66,7 +66,7 @@ export const components: Components<{
       <div>
         <h3 className="text-xl mb-2">{props.title}</h3>
         <ul>
-          {props.faq.map((f, i) => (
+          {props.faq?.map((f, i) => (
             <li key={i}>
               <h4 className="font-bold mb-1">
                 <TinaMarkdown content={f.question} components={components} />
@@ -85,9 +85,9 @@ export const components: Components<{
           return (
             <Collapsible
               key={i}
-              title={c.title}
+              title={c.title || "(ohne Titel)"}
               content={c.content}
-              isExpanded={c.isExpanded}
+              isExpanded={c.isExpanded || false}
             />
           );
         })}
@@ -107,7 +107,11 @@ export const components: Components<{
   },
   youtube_video: (props) => {
     // Extract video id from URL
-    const videoId = props.url.split("v=")[1] || props.url.split("youtu.be/")[1];
+    const videoId =
+      props.url?.split("v=")[1] || props.url?.split("youtu.be/")[1];
+
+    if (!videoId) return <div>Video nicht konfiguriert</div>;
+
     return (
       <div>
         <iframe
