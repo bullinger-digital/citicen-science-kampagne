@@ -4,34 +4,120 @@ import {
   searchPerson,
   searchPlace,
 } from "@/lib/actions/citizen";
-import { ReactNode, useContext, useEffect, useState } from "react";
+import {
+  MouseEventHandler,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { InfoIcon, Popover } from "../common/info";
 import { EditorContext } from "./editorContext";
 import { ContextBox } from "./editor";
-import { FaEdit, FaSearch, FaUnlink } from "react-icons/fa";
+import { FaEdit, FaExternalLinkAlt, FaSearch, FaUnlink } from "react-icons/fa";
 import { FaLink } from "react-icons/fa6";
 import { getPathFromNode } from "@/lib/xml";
 import { Loading } from "../common/loadingIndicator";
 import { EditPersonModal, EditPlaceModal } from "./modals/modals";
 import { useServerFetch } from "../common/serverActions";
 import { Link } from "../common/navigation-block/link";
+import { getYear } from "./modals/common";
+import ReactDOM from "react-dom";
+import { GndResult } from "@/lib/actions/gnd";
 
 const PersName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
   const id = node.getAttribute("ref")?.replace("p", "");
-  const [editModalOpen, setEditModalOpen] = useState(false);
 
+  return id ? (
+    <div>
+      <RemoveReferenceButton node={node} />
+      <CertToggle node={node} />
+      <PersonItemDetails id={id} isPreview={false} />
+    </div>
+  ) : (
+    <EntitySelector
+      onSelect={(id) => {
+        c?.addAction({
+          type: "change-attributes",
+          attributes: { ref: `p${id}` },
+          nodePath: getPathFromNode(node),
+        });
+      }}
+      key={node.textContent}
+      initialSearch={node.textContent}
+      searchFn={searchPerson}
+      displayComponent={PersonItem}
+      detailsComponent={PersonItemDetails}
+      editModal={EditPersonModal}
+    />
+  );
+};
+
+const PlaceName = ({ node }: { node: Node }) => {
+  const c = useContext(EditorContext);
+  const id = node.getAttribute("ref")?.replace("l", "");
+
+  return id ? (
+    <div>
+      <RemoveReferenceButton node={node} />
+      <CertToggle node={node} />
+      <PlaceItemDetails id={id} isPreview={false} />
+    </div>
+  ) : (
+    <EntitySelector
+      onSelect={(id) => {
+        c?.addAction({
+          type: "change-attributes",
+          attributes: { ref: `l${id}` },
+          nodePath: getPathFromNode(node),
+        });
+      }}
+      key={node.textContent}
+      initialSearch={node.textContent}
+      searchFn={searchPlace}
+      displayComponent={PlaceItem}
+      detailsComponent={PlaceItemDetails}
+      editModal={EditPlaceModal}
+    />
+  );
+};
+
+const PersonItem = ({
+  entity,
+}: {
+  entity: Awaited<ReturnType<typeof searchPerson>>[0];
+}) => {
+  return (
+    <div className="relative flex items-center space-x-2 justify-between">
+      <span title={"ID: " + entity.id}>
+        {entity.aliases.find((a) => a.type === "main")?.forename}{" "}
+        {entity.aliases.find((a) => a.type === "main")?.surname}
+      </span>
+    </div>
+  );
+};
+
+const PersonItemDetails = ({
+  id,
+  isPreview,
+}: {
+  id: string;
+  isPreview: boolean;
+}) => {
   const {
     loading,
     data: selectedPerson,
     refetch,
   } = useServerFetch(
     personById,
-    { id },
+    { id, includeGndData: true },
     {
       skip: !id,
     }
   );
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const aliases = selectedPerson?.aliases || [];
   const mainAlias = aliases.find((a) => a.type === "main");
@@ -40,22 +126,33 @@ const PersName = ({ node }: { node: Node }) => {
     return <Loading />;
   }
 
+  if (!selectedPerson) {
+    return <div>Beim Laden der Person ist ein Fehler aufgetreten.</div>;
+  }
+
   if (selectedPerson) {
     return (
       <div>
-        <RemoveReferenceButton node={node} />
         <div>
-          <span className="font-bold">
-            {mainAlias?.forename} {mainAlias?.surname}
-          </span>{" "}
-          ({id}){" "}
-          <button
-            onClick={() => {
-              setEditModalOpen(true);
-            }}
-          >
-            <FaEdit />
-          </button>
+          <div className="flex justify-between">
+            <span className="font-bold">
+              {mainAlias?.forename} {mainAlias?.surname}
+              <span className="text-gray-400 font-normal">
+                {" "}
+                ID {selectedPerson.id}
+              </span>
+            </span>
+            {!isPreview && (
+              <button
+                title="Änderung vorschlagen"
+                onClick={() => {
+                  setEditModalOpen(true);
+                }}
+              >
+                <FaEdit />
+              </button>
+            )}
+          </div>
           {editModalOpen && (
             <EditPersonModal
               open={editModalOpen}
@@ -85,26 +182,134 @@ const PersName = ({ node }: { node: Node }) => {
           )}
         </div>
         <EntityLinksList links={selectedPerson.links} />
-        <CertToggle node={node} />
+        <div>
+          <GndDataDisplay gndData={selectedPerson.gndData} />
+        </div>
       </div>
     );
   }
+};
+
+const GndDataDisplay = ({
+  gndData,
+}: {
+  gndData: GndResult | undefined | null;
+}) => {
+  if (!gndData) {
+    return null;
+  }
+
+  const yearBirth = gndData.dateOfBirth && getYear(gndData.dateOfBirth[0]);
+  const yearDeath = gndData.dateOfDeath && getYear(gndData.dateOfDeath[0]);
 
   return (
-    <EntitySelector
-      onSelect={(id) => {
-        c?.addAction({
-          type: "change-attributes",
-          attributes: { ref: `p${id}` },
-          nodePath: getPathFromNode(node),
-        });
-      }}
-      key={node.textContent}
-      initialSearch={node.textContent}
-      searchFn={searchPerson}
-      displayComponent={PersonItem}
-      editModal={EditPersonModal}
-    />
+    <div className="relative mt-6 rounded-md border text-sm border-gray-200 py-3 px-4">
+      <h6 className="flex -top-3 left-2 px-2 space-x-2 absolute bg-white">
+        <span>Informationen aus GND</span>
+        {gndData.id && (
+          <Link className="inline-block" href={gndData.id} target="_blank">
+            <FaExternalLinkAlt className="mt-0.5" />
+          </Link>
+        )}
+      </h6>
+      <p>{gndData.preferredName}</p>
+      {(yearBirth || yearDeath) && (
+        <div title="Lebensdaten">
+          <span>Lebensdaten: </span>
+          {yearBirth}-{yearDeath}
+        </div>
+      )}
+      <div title="Beschreibung" className="max-h-60 overflow-y-auto">
+        {gndData.biographicalOrHistoricalInformation}
+      </div>
+    </div>
+  );
+};
+
+const PlaceItemDetails = ({
+  id,
+  isPreview,
+}: {
+  id: string;
+  isPreview: boolean;
+}) => {
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const {
+    loading,
+    data: selectedPlace,
+    refetch,
+  } = useServerFetch(
+    placeById,
+    { id },
+    {
+      skip: !id,
+    }
+  );
+
+  if (loading || (!!id && !selectedPlace)) {
+    return <Loading />;
+  }
+
+  if (!selectedPlace) {
+    return <div>Beim Laden der Ortschaft ist ein Fehler aufgetreten.</div>;
+  }
+
+  if (selectedPlace) {
+    return (
+      <div>
+        <div className="flex justify-between">
+          <span className="font-bold">
+            {[
+              selectedPlace.settlement,
+              selectedPlace.district,
+              selectedPlace.country,
+            ]
+              .filter((s) => !!s)
+              .join(", ")}
+            <span className="text-gray-400 font-normal">
+              {" "}
+              ID {selectedPlace.id}
+            </span>
+          </span>
+          {!isPreview && (
+            <button
+              title="Änderung vorschlagen"
+              onClick={() => {
+                setEditModalOpen(true);
+              }}
+            >
+              <FaEdit />
+            </button>
+          )}
+        </div>
+        {editModalOpen && (
+          <EditPlaceModal
+            open={editModalOpen}
+            close={() => {
+              setEditModalOpen(false);
+              refetch();
+            }}
+            id={parseInt(id)}
+          />
+        )}
+        <EntityLinksList links={selectedPlace.links} />
+      </div>
+    );
+  }
+};
+
+const PlaceItem = ({
+  entity,
+}: {
+  entity: Awaited<ReturnType<typeof searchPlace>>[0];
+}) => {
+  return (
+    <span title={"ID: " + entity.id}>
+      {[entity.settlement, entity.district, entity.country]
+        .filter((s) => !!s)
+        .join(", ")}
+    </span>
   );
 };
 
@@ -150,110 +355,6 @@ export const LinksPopup = ({ links }: { links: number[] }) => {
   );
 };
 
-const PlaceName = ({ node }: { node: Node }) => {
-  const c = useContext(EditorContext);
-  const id = node.getAttribute("ref")?.replace("l", "");
-  const [editModalOpen, setEditModalOpen] = useState(false);
-
-  const {
-    loading,
-    data: selectedPlace,
-    refetch,
-  } = useServerFetch(
-    placeById,
-    { id },
-    {
-      skip: !id,
-    }
-  );
-
-  if (loading || (!!id && !selectedPlace)) {
-    return <Loading />;
-  }
-
-  if (selectedPlace) {
-    return (
-      <div>
-        <RemoveReferenceButton node={node} />
-        <div>
-          <span className="font-bold">
-            {[
-              selectedPlace.settlement,
-              selectedPlace.district,
-              selectedPlace.country,
-            ]
-              .filter((s) => !!s)
-              .join(", ")}
-          </span>{" "}
-          <button
-            onClick={() => {
-              setEditModalOpen(true);
-            }}
-          >
-            <FaEdit />
-          </button>
-          {editModalOpen && (
-            <EditPlaceModal
-              open={editModalOpen}
-              close={() => {
-                setEditModalOpen(false);
-                refetch();
-              }}
-              id={parseInt(id)}
-            />
-          )}
-        </div>
-        <EntityLinksList links={selectedPlace.links} />
-        <CertToggle node={node} />
-      </div>
-    );
-  }
-
-  return (
-    <EntitySelector
-      onSelect={(id) => {
-        c?.addAction({
-          type: "change-attributes",
-          attributes: { ref: `l${id}` },
-          nodePath: getPathFromNode(node),
-        });
-      }}
-      key={node.textContent}
-      initialSearch={node.textContent}
-      searchFn={searchPlace}
-      displayComponent={PlaceItem}
-      editModal={EditPlaceModal}
-    />
-  );
-};
-
-const PersonItem = ({
-  entity,
-}: {
-  entity: Awaited<ReturnType<typeof searchPerson>>[0];
-}) => {
-  return (
-    <span title={"ID: " + entity.id}>
-      {entity.aliases.find((a) => a.type === "main")?.forename}{" "}
-      {entity.aliases.find((a) => a.type === "main")?.surname}
-    </span>
-  );
-};
-
-const PlaceItem = ({
-  entity,
-}: {
-  entity: Awaited<ReturnType<typeof searchPlace>>[0];
-}) => {
-  return (
-    <span title={"ID: " + entity.id}>
-      {[entity.settlement, entity.district, entity.country]
-        .filter((s) => !!s)
-        .join(", ")}
-    </span>
-  );
-};
-
 const CertToggle = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
   const cert = node.getAttribute("cert");
@@ -263,7 +364,7 @@ const CertToggle = ({ node }: { node: Node }) => {
     <label
       className={`${
         verified ? "bg-green-100" : "bg-blue-100"
-      } p-2 inline-block w-full rounded-md my-2`}
+      } p-2 inline-block w-full rounded-md mb-3`}
     >
       <input
         type="checkbox"
@@ -306,6 +407,7 @@ const EntitySelector = <T extends SearchFunction>({
   onSelect,
   searchFn,
   displayComponent,
+  detailsComponent,
   editModal,
 }: {
   initialSearch: string | undefined | null;
@@ -313,7 +415,11 @@ const EntitySelector = <T extends SearchFunction>({
   searchFn: T;
   displayComponent: (props: {
     entity: Awaited<ReturnType<T>>[0];
-  }) => JSX.Element;
+  }) => JSX.Element | undefined;
+  detailsComponent: (props: {
+    id: string;
+    isPreview: boolean;
+  }) => JSX.Element | undefined;
   editModal: typeof EditPersonModal | typeof EditPlaceModal;
 }) => {
   const [query, setQuery] = useState(
@@ -336,11 +442,19 @@ const EntitySelector = <T extends SearchFunction>({
   );
 
   const [newModalOpen, setNewModalOpen] = useState(false);
+  const [showDetailsFor, setShowDetailsFor] = useState<
+    | {
+        item: Awaited<ReturnType<T>>[0];
+        element: HTMLButtonElement;
+      }
+    | undefined
+  >(undefined);
   const Component = displayComponent;
+  const DetailsComponent = detailsComponent;
   const EditModal = editModal;
 
   return (
-    <div>
+    <div className="relative">
       <div className="mb-2 italic">Nicht zugewiesen</div>
       <SearchField query={query} setQuery={setQuery} />
 
@@ -349,7 +463,14 @@ const EntitySelector = <T extends SearchFunction>({
       ) : (
         <div className="mt-2 overflow-y-auto max-h-[500px]">
           {entities.map((p) => (
-            <AddReferenceButton onClick={() => onSelect(p.id)} key={p.id}>
+            <AddReferenceButton
+              key={p.id}
+              onClick={() => onSelect(p.id)}
+              onMouseEnter={(e) =>
+                setShowDetailsFor({ item: p, element: e.currentTarget })
+              }
+              onMouseLeave={() => setShowDetailsFor(undefined)}
+            >
               <div>
                 <Component entity={p} />
               </div>
@@ -363,6 +484,31 @@ const EntitySelector = <T extends SearchFunction>({
           )}
         </div>
       )}
+
+      {showDetailsFor &&
+        ReactDOM.createPortal(
+          <div
+            style={{
+              top:
+                showDetailsFor.element.getBoundingClientRect().top +
+                window.scrollY,
+              left:
+                showDetailsFor.element.getBoundingClientRect().right -
+                showDetailsFor.element.getBoundingClientRect().width -
+                400 -
+                20,
+              width: 400,
+            }}
+            className="absolute min-h-32 border border-gray-200 p-7 bg-white shadow-2xl"
+          >
+            <DetailsComponent
+              id={showDetailsFor.item.id.toString()}
+              isPreview={true}
+            />
+          </div>,
+          window.document.body
+        )}
+
       <div className="w-full pt-2 text-sm text-left border-t border-gray-200">
         Der Eintrag existiert noch nicht?{" "}
         <button
@@ -412,21 +558,27 @@ const RemoveReferenceButton = ({ node }: { node: Node }) => {
 
 const AddReferenceButton = ({
   onClick,
+  onMouseEnter,
+  onMouseLeave,
   children,
 }: {
   onClick: () => void;
+  onMouseEnter?: MouseEventHandler<HTMLButtonElement>;
+  onMouseLeave?: MouseEventHandler<HTMLButtonElement>;
   children: ReactNode;
 }) => {
   return (
     <button
-      className="flex items-center p-1 cursor-pointer text-emerald-400 hover:text-emerald-600"
+      className="flex items-center w-full p-1 cursor-pointer text-emerald-400 hover:text-emerald-600"
       title="Zuweisen"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div className="mr-2">
         <FaLink />
       </div>
-      <div className="text-left">{children}</div>
+      <div className="text-left w-full">{children}</div>
     </button>
   );
 };

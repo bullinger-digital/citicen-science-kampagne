@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 import { kdb } from "@/lib/db";
 import { Versioning, whereCurrent } from "../versioning";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
@@ -8,6 +9,7 @@ import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
 import { InferType, number, object, string } from "yup";
 import { sql } from "kysely";
+import { getSingleGndResult } from "./gnd";
 
 if (!globalThis.window) {
   // Hack to make JSDOM window available globally
@@ -23,7 +25,13 @@ export const fileOnCurrentCommit = async ({ id }: { id: string }) => {
   return await v.getCurrentVersion("letter", parseInt(id));
 };
 
-export const personById = async ({ id }: { id: string }) => {
+export const personById = async ({
+  id,
+  includeGndData,
+}: {
+  id: string;
+  includeGndData?: boolean;
+}) => {
   await requireRoleOrThrow("user");
   if (!id) throw new Error("ID is required");
   const p = await kdb
@@ -54,7 +62,13 @@ export const personById = async ({ id }: { id: string }) => {
       ).as("links"),
     ])
     .executeTakeFirstOrThrow();
-  return p;
+
+  return {
+    ...p,
+    gndData: includeGndData
+      ? await getSingleGndResult({ id: p.gnd })
+      : undefined,
+  };
 };
 
 const latinPersonExtension = [
@@ -158,6 +172,7 @@ export const searchPerson = async ({
     // Order by the number of letters the person is linked to (descending)
     .orderBy("computed_link_counts", "desc")
     .execute();
+
   return people;
 };
 

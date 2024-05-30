@@ -1,4 +1,6 @@
 "use server";
+import "server-only";
+
 import { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
 import { kdb } from "../db";

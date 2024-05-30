@@ -48,10 +48,3 @@ export const isValidGndIdentifier = (value: string) => {
     ) % 11;
   return checksum === (value.slice(-1) === "X" ? 10 : Number(value.slice(-1)));
 };
-
-export const getSingleGndResult = (id: string) =>
-  fetch(`https://lobid.org/gnd/${encodeURIComponent(id)}.json`, {
-    headers: {
-      "User-Agent": EXTERNAL_API_USER_AGENT,
-    },
-  }).then((res) => res.json());

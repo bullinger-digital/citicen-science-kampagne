@@ -1,7 +1,7 @@
 export const EXTERNAL_API_USER_AGENT =
   "Bullinger Digital - Citizen Science Kampagne";
 
-export const getYear = (date: string) => {
+export const getYear = (date: string | null | undefined) => {
   // Return only the year from a date string
   return date?.split("-")[0] || "";
 };

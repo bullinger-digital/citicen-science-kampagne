@@ -137,6 +137,15 @@ export interface PersonAliasVersion {
   version_id: Generated<number>;
 }
 
+export interface PersonCacheGnd {
+  ok: boolean;
+  result: Json;
+  status: number;
+  statusText: string;
+  timestamp: Generated<Timestamp>;
+  url: string;
+}
+
 export interface PersonVersion {
   created_log_id: number;
   git_export_id: number | null;
@@ -205,6 +214,7 @@ export interface DB {
   person: Person;
   person_alias: PersonAlias;
   person_alias_version: PersonAliasVersion;
+  person_cache_gnd: PersonCacheGnd;
   person_version: PersonVersion;
   place: Place;
   place_version: PlaceVersion;

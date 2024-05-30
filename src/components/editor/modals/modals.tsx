@@ -6,11 +6,11 @@ import {
   personById,
   placeById,
 } from "@/lib/actions/citizen";
-import { useServerAction } from "../../common/serverActions";
+import { useServerAction, useServerFetch } from "../../common/serverActions";
 import { Loading } from "../../common/loadingIndicator";
 import { TiDeleteOutline } from "react-icons/ti";
 import { SearchInput } from "../../common/searchInput";
-import { getSingleGndResult, isValidGndIdentifier, searchGnd } from "./gnd";
+import { isValidGndIdentifier, searchGnd } from "./gnd";
 import { searchHistHub, singleHistHubResult } from "./histHub";
 import dynamic from "next/dynamic";
 import { Comments } from "@/components/common/comments";
@@ -18,6 +18,7 @@ import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
 import { LinksPopup } from "../properties";
 import { getGeoname, searchGeonames } from "@/lib/actions/geonames";
 import type { Geoname } from "@/lib/actions/geonames";
+import { getSingleGndResult } from "@/lib/actions/gnd";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -304,16 +305,16 @@ const GndField = ({
 }) => {
   const gndId = value?.replace("https://d-nb.info/gnd/", "");
 
-  const [gndResult, setGndResult] = useState<any | null>(null);
-  useEffect(() => {
-    if (gndId && typeof gndId === "string" && isValidGndIdentifier(gndId)) {
-      getSingleGndResult(gndId)
-        .then((data) => setGndResult(data))
-        .catch(() => setGndResult(null));
-    } else {
-      setGndResult(null);
+  const gndResult = useServerFetch(
+    getSingleGndResult,
+    {
+      id: gndId,
+    },
+    {
+      // Prevent fetching if the id is not valid
+      skip: !gndId || typeof gndId !== "string" || !isValidGndIdentifier(gndId),
     }
-  }, [gndId]);
+  );
 
   return (
     <WithLabel label={"GND-ID"}>
@@ -328,7 +329,7 @@ const GndField = ({
                   className="text-emerald-400"
                   href={`https://d-nb.info/gnd/${gndId}`}
                 >
-                  {gndResult.preferredName}
+                  {gndResult.data?.preferredName}
                 </a>
               </div>
             )}
