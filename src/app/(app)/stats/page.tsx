@@ -2,7 +2,6 @@ import { getCurrentUserId } from "@/lib/actions/citizen";
 import { getLetterStats, getUserStats } from "@/lib/actions/stats";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 3600; // 1 hour
 
 export default function StatisticsPage() {
   return (
@@ -19,10 +18,9 @@ export default function StatisticsPage() {
         </div>
       </div>
       <div className="text-center text-sm max-w-screen-sm mx-auto mt-10 mb-5">
-        Hinweise: Die Statistiken werden aus Performance-Gründen nicht in
-        Echtzeit aktualisiert und werden daher nur alle 60 Minuten aktualisiert.
-        Die Punktevergabe dient nur zur Einschätzung der Aktivität und kann im
-        Verlauf des Projekts noch angepasst werden.
+        Hinweise: Die Statistiken werden aus Performance-Gründen nur alle 60
+        Minuten neu berechnet. Die Punktevergabe dient nur zur Einschätzung der
+        Aktivität und kann im Verlauf des Projekts noch angepasst werden.
       </div>
     </main>
   );
