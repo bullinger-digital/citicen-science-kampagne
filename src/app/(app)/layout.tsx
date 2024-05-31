@@ -40,7 +40,7 @@ export default function RootLayout({
             <div className="flex justify-between px-5 py-3 print:hidden">
               <div className="flex space-x-5 items-center self-center text-lg font-light">
                 <Menu />
-                <Link href="/insider">
+                <Link href="/">
                   <h2>Bullinger Digital - Mithelfen</h2>
                 </Link>
                 <LetterNavigation />

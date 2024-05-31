@@ -1,12 +1,11 @@
 import Image from "next/image";
-import Logo from "../../../../public/bullinger-digital.svg";
-import client from "../../../../tina/__generated__/client";
+import Logo from "../../../public/bullinger-digital.svg";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import { components } from "@/components/content/markdownComponents";
 import LoginRegisterInfo from "@/components/common/loginRegisterInfo";
 import { PageContent } from "@/components/content/pageContent";
 
-export default function InsiderPage() {
+export default function Home() {
   return (
     <main className="px-5 pb-5 text-center font-light mt-5 text-2xl">
       <LoginRegisterInfo />

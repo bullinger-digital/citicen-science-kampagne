@@ -50,9 +50,9 @@ export const GET = handleAuth({
   callback: handleCallback({ afterCallback: afterCallback }),
   signup: handleLogin({
     authorizationParams: { screen_hint: "signup" },
-    returnTo: "/insider",
+    returnTo: "/",
   }),
   login: handleLogin({
-    returnTo: "/insider",
+    returnTo: "/",
   }),
 });
