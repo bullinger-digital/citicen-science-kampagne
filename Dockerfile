@@ -20,7 +20,6 @@ RUN \
 FROM base AS builder
 ARG NEXT_PUBLIC_TINA_CLIENT_ID
 ARG TINA_TOKEN
-ARG SENTRY_AUTH_TOKEN
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

@@ -118,7 +118,7 @@ export const components: Components<{
           width="560"
           height="315"
           className="max-w-full"
-          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+          src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0`}
           title="YouTube video player"
           frameBorder="0"
           allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"

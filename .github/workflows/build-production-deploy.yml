@@ -17,8 +17,7 @@ jobs:
         env:
           TINA_CLIENT_ID: ${{ secrets.TINA_CLIENT_ID }}
           TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: docker build . --file Dockerfile --build-arg NEXT_PUBLIC_TINA_CLIENT_ID="$TINA_CLIENT_ID" --build-arg SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" --build-arg TINA_TOKEN="$TINA_TOKEN" --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+        run: docker build . --file Dockerfile --build-arg NEXT_PUBLIC_TINA_CLIENT_ID="$TINA_CLIENT_ID" --build-arg TINA_TOKEN="$TINA_TOKEN" --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
       - name: (main branch only) Log in to registry
         if: github.ref == 'refs/heads/main'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
