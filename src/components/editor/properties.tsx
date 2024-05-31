@@ -226,7 +226,7 @@ const GndDataDisplay = ({
         </div>
       )}
       {(gndData.placeOfActivity || []).length > 0 && (
-        <div title="Orte der Aktivität">
+        <div title="Wirkungsort(e)">
           <span>Wirkungsort(e): </span>
           {gndData.placeOfActivity?.map((p) => p?.label).join(", ")}
         </div>
@@ -236,6 +236,12 @@ const GndDataDisplay = ({
           <div key={b}>{b}</div>
         ))}
       </div>
+      {gndData.professionOrOccupation && (
+        <div title="Beruf / Tätigkeit">
+          <span>Beruf / Tätigkeit: </span>
+          {gndData.professionOrOccupation.map((p) => p?.label).join(", ")}
+        </div>
+      )}
     </div>
   );
 };
