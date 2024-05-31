@@ -219,8 +219,22 @@ const GndDataDisplay = ({
           {yearBirth}-{yearDeath}
         </div>
       )}
+      {gndData.placeOfBirth && gndData.placeOfBirth.length > 0 && (
+        <div title="Geburtsort">
+          <span>Geburtsort: </span>
+          {gndData.placeOfBirth.map((p) => p?.label).join(", ")}
+        </div>
+      )}
+      {(gndData.placeOfActivity || []).length > 0 && (
+        <div title="Orte der Aktivität">
+          <span>Wirkungsort(e): </span>
+          {gndData.placeOfActivity?.map((p) => p?.label).join(", ")}
+        </div>
+      )}
       <div title="Beschreibung" className="max-h-60 overflow-y-auto">
-        {gndData.biographicalOrHistoricalInformation}
+        {gndData.biographicalOrHistoricalInformation?.map((b) => (
+          <div key={b}>{b}</div>
+        ))}
       </div>
     </div>
   );
