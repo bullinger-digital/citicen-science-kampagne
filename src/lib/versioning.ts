@@ -436,11 +436,23 @@ export class Versioning {
       .set((eb) => {
         return {
           computed_link_counts: eb
-            .selectFrom("letter_version_extract_person as v")
-            .innerJoin("letter_version as lv", "lv.version_id", "v.version_id")
-            // Todo: Fix typing
-            .where(whereCurrent as any)
-            .where((e) => e.and([e("v.person_id", "=", eb.ref("person.id"))]))
+            .selectFrom((eb) =>
+              eb
+                .selectFrom("letter_version_extract_person as v")
+                .innerJoin(
+                  "letter_version as lv",
+                  "lv.version_id",
+                  "v.version_id"
+                )
+                // Todo: Fix typing
+                .where(whereCurrent as any)
+                .where((e) =>
+                  e.and([e("v.person_id", "=", eb.ref("person.id"))])
+                )
+                .select(["lv.id"])
+                .distinct()
+                .as("link_count")
+            )
             .select(eb.fn.countAll<number>().as("count")),
         };
       })
@@ -462,11 +474,21 @@ export class Versioning {
       .set((eb) => {
         return {
           computed_link_counts: eb
-            .selectFrom("letter_version_extract_place as v")
-            .innerJoin("letter_version as lv", "lv.version_id", "v.version_id")
-            // Todo: Fix typing
-            .where(whereCurrent as any)
-            .where((e) => e.and([e("v.place_id", "=", eb.ref("place.id"))]))
+            .selectFrom((eb) =>
+              eb
+                .selectFrom("letter_version_extract_place as v")
+                .innerJoin(
+                  "letter_version as lv",
+                  "lv.version_id",
+                  "v.version_id"
+                )
+                // Todo: Fix typing
+                .where(whereCurrent as any)
+                .where((e) => e.and([e("v.place_id", "=", eb.ref("place.id"))]))
+                .select(["lv.id"])
+                .distinct()
+                .as("link_count")
+            )
             .select(eb.fn.countAll<number>().as("count")),
         };
       })
