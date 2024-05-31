@@ -10,12 +10,23 @@ import { requireRoleOrThrow } from "../security/withRequireRole";
 import { InferType, number, object, string } from "yup";
 import { sql } from "kysely";
 import { getSingleGndResult } from "./gnd";
+import { getSession } from "@auth0/nextjs-auth0";
 
 if (!globalThis.window) {
   // Hack to make JSDOM window available globally
   // used in xmlSerialize.ts
   (globalThis as any).jsDomWindow = new JSDOM().window;
 }
+
+export const getCurrentUserId = async () => {
+  await requireRoleOrThrow("user");
+  const session = await getSession();
+  return await kdb
+    .selectFrom("user")
+    .where("user.sub", "=", session?.user.sub)
+    .select("id")
+    .executeTakeFirst();
+};
 
 export const fileOnCurrentCommit = async ({ id }: { id: string }) => {
   await requireRoleOrThrow("user");

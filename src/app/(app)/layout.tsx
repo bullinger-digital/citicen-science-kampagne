@@ -13,6 +13,7 @@ import {
 } from "@/components/common/navigation-block/navigation-block";
 import { MdMenuBook, MdOutlineRule } from "react-icons/md";
 import { Menu } from "@/components/menu";
+import { FaChartPie } from "react-icons/fa6";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -58,6 +59,13 @@ export default function RootLayout({
                 >
                   <MdOutlineRule className="-top-0.5 relative" />
                   <span>Regeln</span>
+                </Link>
+                <Link
+                  href="/stats"
+                  className="flex space-x-2 items-center hover:text-emerald-400"
+                  title="Statistiken"
+                >
+                  <FaChartPie className="-top-0.5 relative" />
                 </Link>
               </div>
               <div>
