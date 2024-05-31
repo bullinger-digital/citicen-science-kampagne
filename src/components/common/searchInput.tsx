@@ -27,6 +27,7 @@ export const SearchInput = <T,>({
   >;
 }) => {
   const [results, setResults] = useState<T[] | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
   const [term, setTerm] = useState("");
   const [hasFocus, setHasFocus] = useState(false);
   const [focusedItem, setFocusedItem] = useState<T | null | undefined>(null);
@@ -35,11 +36,18 @@ export const SearchInput = <T,>({
   const load = useCallback(
     async (t: string | undefined) => {
       if (!t) return;
-      searchFn(t).then((res) => {
-        setResults(res);
-        setIsLoading(false);
-        setFocusedItem(res[0]);
-      });
+      searchFn(t)
+        .then((res) => {
+          setErrors([]);
+          setResults(res);
+          setIsLoading(false);
+          setFocusedItem(res[0]);
+        })
+        .catch((e) => {
+          setErrors([e.message]);
+          setResults([]);
+          setIsLoading(false);
+        });
     },
     [searchFn]
   );
@@ -123,6 +131,15 @@ export const SearchInput = <T,>({
                   </button>
                 );
               })}
+            {!isLoading &&
+              hasFocus &&
+              errors.length > 0 &&
+              errors.map((e, i) => (
+                <div key={i} className="text-red-300 p-2">
+                  Bei der Suche ist ein Fehler aufgetreten. Möglicherweise ist
+                  der externe Dienst nicht verfügbar. Details: {e}
+                </div>
+              ))}
           </div>
         }
       </div>
