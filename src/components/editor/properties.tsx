@@ -495,7 +495,7 @@ const EntitySelector = <T extends SearchFunction>({
                 <Component entity={p} />
               </div>
               <span className="text-sm text-gray-400">
-                {p.computed_link_counts} Referenzen
+                Verwendet in {p.computed_link_counts} Briefen
               </span>
             </AddReferenceButton>
           ))}

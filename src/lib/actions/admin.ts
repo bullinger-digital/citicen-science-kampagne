@@ -198,3 +198,10 @@ export const gitCheckoutMainAndPull = async () => {
   await git.checkout("main");
   await git.pull();
 };
+
+export const updateComputedLinkCounts = async () => {
+  await requireRoleOrThrow("data-admin");
+
+  const v = new Versioning();
+  await v.updateComputedLinkCounts({});
+};
