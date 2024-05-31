@@ -19,8 +19,9 @@ if (!globalThis.window) {
 }
 
 export const getCurrentUserId = async () => {
-  await requireRoleOrThrow("user");
   const session = await getSession();
+  if (!session) return null;
+  await requireRoleOrThrow("user");
   return await kdb
     .selectFrom("user")
     .where("user.sub", "=", session?.user.sub)
