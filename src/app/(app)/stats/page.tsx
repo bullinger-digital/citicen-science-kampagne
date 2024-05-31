@@ -1,6 +1,7 @@
 import { getCurrentUserId } from "@/lib/actions/citizen";
 import { getLetterStats, getUserStats } from "@/lib/actions/stats";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 3600; // 1 hour
 
 export default function StatisticsPage() {
