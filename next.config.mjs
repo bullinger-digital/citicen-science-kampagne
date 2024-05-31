@@ -9,6 +9,16 @@ const nextConfig = {
       },
     ];
   },
+  redirects() {
+    // Redirect old insider page to home
+    return [
+      {
+        source: "/insider",
+        destination: "/",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -171,10 +171,6 @@ export default defineConfig({
             label: "Anzeigen bis",
           },
         ],
-        // ui: {
-        //   // This is an DEMO router. You can remove this to fit your site
-        //   router: ({ document }) => `/insider?`,
-        // },
       },
       {
         name: "page",
