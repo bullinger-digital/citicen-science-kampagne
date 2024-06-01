@@ -11,7 +11,7 @@ export type GeonamesResult = {
 // We route the geonames requests through the server to avoid leaking the username
 export const searchGeonames = async (inputValue: string) => {
   const res = await fetch(
-    `http://api.geonames.org/searchJSON?q=${encodeURIComponent(inputValue)}&maxRows=100&lang=de,en&continentCode=EU&countryBias=CH,DE,AT&username=${GEONAMES_USERNAME}`
+    `http://api.geonames.org/searchJSON?q=${encodeURIComponent(inputValue)}&maxRows=100&lang=de&continentCode=EU&countryBias=CH,DE,AT&username=${GEONAMES_USERNAME}`
   );
   const data = (await res.json()) as GeonamesResult;
   return data.geonames;
@@ -69,7 +69,7 @@ export type Geoname = {
 
 export const getGeoname = async (geonameId: string) => {
   const res = await fetch(
-    `http://api.geonames.org/getJSON?geonameId=${geonameId}&username=${GEONAMES_USERNAME}`
+    `http://api.geonames.org/getJSON?geonameId=${geonameId}&username=${GEONAMES_USERNAME}&lang=de`
   );
   const data = (await res.json()) as Geoname;
   return data;
