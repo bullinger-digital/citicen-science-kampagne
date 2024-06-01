@@ -5,7 +5,7 @@ import { whereCurrent } from "../versioning";
 import { sql } from "kysely";
 import { unstable_cache } from "next/cache";
 
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+const CACHE_DURATION = 60 * 60; // 1 hour
 
 export const getLetterStats = unstable_cache(
   async () => {
