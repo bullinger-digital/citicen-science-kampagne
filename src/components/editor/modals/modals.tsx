@@ -153,9 +153,7 @@ export const EditPersonModal = ({
             setNewPerson({ ...newPerson, forename: e.target.value })
           }
           label="Vorname"
-          placeholder="Max"
           disabled={id !== undefined}
-          required
         />
         <InputWithLabel
           value={newPerson.surname}
@@ -163,9 +161,7 @@ export const EditPersonModal = ({
             setNewPerson({ ...newPerson, surname: e.target.value })
           }
           label="Nachname"
-          placeholder="Mustermann"
           disabled={id !== undefined}
-          required
         />
         <InputWithLabel
           value={newPerson.wiki}
