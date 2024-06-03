@@ -248,6 +248,18 @@ export class Versioning {
       .execute();
   }
 
+  async acceptChanges({
+    items,
+  }: {
+    items: { table: Versioned; versionId: number }[];
+  }) {
+    await wrapTransaction(this.db, async (db) => {
+      for (const item of items) {
+        await this.acceptChange(item);
+      }
+    });
+  }
+
   async acceptChange({
     table,
     versionId,
@@ -265,6 +277,18 @@ export class Versioning {
         })
         .where("version_id", "=", versionId)
         .execute();
+    });
+  }
+
+  async rejectChanges({
+    items,
+  }: {
+    items: { table: Versioned; versionId: number }[];
+  }) {
+    await wrapTransaction(this.db, async (db) => {
+      for (const item of items) {
+        await this.rejectChange(item);
+      }
     });
   }
 
@@ -297,7 +321,7 @@ export class Versioning {
         .selectAll()
         .executeTakeFirst();
 
-      if (!latestAcceptedVersion) {
+      if (!latestAcceptedVersion && ["person", "place"].includes(table)) {
         // Find usages
         const usages = await db
           .selectFrom(`letter_version_extract_${table as "person"}`)

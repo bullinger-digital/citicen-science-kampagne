@@ -1,9 +1,9 @@
 "use client";
 import {
-  acceptChange,
+  acceptChanges,
   getUncommitedChanges,
   moveUsages,
-  rejectChange,
+  rejectChanges,
 } from "@/lib/actions/admin";
 import { useServerAction, useServerFetch } from "../common/serverActions";
 import { Loading } from "../common/loadingIndicator";
@@ -13,7 +13,7 @@ import {
   EditPlaceModal,
 } from "../editor/modals/modals";
 import { useState } from "react";
-import { BsPersonFill } from "react-icons/bs";
+import { BsFiletypeXml, BsPersonFill } from "react-icons/bs";
 import { TbLocation } from "react-icons/tb";
 import { IconType } from "react-icons";
 import {
@@ -79,8 +79,8 @@ const ReviewItem = ({
   const EditModalComponent = specs.editModalComponent;
   const IconComponent = specs.iconComponent;
 
-  const rejectAction = useServerAction(rejectChange);
-  const acceptAction = useServerAction(acceptChange);
+  const rejectAction = useServerAction(rejectChanges);
+  const acceptAction = useServerAction(acceptChanges);
 
   return (
     <div className="p-3 relative rounded-xl bg-white border-gray-300 border mb-2">
@@ -154,9 +154,20 @@ const ReviewItem = ({
           className="bg-emerald-300 hover:bg-emerald-400"
           onClick={async () => {
             await acceptAction.execute({
-              table: log.table,
-              versionId: log.modified!.version_id,
+              items: [
+                {
+                  table: log.table,
+                  versionId: log.modified!.version_id,
+                },
+                ...(log.table === "person"
+                  ? log.aliasChanges.map((aliasChange) => ({
+                      table: "person_alias" as const,
+                      versionId: aliasChange.modified!.version_id,
+                    }))
+                  : []),
+              ],
             });
+
             refetch();
           }}
         >
@@ -167,9 +178,20 @@ const ReviewItem = ({
           className="bg-red-100 hover:bg-red-200"
           onClick={async () => {
             await rejectAction.execute({
-              table: log.table,
-              versionId: log.modified!.version_id,
+              items: [
+                {
+                  table: log.table,
+                  versionId: log.modified!.version_id,
+                },
+                ...(log.table === "person"
+                  ? log.aliasChanges.map((aliasChange) => ({
+                      table: "person_alias" as const,
+                      versionId: aliasChange.modified!.version_id,
+                    }))
+                  : []),
+              ],
             });
+
             refetch();
           }}
         >
@@ -341,18 +363,36 @@ const DiffItem = ({
 }: {
   logEntry: Awaited<ReturnType<typeof getUncommitedChanges>>[0];
 }) => {
+  const [compareWithOriginal, setCompareWithOriginal] = useState(false);
+
   return (
     <>
       {logEntry.table === "person" &&
         logEntry.aliasChanges?.map((aliasChange) => (
           <div key={aliasChange.id}>
             <Diff
-              oldObject={aliasChange.last_accepted}
+              oldObject={
+                compareWithOriginal
+                  ? aliasChange.unmodified
+                  : aliasChange.last_accepted
+              }
               newObject={aliasChange.modified}
             />
           </div>
         ))}
-      <Diff oldObject={logEntry.last_accepted} newObject={logEntry.modified} />
+      <Diff
+        oldObject={
+          compareWithOriginal ? logEntry.unmodified : logEntry.last_accepted
+        }
+        newObject={logEntry.modified}
+      />
+      <div
+        className={`text-xs mt-4 cursor-pointer ${compareWithOriginal ? "text-green-500" : "text-gray-500"}`}
+        title="Mit Original (letzter Korpus-Import) vergleichen"
+        onClick={() => setCompareWithOriginal(!compareWithOriginal)}
+      >
+        <BsFiletypeXml />
+      </div>
     </>
   );
 };

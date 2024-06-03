@@ -311,36 +311,28 @@ export const moveUsages = async ({
   });
 };
 
-export const acceptChange = async ({
-  table,
-  versionId,
+export const acceptChanges = async ({
+  items,
 }: {
-  table: Versioned;
-  versionId: number;
+  items: { table: Versioned; versionId: number }[];
 }) => {
   await requireRoleOrThrow("admin");
 
   const v = new Versioning();
-  await v.acceptChange({
-    table,
-    versionId,
+  await v.acceptChanges({
+    items,
   });
 };
 
-export const rejectChange = async ({
-  table,
-  versionId,
+export const rejectChanges = async ({
+  items,
 }: {
-  table: Versioned;
-  versionId: number;
+  items: { table: Versioned; versionId: number }[];
 }) => {
   await requireRoleOrThrow("admin");
 
   const v = new Versioning();
-  await v.rejectChange({
-    table,
-    versionId,
-  });
+  await v.rejectChanges({ items });
 };
 
 export const getGitStatus = async () => {
