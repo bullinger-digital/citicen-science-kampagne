@@ -98,7 +98,7 @@ const PersonItem = ({
   );
 };
 
-const PersonItemDetails = ({
+export const PersonItemDetails = ({
   id,
   isPreview,
 }: {
@@ -181,7 +181,9 @@ const PersonItemDetails = ({
             </div>
           )}
         </div>
-        <EntityLinksList links={selectedPerson.links} />
+        <div className="text-sm">
+          <EntityLinksList links={selectedPerson.links} />
+        </div>
         <div>
           <GndDataDisplay gndData={selectedPerson.gndData} />
         </div>
@@ -246,7 +248,7 @@ const GndDataDisplay = ({
   );
 };
 
-const PlaceItemDetails = ({
+export const PlaceItemDetails = ({
   id,
   isPreview,
 }: {
@@ -313,7 +315,9 @@ const PlaceItemDetails = ({
             id={parseInt(id)}
           />
         )}
-        <EntityLinksList links={selectedPlace.links} />
+        <div className="text-sm">
+          <EntityLinksList links={selectedPlace.links} />
+        </div>
       </div>
     );
   }
@@ -333,17 +337,17 @@ const PlaceItem = ({
   );
 };
 
-const EntityLinksList = ({
+export const EntityLinksList = ({
   links,
 }: {
   links?: { id: number }[] | undefined | null;
 }) => {
-  if (!links || links.length === 0) {
+  if (!links) {
     return null;
   }
 
   return (
-    <div className="text-sm">
+    <div>
       Verwendet in <LinksPopup links={links.map((l) => l.id)} />
     </div>
   );

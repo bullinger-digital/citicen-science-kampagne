@@ -16,6 +16,8 @@ import {
 import { getCommitHash } from "./import";
 import fs from "fs";
 
+export const BRANCH_NAME = "citizen-science-" + process.env.NODE_ENV;
+
 const domExportHelpers = (personsDom: Document) => {
   const findOrCreateNode = (
     parent: Element,
@@ -376,10 +378,10 @@ export const exportToCurrentCommit = async () => {
     // Commit and push
     // Todo: add git_export id to branch name / suffix?
     const branches = await git.branchLocal();
-    if (branches.all.includes("citizen-science-experiments")) {
-      await git.deleteLocalBranch("citizen-science-experiments", true);
+    if (branches.all.includes(BRANCH_NAME)) {
+      await git.deleteLocalBranch(BRANCH_NAME, true);
     }
-    await git.checkoutBranch("citizen-science-experiments", commitHash);
+    await git.checkoutBranch(BRANCH_NAME, commitHash);
     await git.add(".");
     await git.commit(
       `Citizen Science export ${new Date().toISOString()} (based on ${commitHash.substring(
@@ -387,7 +389,7 @@ export const exportToCurrentCommit = async () => {
         7
       )})`
     );
-    await git.push("origin", "citizen-science-experiments", ["-f"]);
+    await git.push("origin", BRANCH_NAME, ["-f"]);
     await git.checkout(commitHash);
   });
 };

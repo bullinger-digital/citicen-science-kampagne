@@ -1,6 +1,5 @@
 import { aquireLetterLock } from "@/lib/actions/locking";
 import { useEffect } from "react";
-import { Loading } from "../common/loadingIndicator";
 import { useServerFetch } from "../common/serverActions";
 import { usePrevious } from "../common/usePrevious";
 

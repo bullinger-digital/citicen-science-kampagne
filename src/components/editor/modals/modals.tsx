@@ -194,7 +194,13 @@ export const EditPersonModal = ({
   );
 };
 
-const CommentsWrapper = ({ target }: { target: string }) => {
+export const CommentsWrapper = ({
+  target,
+  commentCount,
+}: {
+  target: string;
+  commentCount?: number;
+}) => {
   const [showComments, setShowComments] = useState(false);
 
   return (
@@ -205,11 +211,13 @@ const CommentsWrapper = ({ target }: { target: string }) => {
       >
         {showComments ? (
           <>
-            <FaChevronUp className="inline-block" /> Kommentare ausblenden
+            <FaChevronUp className="inline-block" /> Kommentare ausblenden{" "}
+            {commentCount !== undefined && <>({commentCount})</>}
           </>
         ) : (
           <>
-            <FaChevronDown className="inline-block" /> Kommentare anzeigen
+            <FaChevronDown className="inline-block" /> Kommentare anzeigen{" "}
+            {commentCount !== undefined && <>({commentCount})</>}
           </>
         )}
       </button>

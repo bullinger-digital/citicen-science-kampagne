@@ -12,3 +12,4 @@ tei-corpus
 # Migrations
 migrations/node_modules
 migrations/npm-debug.log
+backup

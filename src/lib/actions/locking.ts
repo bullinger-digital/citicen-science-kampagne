@@ -2,6 +2,7 @@
 import { kdb } from "../db";
 import { requireRoleOrThrow } from "../security/withRequireRole";
 import { Versioning } from "../versioning";
+import { LOCK_DURATION } from "./locking_common";
 
 export const aquireLetterLock = async ({ id }: { id: number }) => {
   await requireRoleOrThrow("user");
@@ -10,7 +11,7 @@ export const aquireLetterLock = async ({ id }: { id: number }) => {
   const v = new Versioning();
   const userSub = await v.getUserSub();
 
-  const expirationThreshold = new Date(Date.now() - 1000 * 60 * 1);
+  const expirationThreshold = new Date(Date.now() - LOCK_DURATION);
 
   return await kdb
     .transaction()

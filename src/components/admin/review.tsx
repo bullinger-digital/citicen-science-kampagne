@@ -2,90 +2,359 @@
 import {
   acceptChange,
   getUncommitedChanges,
+  moveUsages,
   rejectChange,
 } from "@/lib/actions/admin";
 import { useServerAction, useServerFetch } from "../common/serverActions";
+import { Loading } from "../common/loadingIndicator";
+import {
+  CommentsWrapper,
+  EditPersonModal,
+  EditPlaceModal,
+} from "../editor/modals/modals";
+import { useState } from "react";
+import { BsPersonFill } from "react-icons/bs";
+import { TbLocation } from "react-icons/tb";
+import { IconType } from "react-icons";
+import {
+  EntityLinksList,
+  PersonItemDetails,
+  PlaceItemDetails,
+} from "../editor/properties";
+import Modal from "../common/modal";
+import { FaEdit, FaExternalLinkAlt } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa6";
+import { GrClose } from "react-icons/gr";
 
 export const Review = () => {
   const { loading, error, data, refetch } = useServerFetch(
     getUncommitedChanges,
     {}
   );
-  const rejectAction = useServerAction(rejectChange);
-  const acceptAction = useServerAction(acceptChange);
 
-  return (
+  return !data && loading ? (
+    <Loading />
+  ) : error ? (
+    <div>{error}</div>
+  ) : (
     <div>
-      <table className="bg-white w-full table-auto  shadow-lg">
-        <thead>
-          <tr className="text-left">
-            <th>Type</th>
-            <th>ID</th>
-            <th>Table</th>
-            <th>Action</th>
-            <th>Changes</th>
-            <th>Usages</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.map((log) => (
-            <tr className="odd:bg-slate-100" key={log.id}>
-              <td>{log.log_type}</td>
-              <td>{log.modified?.id}</td>
-              <td>{log.table}</td>
-              <td>{log.unmodified === null ? "Erstellt" : "Verändert"}</td>
-              <th>
-                <ReviewItem logEntry={log} />
-              </th>
-              <th>
-                {log.usages?.length}
-                <div className="max-h-40 overflow-y-auto">
-                  <ul>
-                    {log.usages?.map((usage) => (
-                      <li key={usage.id}>{usage.id}</li>
-                    ))}
-                  </ul>
-                </div>
-              </th>
-              <th>
-                <button
-                  onClick={() => {
-                    acceptAction.execute({
-                      table: log.table,
-                      versionId: log.modified!.version_id,
-                    });
-                    refetch();
-                  }}
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={() => {
-                    rejectAction.execute({
-                      table: log.table,
-                      versionId: log.modified!.version_id,
-                    });
-                    refetch();
-                  }}
-                >
-                  Reject
-                </button>
-              </th>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h2 className="text-xl mb-3 mt-5">{data?.length} Änderungsvorschläge</h2>
+      <div className={`${loading ? "opacity-20" : ""}`}>
+        {data?.map((log) => (
+          <ReviewItem log={log} key={log.id} refetch={refetch} />
+        ))}
+      </div>
     </div>
   );
 };
 
+const REVIEW_ITEM_SPECS: {
+  [key: string]: {
+    itemLabel: string;
+    editModalComponent: React.ComponentType<any>;
+    iconComponent: IconType;
+  };
+} = {
+  person: {
+    itemLabel: "Person",
+    editModalComponent: EditPersonModal,
+    iconComponent: BsPersonFill,
+  },
+  place: {
+    itemLabel: "Ort",
+    editModalComponent: EditPlaceModal,
+    iconComponent: TbLocation,
+  },
+};
+
 const ReviewItem = ({
+  log,
+  refetch,
+}: {
+  log: Awaited<ReturnType<typeof getUncommitedChanges>>[0];
+  refetch: () => void;
+}) => {
+  const [showEditModal, setShowEditModal] = useState(false);
+  const specs = REVIEW_ITEM_SPECS[log.table];
+  const EditModalComponent = specs.editModalComponent;
+  const IconComponent = specs.iconComponent;
+
+  const rejectAction = useServerAction(rejectChange);
+  const acceptAction = useServerAction(acceptChange);
+
+  return (
+    <div className="p-3 relative rounded-xl bg-white border-gray-300 border mb-2">
+      {showEditModal && EditModalComponent && (
+        <EditModalComponent
+          id={log.modified!.id}
+          open={true}
+          close={() => {
+            setShowEditModal(false);
+            refetch();
+          }}
+        />
+      )}
+      <div className="flex justify-between mb-2">
+        <div>
+          <IconComponent className="inline-block mr-2" />
+          <span className="font-bold">
+            {specs.itemLabel} {log.modified?.id}
+          </span>{" "}
+          {log.last_accepted === null ? "erstellt" : "verändert"}
+        </div>
+        <div>
+          Benutzer {log.created_by_id} am{" "}
+          {log.timestamp?.toLocaleDateString("de")}{" "}
+          {log.timestamp?.toLocaleTimeString("de")} ({log.log_type})
+        </div>
+      </div>
+      <div className="flex justify-between">
+        <div>
+          <div className="border-gray-200 border-l-4 pl-3">
+            <DiffItem logEntry={log} />
+          </div>
+          <div className="max-w-screen-md">
+            <CommentsWrapper
+              target={`${log.table}/${log.modified!.id}`}
+              commentCount={log.comment_count?.count}
+            />
+          </div>
+        </div>
+        <div>
+          <div>
+            <EntityLinksList links={log.usages} />
+          </div>
+        </div>
+      </div>
+      <div className="flex absolute bottom-0 right-0">
+        {acceptAction.error && (
+          <div className="text-xs bg-red-100 p-2">{acceptAction.error}</div>
+        )}
+        {rejectAction.error && (
+          <div className="text-xs bg-red-100 p-2">{rejectAction.error}</div>
+        )}
+        {(log.table === "person" || log.table === "place") && (
+          <UsageMoverButton
+            table={log.table}
+            fromId={log.modified!.id!}
+            refetch={refetch}
+          />
+        )}
+        <ActionButton
+          iconComponent={FaEdit}
+          className="bg-gray-100 hover:bg-gray-200"
+          onClick={() => {
+            setShowEditModal(true);
+          }}
+        >
+          Bearbeiten
+        </ActionButton>
+        <ActionButton
+          iconComponent={FaCheck}
+          className="bg-emerald-300 hover:bg-emerald-400"
+          onClick={async () => {
+            await acceptAction.execute({
+              table: log.table,
+              versionId: log.modified!.version_id,
+            });
+            refetch();
+          }}
+        >
+          Akzeptieren
+        </ActionButton>
+        <ActionButton
+          iconComponent={GrClose}
+          className="bg-red-100 hover:bg-red-200"
+          onClick={async () => {
+            await rejectAction.execute({
+              table: log.table,
+              versionId: log.modified!.version_id,
+            });
+            refetch();
+          }}
+        >
+          Verwerfen
+        </ActionButton>
+      </div>
+    </div>
+  );
+};
+
+const ActionButton = ({
+  onClick,
+  children,
+  disabled,
+  className,
+  iconComponent,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  disabled?: boolean;
+  className?: string;
+  iconComponent?: IconType;
+}) => {
+  const IconComponent = iconComponent;
+  return (
+    <button
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      className={`flex py-2 px-4 first:rounded-l-xl last:rounded-r-xl ${className} ${disabled ? "text-gray-100" : ""}`}
+    >
+      {IconComponent && (
+        <IconComponent className="inline-block mr-2 relative top-1" />
+      )}
+      {children}
+    </button>
+  );
+};
+
+const UsageMoverButton = ({
+  table,
+  fromId,
+  refetch,
+}: {
+  table: "person" | "place";
+  fromId: number;
+  refetch: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const specs = REVIEW_ITEM_SPECS[table];
+
+  return (
+    <>
+      <ActionButton
+        iconComponent={FaExternalLinkAlt}
+        onClick={() => setOpen(true)}
+        className="bg-gray-200"
+      >
+        Verwendungen von {specs.itemLabel} {fromId} verschieben
+      </ActionButton>
+      <UsageMoverModal
+        table={table}
+        fromId={fromId}
+        open={open}
+        close={() => {
+          setOpen(false);
+          refetch();
+        }}
+      />
+    </>
+  );
+};
+
+const UsageMoverModal = ({
+  table,
+  fromId,
+  close,
+  open,
+}: {
+  table: "person" | "place";
+  fromId: number;
+  open: boolean;
+  close: () => void;
+}) => {
+  const specs = REVIEW_ITEM_SPECS[table];
+
+  return !open ? null : (
+    <Modal
+      open={open}
+      closeOnOutsideClick={true}
+      cancel={close}
+      title={`Verwendungen von ${specs.itemLabel} ${fromId} verschieben`}
+    >
+      <div>
+        Alle Instanzen von {specs.itemLabel} {fromId} zu einer anderen ID
+        verschieben.
+        <br />
+        <span className="text-red-400">
+          ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden.
+        </span>
+      </div>
+
+      <UsageMover table={table} fromId={fromId} refetch={close} />
+    </Modal>
+  );
+};
+
+const UsageMover = ({
+  table,
+  fromId,
+  refetch,
+}: {
+  table: "person" | "place";
+  fromId: number;
+  refetch: () => void;
+}) => {
+  const [toId, setToId] = useState<number | null>(null);
+  const moveUsagesAction = useServerAction(moveUsages);
+
+  return (
+    <div className="mt-5">
+      <div>
+        Verschieben von
+        {fromId && table === "place" && (
+          <PlaceItemDetails id={fromId?.toString()} isPreview={false} />
+        )}
+        {fromId && table === "person" && (
+          <PersonItemDetails id={fromId?.toString()} isPreview={false} />
+        )}
+      </div>
+      <div className="flex space-x-2 items-center my-4">
+        <span>Zu ID</span>
+        <input
+          className="border border-gray-300 p-2 rounded-md"
+          type="number"
+          value={toId?.toString()}
+          onChange={(e) => setToId(parseInt(e.target.value))}
+        />
+        {toId && table === "place" && (
+          <PlaceItemDetails id={toId?.toString()} isPreview={false} />
+        )}
+        {toId && table === "person" && (
+          <PersonItemDetails id={toId?.toString()} isPreview={false} />
+        )}
+      </div>
+      <ActionButton
+        className="bg-emerald-300 hover:bg-emerald-400"
+        disabled={toId === null}
+        onClick={async () => {
+          if (toId === null) {
+            return;
+          }
+          try {
+            await moveUsagesAction.execute({ table, fromId, toId });
+            refetch();
+          } catch (e) {}
+        }}
+      >
+        Ausführen
+      </ActionButton>
+      {moveUsagesAction.error && (
+        <div className="text-xs bg-red-100 p-2">{moveUsagesAction.error}</div>
+      )}
+    </div>
+  );
+};
+
+const DiffItem = ({
   logEntry,
 }: {
   logEntry: Awaited<ReturnType<typeof getUncommitedChanges>>[0];
 }) => {
-  return <Diff oldObject={logEntry.unmodified} newObject={logEntry.modified} />;
+  return (
+    <>
+      {logEntry.table === "person" &&
+        logEntry.aliasChanges?.map((aliasChange) => (
+          <div key={aliasChange.id}>
+            <Diff
+              oldObject={aliasChange.last_accepted}
+              newObject={aliasChange.modified}
+            />
+          </div>
+        ))}
+      <Diff oldObject={logEntry.last_accepted} newObject={logEntry.modified} />
+    </>
+  );
 };
 
 const fieldsToHide = [
@@ -117,23 +386,26 @@ const Diff = ({
         const oldV = oldObject?.[key] || null;
         const newV = newObject?.[key] || null;
         return (
-          <>
-            <div className="flex" key={key}>
-              <div>
-                <span className="font-bold">{key}</span>
-              </div>
-              <div>
-                {oldV === newV ? (
-                  <>{newV}</>
-                ) : (
-                  <>
-                    <span className="text-red-500 line-through">{oldV}</span>
-                    <span className="text-green-500">{newV}</span>
-                  </>
-                )}
-              </div>
+          <div className="flex space-x-2" key={key}>
+            <div className={`w-32 ${oldV === newV ? "text-gray-300" : ""}`}>
+              <span>{key}</span>
             </div>
-          </>
+            <div>
+              {oldV === newV ? (
+                <>{newV}</>
+              ) : (
+                <>
+                  {oldV && (
+                    <>
+                      <span className="text-red-500 line-through">{oldV}</span>
+                      <br />
+                    </>
+                  )}
+                  <span className="text-green-500">{newV}</span>
+                </>
+              )}
+            </div>
+          </div>
         );
       })}
     </div>

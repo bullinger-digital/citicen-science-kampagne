@@ -276,8 +276,6 @@ export class Versioning {
     versionId: number;
   }) {
     await wrapTransaction(this.db, async (db) => {
-      // Todo: Prevent rejection if item is in use?
-
       const versions_table = `${table}_version` as VersionedTable;
       const logId = await this.createLogId("review");
 
@@ -287,6 +285,42 @@ export class Versioning {
         .where("version_id", "=", versionId)
         .select(["id", "git_import_id"])
         .executeTakeFirstOrThrow();
+
+      // Prevent rejection if item is new and in use
+      const latestAcceptedVersion = await db
+        .selectFrom<VersionedTable>(versions_table)
+        .where("git_import_id", "=", gitImportId)
+        .where("id", "=", masterId)
+        .where("review_state", "=", "accepted")
+        .orderBy("version_id", "desc")
+        .limit(1)
+        .selectAll()
+        .executeTakeFirst();
+
+      if (!latestAcceptedVersion) {
+        // Find usages
+        const usages = await db
+          .selectFrom(`letter_version_extract_${table as "person"}`)
+          .leftJoin(
+            "letter_version",
+            "letter_version.version_id",
+            `letter_version_extract_${table as "person"}.version_id`
+          )
+          .where(whereCurrent)
+          .where(
+            `letter_version_extract_${table as "person"}.${table as "person"}_id`,
+            "=",
+            masterId
+          )
+          .selectAll()
+          .execute();
+
+        if (usages.length > 0) {
+          throw new Error(
+            `Cannot reject new ${table} ${masterId} as it is used ${usages.length} times.`
+          );
+        }
+      }
 
       // Set version to rejected
       const modifiedVersion = await db
@@ -300,21 +334,7 @@ export class Versioning {
         .execute();
 
       // If the entry existed before, we need to create a new approved version with the content of the latest accepted version
-      if (!modifiedVersion[0].is_new) {
-        const latestAcceptedVersion = await db
-          .selectFrom<VersionedTable>(versions_table)
-          .where("git_import_id", "=", gitImportId)
-          .where("id", "=", masterId)
-          .where("review_state", "=", "accepted")
-          .orderBy("version_id", "desc")
-          .limit(1)
-          .selectAll()
-          .executeTakeFirstOrThrow();
-
-        if (!latestAcceptedVersion?.id) {
-          throw new Error("Entry is not new, but no accepted version found.");
-        }
-
+      if (latestAcceptedVersion) {
         // Set is_latest to false for the target version
         await db
           .updateTable<VersionedTable>(versions_table)
