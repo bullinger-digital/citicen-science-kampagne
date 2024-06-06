@@ -13,3 +13,4 @@ tei-corpus
 migrations/node_modules
 migrations/npm-debug.log
 backup
+pino-logs

@@ -11,6 +11,7 @@ import { InferType, number, object, string } from "yup";
 import { sql } from "kysely";
 import { getSingleGndResult } from "./gnd";
 import { getSession } from "@auth0/nextjs-auth0";
+import logger from "../logger/logger";
 
 if (!globalThis.window) {
   // Hack to make JSDOM window available globally
@@ -420,11 +421,20 @@ export const saveVersion = async ({
   }
   let newXml = xmlSerializeToString(existingXml);
 
-  // Debug: Write both XMLs to disk
-  // fs.writeFileSync(path.join(process.cwd(), "./debug", "new.xml"), newXml);
-  // fs.writeFileSync(path.join(process.cwd(), "./debug", "existing.xml"), xml);
-
-  if (newXml !== xml) throw new Error("XML does not match applied actions");
+  if (newXml !== xml) {
+    logger.fatal(
+      {
+        letterId: id,
+        versionId: version_id,
+        xmlAfterApplyingActions: newXml,
+        xmlBeforeApplyingActions: currentVersion.xml,
+        xmlFromClient: xml,
+        actions: actions,
+      },
+      "Error while saving version: XMLs do not match; writing to disk for debugging"
+    );
+    throw new Error("XML does not match applied actions");
+  }
 
   await v.createNewVersion(
     "letter",
