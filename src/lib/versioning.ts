@@ -221,33 +221,6 @@ export class Versioning {
       .executeTakeFirst();
   }
 
-  async tempApproveAllChanges() {
-    const logId = await this.createLogId("review");
-    await this.db
-      .updateTable("person_version")
-      .where("review_state", "=", "pending")
-      .set({ review_state: "accepted", reviewed_log_id: logId })
-      .execute();
-
-    await this.db
-      .updateTable("person_alias_version")
-      .where("review_state", "=", "pending")
-      .set({ review_state: "accepted", reviewed_log_id: logId })
-      .execute();
-
-    await this.db
-      .updateTable("place_version")
-      .where("review_state", "=", "pending")
-      .set({ review_state: "accepted", reviewed_log_id: logId })
-      .execute();
-
-    await this.db
-      .updateTable("letter_version")
-      .where("review_state", "=", "pending")
-      .set({ review_state: "accepted", reviewed_log_id: logId })
-      .execute();
-  }
-
   async acceptChanges({
     items,
   }: {

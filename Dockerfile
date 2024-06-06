@@ -81,6 +81,10 @@ COPY --from=deps /app/node_modules/regexp-to-ast ./node_modules/regexp-to-ast
 RUN mkdir tei-corpus
 RUN chown nextjs:nodejs tei-corpus
 
+# Initialize pino-logs folder
+RUN mkdir pino-logs
+RUN chown nextjs:nodejs pino-logs
+
 USER nextjs
 
 EXPOSE 3000
