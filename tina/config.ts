@@ -167,8 +167,16 @@ export default defineConfig({
           },
           {
             type: "datetime",
+            ui: {
+              timeFormat: "HH:mm",
+            },
             name: "showUntil",
             label: "Anzeigen bis",
+          },
+          {
+            type: "boolean",
+            name: "isVisible",
+            label: "Ist sichtbar",
           },
         ],
       },

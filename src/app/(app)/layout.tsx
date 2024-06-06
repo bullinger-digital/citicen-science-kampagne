@@ -14,6 +14,7 @@ import {
 import { MdMenuBook, MdOutlineRule } from "react-icons/md";
 import { Menu } from "@/components/menu";
 import { FaChartPie } from "react-icons/fa6";
+import { InfoMessages } from "@/components/common/infoMessages";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
               inter.className + " text-gray-700 bg-zinc-50 print:bg-white"
             }
           >
+            <InfoMessages />
             <div className="flex justify-between px-5 py-3 print:hidden">
               <div className="flex space-x-5 items-center self-center text-lg font-light">
                 <Menu />
