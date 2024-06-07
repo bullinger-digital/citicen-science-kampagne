@@ -27,17 +27,21 @@ const XML_DECLARAION = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>';
 
 export const xmlSerializeToString = (dom: Document) => {
   const s = getXmlSerializer();
-  const str = s.serializeToString(dom);
+  let str = s.serializeToString(dom);
 
   // Some browsers (like Chrome) do not add a newline after the xml declaration
   if (str.startsWith(XML_DECLARAION + "<TEI")) {
-    return str.replace(XML_DECLARAION, XML_DECLARAION + "\n");
+    str = str.replace(XML_DECLARAION, XML_DECLARAION + "\n");
   }
 
   // JSDOM does not add an xml declaration, so we need to add it manually
   if (!str.startsWith("<?xml ")) {
-    return XML_DECLARAION + "\n" + str;
+    str = XML_DECLARAION + "\n" + str;
   }
+
+  // Some browsers / OS combinations use \r\n as newline, so we need to normalize it
+  str = str.replace(/\r\n/g, "\n");
+
   return str;
 };
 
