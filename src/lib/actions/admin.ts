@@ -288,11 +288,21 @@ export const moveUsages = async ({
       // Replace the old instance id with the new one
       const dom = xmlParseFromString(currentVersion.xml);
       // Find all instances of tagName[ref=fromId] INSIDE  and replace them with tagName[ref=toId]
+      const selector = `${tagName}[ref="${refPrefix}${fromId}"]`;
       const elements = dom.querySelectorAll(
-        `${tagName}[ref="${refPrefix}${fromId}"]`
+        // Once all instances of the person / place are imported (see ToDo in extractMetadata.ts)
+        // we can replace this with just ${selector}
+        `TEI > text ${selector}, correspAction ${selector}`
       );
       for (const element of Array.from(elements)) {
         element.setAttribute("ref", refPrefix + toId.toString());
+      }
+
+      if (Array.from(dom.querySelectorAll(selector)).length > 0) {
+        // If there are still instances of the old person / place, we should throw an error
+        throw new Error(
+          `Cannot move usages: Not all instances of ${tagName} with ref ${refPrefix}${fromId} were updated, probably because those are located outside of the <text> element. This will be fixed in a later version.`
+        );
       }
 
       // Update the letter

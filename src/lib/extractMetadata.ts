@@ -100,6 +100,8 @@ const extractLinksSpecs: {
   linkType: "correspondent" | "mentioned" | "origin";
   refPrefix: string;
 }[] = [
+  // ToDo: Import ALL instances of perName and placeName
+  // and determine the type of link based on the context
   {
     table: "person",
     selector: "TEI > text persName[ref]",
