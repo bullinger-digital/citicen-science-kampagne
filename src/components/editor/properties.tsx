@@ -339,8 +339,10 @@ const PlaceItem = ({
 
 export const EntityLinksList = ({
   links,
+  highlightSelector,
 }: {
   links?: { id: number }[] | undefined | null;
+  highlightSelector?: string;
 }) => {
   if (!links) {
     return null;
@@ -348,12 +350,22 @@ export const EntityLinksList = ({
 
   return (
     <div>
-      Verwendet in <LinksPopup links={links.map((l) => l.id)} />
+      Verwendet in{" "}
+      <LinksPopup
+        highlightSelector={highlightSelector}
+        links={links.map((l) => l.id)}
+      />
     </div>
   );
 };
 
-export const LinksPopup = ({ links }: { links: number[] }) => {
+export const LinksPopup = ({
+  links,
+  highlightSelector,
+}: {
+  links: number[];
+  highlightSelector?: string;
+}) => {
   return (
     <Popover
       content={
@@ -363,7 +375,7 @@ export const LinksPopup = ({ links }: { links: number[] }) => {
               <li key={link}>
                 <Link
                   className="underline text-emerald-400"
-                  href={`/letter/${link}`}
+                  href={`/letter/${link}${highlightSelector ? `#highlight=${encodeURIComponent(highlightSelector)}` : ""}`}
                   target="_blank"
                 >
                   Brief {link}

@@ -212,13 +212,14 @@ export const CommentsWrapper = ({
         {showComments ? (
           <>
             <FaChevronUp className="inline-block" /> Kommentare ausblenden{" "}
-            {commentCount !== undefined && <>({commentCount})</>}
           </>
         ) : (
           <>
             <FaChevronDown className="inline-block" /> Kommentare anzeigen{" "}
-            {commentCount !== undefined && <>({commentCount})</>}
           </>
+        )}
+        {commentCount !== undefined && commentCount > 0 && (
+          <span className="rounded-full bg-red-200 px-2">{commentCount}</span>
         )}
       </button>
 

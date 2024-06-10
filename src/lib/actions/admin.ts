@@ -159,6 +159,19 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
         ).as("usages")
       )
     )
+    .$if(table === "person_version", (e) =>
+      e.select((e) =>
+        jsonObjectFrom(
+          e
+            .selectFrom("person_alias_version")
+            .where(whereCurrent as any)
+            .where("person_id", "=", e.ref(`${table as "person_version"}.id`))
+            .where("type", "=", "main")
+            .limit(1)
+            .selectAll()
+        ).as("main_alias")
+      )
+    )
     .execute();
 };
 

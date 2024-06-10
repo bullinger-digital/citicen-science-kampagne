@@ -41,6 +41,22 @@ const RenderTextInternal = ({ nodes }: { nodes: ChildNode[] }) => {
     });
 };
 
+const useShouldHighlight = (selector: string) => {
+  const highlights = window.location.hash
+    ?.split("#")[1]
+    ?.split("&")
+    ?.filter((h) => h.split("=")[0] === "highlight");
+
+  return (
+    highlights?.[0]
+      ?.split(",")
+      .map((h) => {
+        return decodeURIComponent(h.split("=")[1]);
+      })
+      .some((h) => h === selector) || false
+  );
+};
+
 const linkXmlAndDomNodes = (
   xmlNode: Node | undefined | null,
   domNode: HTMLElement | undefined | null
@@ -109,10 +125,12 @@ const renderers: {
     const c = useContext(EditorContext);
     const cert = node.getAttribute("cert");
     const ref = node.getAttribute("ref");
+    const highlight = useShouldHighlight(`persName[ref=${ref}]`);
+
     return (
       <span
         ref={(r) => linkXmlAndDomNodes(node, r)}
-        className={`border-b-4 border-sky-600 ${
+        className={`border-b-4 border-sky-600 ${highlight ? " outline-red-300 outline-4 outline-offset-2 outline" : ""} ${
           c?.selectedNode === node ? " bg-sky-100" : ""
         } ${
           cert === "high" && !!ref
@@ -133,10 +151,12 @@ const renderers: {
     const c = useContext(EditorContext);
     const cert = node.getAttribute("cert");
     const ref = node.getAttribute("ref");
+    const highlight = useShouldHighlight(`placeName[ref=${ref}]`);
+
     return (
       <span
         ref={(r) => linkXmlAndDomNodes(node, r)}
-        className={`border-b-4 border-yellow-600 ${
+        className={`border-b-4 border-yellow-600  ${highlight ? " outline-red-300 outline-4 outline-offset-2 outline" : ""} ${
           c?.selectedNode === node ? " bg-yellow-100" : ""
         } ${
           cert === "high" && !!ref

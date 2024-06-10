@@ -25,6 +25,7 @@ import Modal from "../common/modal";
 import { FaEdit, FaExternalLinkAlt } from "react-icons/fa";
 import { FaCheck } from "react-icons/fa6";
 import { GrClose } from "react-icons/gr";
+import { Link } from "../common/navigation-block/link";
 
 export const Review = () => {
   const { loading, error, data, refetch } = useServerFetch(
@@ -32,18 +33,28 @@ export const Review = () => {
     {}
   );
 
+  const [limit, setLimit] = useState(10);
+
   return !data && loading ? (
     <Loading />
   ) : error ? (
     <div>{error}</div>
   ) : (
-    <div>
+    <div className="pb-20">
       <h2 className="text-xl mb-3 mt-5">{data?.length} Änderungsvorschläge</h2>
       <div className={`${loading ? "opacity-20" : ""}`}>
-        {data?.map((log) => (
-          <ReviewItem log={log} key={log.id} refetch={refetch} />
-        ))}
+        {data
+          ?.slice(0, limit)
+          .map((log) => (
+            <ReviewItem log={log} key={log.id} refetch={refetch} />
+          ))}
       </div>
+      <button
+        className="bg-gray-200 hover:bg-gray-300 p-2 rounded-xl"
+        onClick={() => setLimit(data?.length || 0)}
+      >
+        Alle anzeigen
+      </button>
     </div>
   );
 };
@@ -51,7 +62,7 @@ export const Review = () => {
 const REVIEW_ITEM_SPECS: {
   [key: string]: {
     itemLabel: string;
-    editModalComponent: React.ComponentType<any>;
+    editModalComponent?: React.ComponentType<any> | undefined;
     iconComponent: IconType;
   };
 } = {
@@ -64,6 +75,10 @@ const REVIEW_ITEM_SPECS: {
     itemLabel: "Ort",
     editModalComponent: EditPlaceModal,
     iconComponent: TbLocation,
+  },
+  person_alias: {
+    itemLabel: "Person-Alias",
+    iconComponent: BsPersonFill,
   },
 };
 
@@ -110,6 +125,11 @@ const ReviewItem = ({
       </div>
       <div className="flex justify-between">
         <div>
+          {log.main_alias && (
+            <div className="mb-2">
+              {log.main_alias.forename} {log.main_alias.surname}
+            </div>
+          )}
           <div className="border-gray-200 border-l-4 pl-3">
             <DiffItem logEntry={log} />
           </div>
@@ -122,7 +142,18 @@ const ReviewItem = ({
         </div>
         <div>
           <div>
-            <EntityLinksList links={log.usages} />
+            <EntityLinksList
+              links={log.usages}
+              highlightSelector={
+                log.table === "place"
+                  ? `placeName[ref=l${log.modified?.id}]`
+                  : log.table === "person"
+                    ? `persName[ref=p${log.modified?.id}]`
+                    : log.table === "person_alias"
+                      ? `persName[ref=p${log.modified?.person_id}]`
+                      : undefined
+              }
+            />
           </div>
         </div>
       </div>
@@ -133,13 +164,15 @@ const ReviewItem = ({
         {rejectAction.error && (
           <div className="text-xs bg-red-100 p-2">{rejectAction.error}</div>
         )}
-        {(log.table === "person" || log.table === "place") && (
-          <UsageMoverButton
-            table={log.table}
-            fromId={log.modified!.id!}
-            refetch={refetch}
-          />
-        )}
+        {(log.table === "person" || log.table === "place") &&
+          // At the moment, we only allow moving usages for new items
+          log.last_accepted === null && (
+            <UsageMoverButton
+              table={log.table}
+              fromId={log.modified!.id!}
+              refetch={refetch}
+            />
+          )}
         <ActionButton
           iconComponent={FaEdit}
           className="bg-gray-100 hover:bg-gray-200"
@@ -432,16 +465,22 @@ const Diff = ({
             </div>
             <div>
               {oldV === newV ? (
-                <>{newV}</>
+                <>
+                  <ValueOrLink value={newV} />
+                </>
               ) : (
                 <>
                   {oldV && (
                     <>
-                      <span className="text-red-500 line-through">{oldV}</span>
+                      <span className="text-red-500 line-through">
+                        <ValueOrLink value={oldV} />
+                      </span>
                       <br />
                     </>
                   )}
-                  <span className="text-green-500">{newV}</span>
+                  <span className="text-green-500">
+                    <ValueOrLink value={newV} />
+                  </span>
                 </>
               )}
             </div>
@@ -449,5 +488,15 @@ const Diff = ({
         );
       })}
     </div>
+  );
+};
+
+const ValueOrLink = ({ value }: { value: any }) => {
+  return typeof value === "string" && value?.match(/^https?:\/\//) ? (
+    <Link target="_blank" href={value}>
+      {value}
+    </Link>
+  ) : (
+    <span>{value}</span>
   );
 };
