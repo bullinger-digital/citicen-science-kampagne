@@ -1,7 +1,12 @@
 import { EXTERNAL_API_USER_AGENT, getYear } from "./common";
 
 export const searchGnd = async (inputValue: string) => {
-  const filter = "type:Person AND dateOfBirth:[-2000 TO 1700]";
+  // If the input value is a GND identifier, don't apply dateOfBirth filter
+  // because the GND API seems not to return results for people with uncertain birth dates.
+  const filter = isValidGndIdentifier(inputValue)
+    ? "type:Person"
+    : "type:Person AND dateOfBirth:[-2000 TO 1700]";
+
   const res = await fetch(
     `https://lobid.org/gnd/search?q=${encodeURIComponent(
       inputValue
