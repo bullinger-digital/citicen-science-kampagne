@@ -46,6 +46,12 @@ export const extractAndStoreMetadata = async ({
   for (const { table, selector, linkType, refPrefix } of extractLinksSpecs) {
     const entities = Array.from(xmlDom.querySelectorAll(selector));
 
+    // Remove existing extracts for this version (only required when gegenerating metadata for existing letter versions)
+    await db
+      .deleteFrom(`letter_version_extract_${table}`)
+      .where("version_id", "=", versionId)
+      .execute();
+
     const inserts = entities.map((entity) => {
       const ref = entity.getAttribute("ref");
       const cert = entity.getAttribute("cert") || "low";
@@ -54,7 +60,7 @@ export const extractAndStoreMetadata = async ({
       return {
         version_id: versionId,
         link_to: entityId,
-        link_type: linkType,
+        link_type: linkType(xmlDom, entity as Node),
         cert,
         node_text: textContent,
       };
@@ -97,33 +103,42 @@ export const extractAndStoreMetadata = async ({
 const extractLinksSpecs: {
   table: Extract<Versioned, "person" | "place">;
   selector: string;
-  linkType: "correspondent" | "mentioned" | "origin";
+  linkType: (
+    root: Document,
+    node: Node
+  ) => "correspondent" | "mentioned" | "origin" | "other";
   refPrefix: string;
 }[] = [
   // ToDo: Import ALL instances of perName and placeName
   // and determine the type of link based on the context
   {
     table: "person",
-    selector: "TEI > text persName[ref]",
-    linkType: "mentioned",
-    refPrefix: "p",
-  },
-  {
-    table: "person",
-    selector: "correspAction persName[ref]",
-    linkType: "correspondent",
+    selector: "persName[ref]",
+    linkType: (root, node) => {
+      if (root.querySelector("TEI > teiHeader correspDesc")?.contains(node))
+        return "correspondent";
+      if (root.querySelector("TEI > text")?.contains(node)) return "mentioned";
+      if (root.querySelector("TEI > teiHeader summary")?.contains(node))
+        return "mentioned";
+      return "other";
+    },
     refPrefix: "p",
   },
   {
     table: "place",
-    selector: "TEI > text placeName[ref]",
-    linkType: "mentioned",
-    refPrefix: "l",
-  },
-  {
-    table: "place",
-    selector: "correspAction[type='sent'] placeName[ref]",
-    linkType: "origin",
+    selector: "placeName[ref]",
+    linkType: (root, node) => {
+      if (
+        root
+          .querySelector("TEI > teiHeader correspAction[type='sent']")
+          ?.contains(node)
+      )
+        return "origin";
+      if (root.querySelector("TEI > text")?.contains(node)) return "mentioned";
+      if (root.querySelector("TEI > teiHeader summary")?.contains(node))
+        return "mentioned";
+      return "other";
+    },
     refPrefix: "l",
   },
 ];

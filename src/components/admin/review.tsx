@@ -419,13 +419,15 @@ const DiffItem = ({
         }
         newObject={logEntry.modified}
       />
-      <div
-        className={`text-xs mt-4 cursor-pointer ${compareWithOriginal ? "text-green-500" : "text-gray-500"}`}
-        title="Mit Original (letzter Korpus-Import) vergleichen"
-        onClick={() => setCompareWithOriginal(!compareWithOriginal)}
-      >
-        <BsFiletypeXml />
-      </div>
+      {logEntry.unmodified?.is_touched && (
+        <div
+          className={`text-xs mt-4 cursor-pointer ${compareWithOriginal ? "text-green-500" : "text-gray-500"}`}
+          title="Mit Original (letzter Korpus-Import) vergleichen"
+          onClick={() => setCompareWithOriginal(!compareWithOriginal)}
+        >
+          <BsFiletypeXml />
+        </div>
+      )}
     </>
   );
 };
