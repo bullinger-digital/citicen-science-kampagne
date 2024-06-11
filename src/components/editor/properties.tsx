@@ -559,9 +559,9 @@ const EntitySelector = <T extends SearchFunction>({
           }
         />
         <EditModal
-          close={(savedEntity) => {
-            if (savedEntity) {
-              onSelect(savedEntity.id);
+          close={(id) => {
+            if (id) {
+              onSelect(id);
             }
             setNewModalOpen(false);
           }}

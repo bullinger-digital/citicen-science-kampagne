@@ -40,17 +40,20 @@ export const fileOnCurrentCommit = async ({ id }: { id: string }) => {
 
 export const personById = async ({
   id,
+  gnd,
   includeGndData,
 }: {
-  id: string;
+  id?: string;
+  gnd?: string;
   includeGndData?: boolean;
 }) => {
   await requireRoleOrThrow("user");
-  if (!id) throw new Error("ID is required");
+  if (!id && !gnd) throw new Error("ID or GND is required");
   const p = await kdb
     .selectFrom("person_version")
     .where(whereCurrent)
-    .where("id", "=", parseInt(id))
+    .$if(!!id, (e) => e.where("id", "=", parseInt(id!)))
+    .$if(!!gnd, (e) => e.where("gnd", "=", gnd!))
     .selectAll()
     .select((e) => [
       jsonArrayFrom(
@@ -74,7 +77,11 @@ export const personById = async ({
           .orderBy("v2.id", "asc")
       ).as("links"),
     ])
-    .executeTakeFirstOrThrow();
+    .executeTakeFirst();
+
+  if (!p) {
+    return null;
+  }
 
   return {
     ...p,

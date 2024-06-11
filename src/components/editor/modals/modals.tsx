@@ -15,10 +15,11 @@ import { searchHistHub, singleHistHubResult } from "./histHub";
 import dynamic from "next/dynamic";
 import { Comments } from "@/components/common/comments";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
-import { LinksPopup } from "../properties";
+import { LinksPopup, PersonItemDetails } from "../properties";
 import { getGeoname, searchGeonames } from "@/lib/actions/geonames";
 import type { Geoname } from "@/lib/actions/geonames";
 import { getSingleGndResult } from "@/lib/actions/gnd";
+import { IoWarning } from "react-icons/io5";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -85,7 +86,7 @@ export const EditPersonModal = ({
 }: {
   id?: number | null;
   open: boolean;
-  close: (savedPerson?: Awaited<ReturnType<typeof execute>>) => void;
+  close: (personId?: number) => void;
 }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const { execute, loading, error } = useServerAction(insertOrUpdatePerson);
@@ -93,11 +94,18 @@ export const EditPersonModal = ({
   const [newPerson, setNewPerson] =
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PERSON);
   const [usages, setUsages] = useState<number[]>([]);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
+      setLoadingError(null);
       setIsLoading(true);
       personById({ id: id.toString() }).then((p) => {
+        if (!p) {
+          setLoadingError("Person nicht gefunden");
+          setIsLoading(false);
+          return;
+        }
         const primaryAlias = p.aliases.find((a) => a.type === "main");
         setNewPerson({
           forename: primaryAlias?.forename || "",
@@ -131,7 +139,12 @@ export const EditPersonModal = ({
       maxWidth={700}
     >
       <EditWarning id={id} usages={usages} />
-      {error && <div className="bg-red-100 p-2 mb-4">{error}</div>}
+      {error ||
+        (loadingError && (
+          <div className="bg-red-100 p-2 mb-4">
+            {error} {loadingError}
+          </div>
+        ))}
       {(loading || isLoading) && <Loading />}
       <form
         onSubmit={async (e) => {
@@ -141,7 +154,7 @@ export const EditPersonModal = ({
             id: id,
           });
           if (savedPerson) {
-            close(savedPerson);
+            close(savedPerson.id);
           }
         }}
         ref={formRef}
@@ -181,6 +194,12 @@ export const EditPersonModal = ({
             .filter((n) => !!n)
             .join(" ")}
         />
+        {!id && (
+          <PersonMightAlreadyExistHint
+            gnd={newPerson.gnd}
+            onUseExisting={(id) => close(id)}
+          />
+        )}
         <HistHubField
           value={newPerson.hist_hub}
           onChange={(v) => setNewPerson({ ...newPerson, hist_hub: v })}
@@ -192,6 +211,52 @@ export const EditPersonModal = ({
       {id && <CommentsWrapper target={"person/" + id.toString()} />}
     </Modal>
   );
+};
+
+const PersonMightAlreadyExistHint = ({
+  gnd,
+  onUseExisting,
+}: {
+  gnd?: string;
+  onUseExisting: (id: number) => void;
+}) => {
+  const existing = useServerFetch(
+    personById,
+    {
+      gnd: gnd,
+      includeGndData: true,
+    },
+    {
+      skip: !gnd,
+    }
+  );
+
+  if (existing.loading || !existing.data) {
+    return null;
+  }
+
+  if (existing.data.id) {
+    return (
+      <div className="bg-yellow-100 p-2 mb-4 text-sm">
+        <div className="flex space-x-2">
+          <IoWarning className="text-lg" />
+          <span>Es existiert bereits eine Person mit dieser GND-ID</span>
+        </div>
+        <div className="pl-4 pt-2 pb-4">
+          <button
+            onClick={() => onUseExisting(existing.data!.id!)}
+            className="underline pb-2 rounded-sm text-emerald-400"
+          >
+            Diese Person verwenden, anstatt neu zu erfassen
+          </button>
+          <PersonItemDetails
+            id={existing.data.id.toString()}
+            isPreview={true}
+          />
+        </div>
+      </div>
+    );
+  }
 };
 
 export const CommentsWrapper = ({
@@ -391,7 +456,7 @@ export const EditPlaceModal = ({
 }: {
   id?: number | null;
   open: boolean;
-  close: (savedPlace?: Awaited<ReturnType<typeof execute>>) => void;
+  close: (savedId?: number) => void;
 }) => {
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -452,7 +517,7 @@ export const EditPlaceModal = ({
             id: id,
           });
           if (savedPlace) {
-            close(savedPlace);
+            close(savedPlace.id);
           }
         }}
         ref={formRef}
