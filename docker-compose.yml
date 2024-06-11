@@ -21,7 +21,7 @@ services:
       - database-data:/var/lib/postgresql/data/
   
   pgadmin:
-    image: dpage/pgadmin4:8.4
+    image: dpage/pgadmin4:8.8
     ports:
       - 6434:80
     environment:

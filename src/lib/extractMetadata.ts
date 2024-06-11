@@ -53,7 +53,7 @@ export const extractAndStoreMetadata = async ({
       .execute();
 
     const inserts = entities.map((entity) => {
-      const ref = entity.getAttribute("ref");
+      const ref = entity.getAttribute("ref") || entity.getAttribute("source");
       const cert = entity.getAttribute("cert") || "low";
       const textContent = entity.textContent || "";
       const entityId = parseInt(ref!.toLowerCase().replace(refPrefix, ""));
@@ -126,7 +126,7 @@ const extractLinksSpecs: {
   },
   {
     table: "place",
-    selector: "placeName[ref]",
+    selector: "placeName[ref], placeName[source]",
     linkType: (root, node) => {
       if (
         root
