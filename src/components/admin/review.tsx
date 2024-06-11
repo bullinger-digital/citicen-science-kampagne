@@ -142,18 +142,13 @@ const ReviewItem = ({
         </div>
         <div>
           <div>
-            <EntityLinksList
-              links={log.usages}
-              highlightSelector={
-                log.table === "place"
-                  ? `placeName[ref=l${log.modified?.id}]`
-                  : log.table === "person"
-                    ? `persName[ref=p${log.modified?.id}]`
-                    : log.table === "person_alias"
-                      ? `persName[ref=p${log.modified?.person_id}]`
-                      : undefined
-              }
-            />
+            {(log.table === "place" || log.table === "person") && (
+              <EntityLinksList
+                id={log.modified!.id!}
+                table={log.table.replace("_version", "") as "place" | "person"}
+                usageCount={log.computed_link_counts}
+              />
+            )}
           </div>
         </div>
       </div>
