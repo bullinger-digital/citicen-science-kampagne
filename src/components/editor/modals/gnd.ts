@@ -1,6 +1,8 @@
 import { EXTERNAL_API_USER_AGENT, getYear } from "./common";
 
 export const searchGnd = async (inputValue: string) => {
+  inputValue = inputValue.trim().replace("https://d-nb.info/gnd/", "");
+
   // If the input value is a GND identifier, don't apply dateOfBirth filter
   // because the GND API seems not to return results for people with uncertain birth dates.
   const filter = isValidGndIdentifier(inputValue)

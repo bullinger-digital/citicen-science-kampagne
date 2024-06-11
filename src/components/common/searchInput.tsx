@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, ComponentType } from "react";
 import { debounce } from "./debounce";
 import { Loading } from "./loadingIndicator";
+import { FaSearch } from "react-icons/fa";
 
 export const SearchInput = <T,>({
   fallbackTerm,
@@ -96,11 +97,15 @@ export const SearchInput = <T,>({
       }}
     >
       <div className="relative">
-        <Input
-          value={term}
-          onChange={(v) => setTerm(v.currentTarget.value)}
-          placeholder="Suche"
-        />
+        <div className="text-gray-400 pb-2">Nicht zugewiesen</div>
+        <div className="flex items-center space-x-2">
+          <FaSearch className="text-gray-400" />
+          <Input
+            value={term}
+            onChange={(v) => setTerm(v.currentTarget.value)}
+            placeholder="Suche"
+          />
+        </div>
         {
           <div className="absolute z-[501] text-sm bg-gray-50 overflow-auto max-h-72 w-full shadow-2xl">
             {isLoading && (
@@ -131,6 +136,11 @@ export const SearchInput = <T,>({
                   </button>
                 );
               })}
+            {!isLoading && hasFocus && results?.length === 0 && (
+              <div className="text-gray-300 p-2">
+                Keine Ergebnisse gefunden.
+              </div>
+            )}
             {!isLoading &&
               hasFocus &&
               errors.length > 0 &&
