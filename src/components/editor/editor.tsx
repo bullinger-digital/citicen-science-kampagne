@@ -52,21 +52,6 @@ const EditorInternal = ({
   const session = useUser();
   const { xmlDoc, actions } = state;
 
-  // const onBeforeUnload = useCallback(
-  //   (e: BeforeUnloadEvent) => {
-  //     if (actions.length > 0) {
-  //       e.preventDefault();
-  //       e.returnValue = "Sie haben ungespeicherte Änderungen.";
-  //     }
-  //   },
-  //   [actions]
-  // );
-
-  // useEffect(() => {
-  //   window.addEventListener("beforeunload", onBeforeUnload);
-  //   return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  // });
-
   if (!xmlDoc) return <Loading />;
 
   const fileType = xmlDoc.querySelector("TEI")?.getAttribute("type") || "";
