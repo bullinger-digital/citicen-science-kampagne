@@ -15,11 +15,12 @@ import { searchHistHub, singleHistHubResult } from "./histHub";
 import dynamic from "next/dynamic";
 import { Comments } from "@/components/common/comments";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
-import { LinksPopup, PersonItemDetails } from "../properties";
+import { EntityUsagesModalTrigger, PersonItemDetails } from "../properties";
 import { getGeoname, searchGeonames } from "@/lib/actions/geonames";
 import type { Geoname } from "@/lib/actions/geonames";
 import { getSingleGndResult } from "@/lib/actions/gnd";
 import { IoWarning } from "react-icons/io5";
+import { Versioned } from "@/lib/versioning";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -93,7 +94,7 @@ export const EditPersonModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [newPerson, setNewPerson] =
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PERSON);
-  const [usages, setUsages] = useState<number[]>([]);
+  const [usages, setUsages] = useState<number | null | undefined>();
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -115,7 +116,7 @@ export const EditPersonModal = ({
           wiki: p.wiki || "",
           portrait: p.portrait || "",
         });
-        setUsages(p.links.map((l) => l.id));
+        setUsages(p.computed_link_counts);
         setIsLoading(false);
       });
     }
@@ -138,13 +139,12 @@ export const EditPersonModal = ({
       }}
       maxWidth={700}
     >
-      <EditWarning id={id} usages={usages} />
-      {error ||
-        (loadingError && (
-          <div className="bg-red-100 p-2 mb-4">
-            {error} {loadingError}
-          </div>
-        ))}
+      <EditWarning table={"person"} id={id} usages={usages} />
+      {(error || loadingError) && (
+        <div className="bg-red-100 p-2 mb-4">
+          {error} {loadingError}
+        </div>
+      )}
       {(loading || isLoading) && <Loading />}
       <form
         onSubmit={async (e) => {
@@ -462,18 +462,25 @@ export const EditPlaceModal = ({
 
   const { execute, loading, error } = useServerAction(insertOrUpdatePlace);
   const [isLoading, setIsLoading] = useState(false);
-  const [usages, setUsages] = useState<number[]>([]);
+  const [usages, setUsages] = useState<number | undefined | null>();
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const [newPlace, setNewPlace] =
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PLACE);
 
   useEffect(() => {
     if (id) {
+      setLoadingError(null);
       setIsLoading(true);
       placeById({ id: id.toString() }).then((p) => {
+        if (!p) {
+          setLoadingError("Person nicht gefunden");
+          setIsLoading(false);
+          return;
+        }
         setNewPlace(p);
         setIsLoading(false);
-        setUsages(p.links.map((l) => l.id));
+        setUsages(p.computed_link_counts);
       });
     }
   }, [id]);
@@ -506,8 +513,12 @@ export const EditPlaceModal = ({
       }}
       maxWidth={600}
     >
-      <EditWarning id={id} usages={usages} />
-      {error && <div className="bg-red-100 p-2 mb-4">{error}</div>}
+      <EditWarning table={"place"} id={id} usages={usages} />
+      {(error || loadingError) && (
+        <div className="bg-red-100 p-2 mb-4">
+          {error} {loadingError}
+        </div>
+      )}
       {(loading || isLoading) && <Loading />}
       <form
         onSubmit={async (e) => {
@@ -727,23 +738,27 @@ const DisplayGenoname = ({ geoname }: { geoname: Geoname }) => {
 };
 
 const EditWarning = ({
+  table,
   id,
   usages,
 }: {
+  table: Extract<Versioned, "person" | "place">;
   id?: number | null;
-  usages: number[];
+  usages: number | undefined | null;
 }) => {
-  if (!id || usages.length === 0) {
+  if (!id || !usages || usages === 0) {
     return null;
   }
   // Todo: add possibility to create a new entry directly
   return (
     <div className="bg-yellow-100 p-2 mb-4 text-sm">
       Achtung: Sie verändern einen bestehenden Eintrag, der in{" "}
-      <LinksPopup links={usages} /> verwendet wird. Änderungen betreffen alle
-      Verwendungen. Falls Sie die Person oder den Ort lediglich an der aktuellen
-      Stelle ändern möchten, entfernen Sie die Zuweisung und erstellen Sie einen
-      neuen Eintrag.
+      <EntityUsagesModalTrigger table={table} id={id}>
+        {usages} Briefen
+      </EntityUsagesModalTrigger>{" "}
+      verwendet wird. Änderungen betreffen alle Verwendungen. Falls Sie die
+      Person oder den Ort lediglich an der aktuellen Stelle ändern möchten,
+      entfernen Sie die Zuweisung und erstellen Sie einen neuen Eintrag.
     </div>
   );
 };

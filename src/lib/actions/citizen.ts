@@ -52,9 +52,9 @@ export const personById = async ({
   const p = await kdb
     .selectFrom("person_version")
     .where(whereCurrent)
-    .$if(!!id, (e) => e.where("id", "=", parseInt(id!)))
+    .$if(!!id, (e) => e.where("person_version.id", "=", parseInt(id!)))
     .$if(!!gnd, (e) => e.where("gnd", "=", gnd!))
-    .selectAll()
+    .selectAll("person_version")
     .select((e) => [
       jsonArrayFrom(
         e
@@ -64,19 +64,21 @@ export const personById = async ({
           .selectAll()
       ).as("aliases"),
     ])
-    .select((e) => [
-      jsonArrayFrom(
-        e
-          .selectFrom("letter_version_extract_person as l")
-          .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
-          // Todo: fix typing
-          .where(whereCurrent as any)
-          .where("l.person_id", "=", e.ref("person_version.id"))
-          .select(["v2.id"])
-          .distinct()
-          .orderBy("v2.id", "asc")
-      ).as("links"),
-    ])
+    .leftJoin("person", "person.id", "person_version.id")
+    .select("person.computed_link_counts")
+    // .select((e) => [
+    //   jsonArrayFrom(
+    //     e
+    //       .selectFrom("letter_version_extract_person as l")
+    //       .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
+    //       // Todo: fix typing
+    //       .where(whereCurrent as any)
+    //       .where("l.person_id", "=", e.ref("person_version.id"))
+    //       .select(["v2.id"])
+    //       .distinct()
+    //       .orderBy("v2.id", "asc")
+    //   ).as("links"),
+    // ])
     .executeTakeFirst();
 
   if (!p) {
@@ -247,22 +249,11 @@ export const placeById = async ({ id }: { id: string }) => {
   const p = await kdb
     .selectFrom("place_version")
     .where(whereCurrent)
-    .where("id", "=", parseInt(id))
-    .selectAll()
-    .select((e) => [
-      jsonArrayFrom(
-        e
-          .selectFrom("letter_version_extract_place as l")
-          .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
-          // Todo: fix typing
-          .where(whereCurrent as any)
-          .where("l.place_id", "=", e.ref("place_version.id"))
-          .select(["v2.id"])
-          .distinct()
-          .orderBy("v2.id", "asc")
-      ).as("links"),
-    ])
-    .executeTakeFirstOrThrow();
+    .where("place_version.id", "=", parseInt(id))
+    .selectAll("place_version")
+    .leftJoin("place", "place.id", "place_version.id")
+    .select("place.computed_link_counts")
+    .executeTakeFirst();
   return p;
 };
 
@@ -628,4 +619,38 @@ export const orgNameByRef = async ({ ref }: { ref: string }) => {
     .select(["id", "xml"])
     .executeTakeFirst();
   return orgName;
+};
+
+export const getPersonUsages = async ({ id }: { id: number }) => {
+  await requireRoleOrThrow("user");
+  const usages = await kdb
+    .selectFrom("letter_version_extract_person")
+    .leftJoin(
+      "letter_version",
+      "letter_version.version_id",
+      "letter_version_extract_person.version_id"
+    )
+    .where(whereCurrent)
+    .where("letter_version_extract_person.person_id", "=", id)
+    .orderBy("id")
+    .select(["id", "cert", "link_type", "node_text"])
+    .execute();
+  return usages;
+};
+
+export const getPlaceUsages = async ({ id }: { id: number }) => {
+  await requireRoleOrThrow("user");
+  const usages = await kdb
+    .selectFrom("letter_version_extract_place")
+    .leftJoin(
+      "letter_version",
+      "letter_version.version_id",
+      "letter_version_extract_place.version_id"
+    )
+    .where(whereCurrent)
+    .where("letter_version_extract_place.place_id", "=", id)
+    .orderBy("id")
+    .select(["id", "cert", "link_type", "node_text"])
+    .execute();
+  return usages;
 };

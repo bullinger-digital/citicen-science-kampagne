@@ -1,4 +1,4 @@
-import { ReactNode, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Draggable from "react-draggable";
 import { AiOutlineClose } from "react-icons/ai";
@@ -22,6 +22,17 @@ const Modal = ({
 }) => {
   const wrapperRef = useRef(null);
   const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      window.document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      window.document.body.style.overflow = "auto";
+    };
+  }, [open]);
+
   return open
     ? createPortal(
         <div
@@ -44,7 +55,7 @@ const Modal = ({
           >
             <div
               ref={modalRef}
-              className={`bg-white rounded-lg shadow-2xl w-full`}
+              className={`bg-white rounded-lg mb-40 shadow-2xl w-full`}
               style={{ minHeight: "100px", maxWidth: maxWidth }}
             >
               <div className="flex justify-between">

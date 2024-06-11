@@ -24,6 +24,8 @@ import { Link } from "../common/navigation-block/link";
 import { getYear } from "./modals/common";
 import ReactDOM from "react-dom";
 import { GndResult } from "@/lib/actions/gnd";
+import { Versioned } from "@/lib/versioning";
+import { UsagesModal } from "./modals/usagesModal";
 
 const PersName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
@@ -107,6 +109,7 @@ export const PersonItemDetails = ({
 }) => {
   const {
     loading,
+    error,
     data: selectedPerson,
     refetch,
   } = useServerFetch(
@@ -126,7 +129,7 @@ export const PersonItemDetails = ({
     return <Loading />;
   }
 
-  if (!selectedPerson) {
+  if (!selectedPerson || error) {
     return <div>Beim Laden der Person ist ein Fehler aufgetreten.</div>;
   }
 
@@ -182,7 +185,11 @@ export const PersonItemDetails = ({
           )}
         </div>
         <div className="text-sm">
-          <EntityLinksList links={selectedPerson.links} />
+          <EntityLinksList
+            table="person"
+            id={selectedPerson.id}
+            usageCount={selectedPerson.computed_link_counts}
+          />
         </div>
         <div>
           <GndDataDisplay gndData={selectedPerson.gndData} />
@@ -260,6 +267,7 @@ export const PlaceItemDetails = ({
   const {
     loading,
     data: selectedPlace,
+    error,
     refetch,
   } = useServerFetch(
     placeById,
@@ -269,11 +277,11 @@ export const PlaceItemDetails = ({
     }
   );
 
-  if (loading || (!!id && !selectedPlace)) {
+  if (loading) {
     return <Loading />;
   }
 
-  if (!selectedPlace) {
+  if (!selectedPlace || error) {
     return <div>Beim Laden der Ortschaft ist ein Fehler aufgetreten.</div>;
   }
 
@@ -316,7 +324,11 @@ export const PlaceItemDetails = ({
           />
         )}
         <div className="text-sm">
-          <EntityLinksList links={selectedPlace.links} />
+          <EntityLinksList
+            table="place"
+            id={selectedPlace.id}
+            usageCount={selectedPlace.computed_link_counts}
+          />
         </div>
       </div>
     );
@@ -338,56 +350,49 @@ const PlaceItem = ({
 };
 
 export const EntityLinksList = ({
-  links,
-  highlightSelector,
+  table,
+  id,
+  usageCount,
 }: {
-  links?: { id: number }[] | undefined | null;
-  highlightSelector?: string;
+  table: Extract<Versioned, "person" | "place">;
+  id: number;
+  usageCount?: number | null;
 }) => {
-  if (!links) {
-    return null;
-  }
-
   return (
     <div>
       Verwendet in{" "}
-      <LinksPopup
-        highlightSelector={highlightSelector}
-        links={links.map((l) => l.id)}
-      />
+      <EntityUsagesModalTrigger id={id} table={table}>
+        {usageCount} Briefen
+      </EntityUsagesModalTrigger>
     </div>
   );
 };
 
-export const LinksPopup = ({
-  links,
-  highlightSelector,
+export const EntityUsagesModalTrigger = ({
+  id,
+  table,
+  children,
 }: {
-  links: number[];
-  highlightSelector?: string;
+  id: number;
+  table: Extract<Versioned, "person" | "place">;
+  children: ReactNode;
 }) => {
+  const [usagesModalVisible, setUsagesModalVisible] = useState(false);
+
   return (
-    <Popover
-      content={
-        <div className="max-h-32 px-3 overflow-y-auto text-left">
-          <ul>
-            {links.map((link) => (
-              <li key={link}>
-                <Link
-                  className="underline text-emerald-400"
-                  href={`/letter/${link}${highlightSelector ? `#highlight=${encodeURIComponent(highlightSelector)}` : ""}`}
-                  target="_blank"
-                >
-                  Brief {link}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      }
-    >
-      <strong>{links.length} Briefen</strong>
-    </Popover>
+    <>
+      <button className="font-bold" onClick={() => setUsagesModalVisible(true)}>
+        {children}
+      </button>
+      {usagesModalVisible && (
+        <UsagesModal
+          table={table}
+          id={id}
+          open={usagesModalVisible}
+          close={() => setUsagesModalVisible(false)}
+        />
+      )}
+    </>
   );
 };
 

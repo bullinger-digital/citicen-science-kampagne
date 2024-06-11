@@ -136,27 +136,11 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
     )
     .$if(table === "person_version" || table === "place_version", (e) =>
       e.select((e) =>
-        jsonArrayFrom(
-          e
-            .selectFrom("letter_version as v")
-            .where(whereCurrent as any)
-            .where((e) =>
-              e.exists(
-                e
-                  .selectFrom(
-                    `letter_version_extract_${rawTable as "person"} as ex_p`
-                  )
-                  .where("ex_p.version_id", "=", e.ref("v.version_id"))
-                  .where(
-                    `ex_p.${rawTable as "person"}_id`,
-                    "=",
-                    e.ref(`${table as "person_version"}.id`)
-                  )
-              )
-            )
-            .orderBy("v.id")
-            .select("v.id")
-        ).as("usages")
+        e
+          .selectFrom(table.replace("_version", "") as "person" | "place")
+          .where("id", "=", e.ref(`${table as "person_version"}.id`))
+          .select("computed_link_counts")
+          .as("computed_link_counts")
       )
     )
     .$if(table === "person_version", (e) =>
