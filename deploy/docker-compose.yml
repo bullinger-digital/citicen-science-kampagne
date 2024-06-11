@@ -44,6 +44,27 @@ services:
       - citizen-science-database-data:/var/lib/postgresql/data/
     networks:
       - citizen_science
+  
+
+  # Source: https://github.com/ixc/restic-pg-dump-docker
+  restic-backup:
+    image: interaction/restic-pg-dump:sha-sha-b98c2fd837ea978e2e70d3f8b5c55fa59345f38f
+    restart: always
+    environment:
+      AWS_ACCESS_KEY_ID: $RESTIC_BACKUP_AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY: $RESTIC_BACKUP_AWS_SECRET_ACCESS_KEY
+      BACKUP_SCHEDULE: '10 * * * *'  # Hourly at minute 10
+      # PRUNE_SCHEDULE: '0 14 * * 0'  # Sunday midnight, AEST. Use '' to disable.
+      PGHOST: citizen-science-db
+      PGPASSWORD: $POSTGRES_PASSWORD
+      # PGPORT: 5432
+      PGUSER: postgres
+      # RESTIC_KEEP_HOURLY: 24
+      # RESTIC_KEEP_DAILY: 7
+      # RESTIC_KEEP_WEEKLY: 4
+      # RESTIC_KEEP_MONTHLY: 12
+      RESTIC_PASSWORD: $RESTIC_BACKUP_PASSWORD
+      RESTIC_REPOSITORY: $RESTIC_BACKUP_REPOSITORY
 
 
 volumes:
