@@ -53,7 +53,7 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: $RESTIC_BACKUP_AWS_ACCESS_KEY_ID
       AWS_SECRET_ACCESS_KEY: $RESTIC_BACKUP_AWS_SECRET_ACCESS_KEY
-      BACKUP_SCHEDULE: '10 * * * *'  # Hourly at minute 10
+      BACKUP_SCHEDULE: '15 * * * *'  # Hourly at minute 15
       # PRUNE_SCHEDULE: '0 14 * * 0'  # Sunday midnight, AEST. Use '' to disable.
       PGHOST: citizen-science-db
       PGPASSWORD: $POSTGRES_PASSWORD
@@ -65,6 +65,8 @@ services:
       # RESTIC_KEEP_MONTHLY: 12
       RESTIC_PASSWORD: $RESTIC_BACKUP_PASSWORD
       RESTIC_REPOSITORY: $RESTIC_BACKUP_REPOSITORY
+    networks:
+      - citizen_science
 
 
 volumes:
