@@ -169,7 +169,6 @@ export const EditPersonModal = ({
           label="Vorname"
           placeholder="Max"
           disabled={id !== undefined}
-          required
         />
         <InputWithLabel
           value={newPerson.surname}
@@ -179,7 +178,6 @@ export const EditPersonModal = ({
           label="Nachname"
           placeholder="Mustermann"
           disabled={id !== undefined}
-          required
         />
         <InputWithLabel
           value={newPerson.wiki}

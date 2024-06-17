@@ -88,7 +88,7 @@ const PlaceName = ({ node }: { node: Node }) => {
 const PersonItem = ({
   entity,
 }: {
-  entity: Awaited<ReturnType<typeof searchPerson>>[0];
+  entity: Awaited<ReturnType<typeof searchPerson>>["result"][0];
 }) => {
   return (
     <div className="relative flex items-center space-x-2 justify-between">
@@ -336,7 +336,7 @@ export const PlaceItemDetails = ({
 const PlaceItem = ({
   entity,
 }: {
-  entity: Awaited<ReturnType<typeof searchPlace>>[0];
+  entity: Awaited<ReturnType<typeof searchPlace>>["result"][0];
 }) => {
   return (
     <span title={"ID: " + entity.id}>
@@ -453,7 +453,7 @@ const EntitySelector = <T extends SearchFunction>({
   onSelect: (id: number) => void;
   searchFn: T;
   displayComponent: (props: {
-    entity: Awaited<ReturnType<T>>[0];
+    entity: Awaited<ReturnType<T>>["result"][0];
   }) => JSX.Element | undefined;
   detailsComponent: (props: {
     id: string;
@@ -471,7 +471,7 @@ const EntitySelector = <T extends SearchFunction>({
 
   const { queueing, dequeuedValue } = useDequeued(query, 500);
 
-  const { loading, data: entities } = useServerFetch<
+  const { loading, data } = useServerFetch<
     Parameters<T>[0],
     Awaited<ReturnType<T>>
   >(
@@ -480,10 +480,12 @@ const EntitySelector = <T extends SearchFunction>({
     { query: dequeuedValue }
   );
 
+  const entities = data?.result;
+
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [showDetailsFor, setShowDetailsFor] = useState<
     | {
-        item: Awaited<ReturnType<T>>[0];
+        item: Awaited<ReturnType<T>>["result"][0];
         element: HTMLButtonElement;
       }
     | undefined

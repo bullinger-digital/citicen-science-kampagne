@@ -6,7 +6,7 @@ import { EditorAction, applyNewActions } from "../xml";
 import { JSDOM } from "jsdom";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
-import { InferType, array, number, object, string } from "yup";
+import { InferType, array, mixed, number, object, string } from "yup";
 import { sql } from "kysely";
 import { getSingleGndResult } from "./gnd";
 import { getSession } from "@auth0/nextjs-auth0";
@@ -84,11 +84,30 @@ const latinPersonExtension = [
 ] // Sort by length descending
   .sort((a, b) => b.length - a.length);
 
+type FilterTableOrderByOption = {
+  column: string;
+  direction: "asc" | "desc";
+};
+
+export type FilterTableOptions = {
+  query?: string;
+  limit?: number;
+  offset?: number;
+  orderBy?: FilterTableOrderByOption;
+};
+
+export type FilterTableResult<T> = {
+  result: T[];
+  count: number | undefined;
+};
+
 export const searchPerson = async ({
-  query,
+  query = "",
+  limit = 50,
+  offset = 0,
+  orderBy = { column: "computed_link_counts", direction: "desc" },
   includeOnlyCorrespondents = false,
-}: {
-  query: string;
+}: FilterTableOptions & {
   includeOnlyCorrespondents?: boolean;
 }) => {
   await requireRoleOrThrow("user");
@@ -101,7 +120,7 @@ export const searchPerson = async ({
     return k;
   });
 
-  const people = await kdb
+  const baseQuery = kdb
     .selectFrom("person")
     .innerJoin("person_version", "person_version.id", "person.id")
     .where(whereCurrent)
@@ -145,21 +164,35 @@ export const searchPerson = async ({
           )
         ),
       ])
-    )
-    .limit(50)
+    );
+
+  const people = await baseQuery
+    .limit(limit)
+    .offset(offset)
     .selectAll("person_version")
     .select("person.computed_link_counts")
-    // Order by the number of letters the person is linked to (descending)
-    .orderBy("computed_link_counts", "desc")
+    .orderBy(orderBy.column as any, orderBy.direction)
+    .orderBy("person.id")
     .execute();
 
-  return people;
+  const count = await baseQuery
+    .select((e) => e.fn.countAll<number>().as("count"))
+    .executeTakeFirst();
+
+  return { result: people, count: count?.count } satisfies FilterTableResult<
+    (typeof people)[0]
+  >;
 };
 
-export const searchPlace = async ({ query }: { query: string }) => {
+export const searchPlace = async ({
+  query = "",
+  limit = 50,
+  offset = 0,
+  orderBy = { column: "computed_link_counts", direction: "desc" },
+}: FilterTableOptions) => {
   await requireRoleOrThrow("user");
   const keywords = query.split(" ");
-  const places = await kdb
+  const baseQuery = kdb
     .selectFrom("place")
     .innerJoin("place_version", "place_version.id", "place.id")
     .where(whereCurrent)
@@ -191,14 +224,23 @@ export const searchPlace = async ({ query }: { query: string }) => {
           )
         ),
       ])
-    )
+    );
+
+  const places = await baseQuery
     .selectAll("place_version")
     .select("place.computed_link_counts")
-    // Order by the number of letters the place is linked to (descending)
-    .orderBy("computed_link_counts", "desc")
-    .limit(50)
+    .orderBy(orderBy.column as any, orderBy.direction)
+    .limit(limit)
+    .offset(offset)
     .execute();
-  return places;
+
+  const count = await baseQuery
+    .select((e) => e.fn.countAll<number>().as("count"))
+    .executeTakeFirst();
+
+  return { result: places, count: count?.count } satisfies FilterTableResult<
+    (typeof places)[0]
+  >;
 };
 
 export const placeById = async ({ id }: { id: string }) => {
@@ -215,6 +257,8 @@ export const placeById = async ({ id }: { id: string }) => {
   return p;
 };
 
+const anyString = string().ensure();
+
 const updateOrInsertPersonSchema = object({
   id: number().nullable(),
   gnd: string().matches(/\/?[0-9X]{8,11}$/, {
@@ -229,15 +273,15 @@ const updateOrInsertPersonSchema = object({
     message: "Ungültiger Wikipedia-Link",
     excludeEmptyString: true,
   }),
-  forename: string().required(),
-  surname: string().required(),
+  forename: anyString,
+  surname: anyString,
   portrait: string(),
   aliases: array()
     .required()
     .of(
       object({
-        forename: string().required(),
-        surname: string().required(),
+        forename: anyString,
+        surname: anyString,
         type: string()
           .matches(/^alias$/)
           .required(),
@@ -417,14 +461,6 @@ export const saveVersion = async ({
   await v.updateComputedLinkCounts({
     letterId: id,
   });
-};
-
-const getReferencedIds = (xmlDom: Document, type: "person" | "place") => {
-  const refPrefix = type === "person" ? "p" : "l";
-  const elementName = type === "person" ? "persName" : "placeName";
-  return Array.from(xmlDom.querySelectorAll(`${elementName}[ref]`)).map((n) =>
-    parseInt(n.getAttribute("ref")?.replace(refPrefix, "")!)
-  );
 };
 
 export type LetterNavigationFilter = {

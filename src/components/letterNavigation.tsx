@@ -270,7 +270,7 @@ const FilterWithLabel = ({
 const personDisplayName = (
   p:
     | Awaited<ReturnType<typeof personById>>
-    | Awaited<ReturnType<typeof searchPerson>>[0]
+    | Awaited<ReturnType<typeof searchPerson>>["result"][0]
 ) => {
   return `${p?.forename} ${p?.surname}`;
 };
@@ -293,7 +293,7 @@ const PersonDropdown = ({
       query: v,
       includeOnlyCorrespondents: true,
     });
-    return res.map((p) => {
+    return res.result.map((p) => {
       return {
         value: p.id,
         label: personDisplayName(p),
