@@ -343,6 +343,15 @@ export class Versioning {
             created_log_id: logId,
             is_latest: true,
             version_id: undefined,
+            ...(table === "person"
+              ? {
+                  // alias_string is a generated field and cannot be inserted
+                  aliases_string: undefined,
+                  // I'm not sure why we need to stringify this - in other places we don't
+                  // Todo: Investigate
+                  aliases: JSON.stringify(latestAcceptedVersion.aliases),
+                }
+              : {}),
           })
           .execute();
       }
