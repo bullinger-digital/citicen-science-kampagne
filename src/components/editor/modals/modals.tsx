@@ -572,7 +572,7 @@ export const EditPlaceModal = ({
           onChange={(e) =>
             setNewPlace({ ...newPlace, district: e.target.value })
           }
-          label="Bezirk"
+          label="Kanton / Bundesland"
           placeholder=""
         />
         <InputWithLabel
