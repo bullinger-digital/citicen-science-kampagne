@@ -565,7 +565,7 @@ export const EditPlaceModal = ({
             setNewPlace({ ...newPlace, settlement: e.target.value })
           }
           label="Ortschaft"
-          placeholder="Zürich"
+          placeholder=""
         />
         <InputWithLabel
           value={newPlace.district}
