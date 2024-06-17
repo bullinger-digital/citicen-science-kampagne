@@ -3,8 +3,7 @@ import "server-only";
 
 import { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
-import { kdb } from "../db";
-import { DB } from "../generated/kysely-codegen";
+import { DB, kdb } from "../db";
 import { requireRoleOrThrow } from "../security/withRequireRole";
 import {
   Versioned,
@@ -58,7 +57,6 @@ export const getLogs = async () => {
     ])
     .select(selectRelatedCounts("letter"))
     .select(selectRelatedCounts("person"))
-    .select(selectRelatedCounts("person_alias"))
     .select(selectRelatedCounts("place"))
     .limit(100);
 
@@ -143,19 +141,6 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
           .as("computed_link_counts")
       )
     )
-    .$if(table === "person_version", (e) =>
-      e.select((e) =>
-        jsonObjectFrom(
-          e
-            .selectFrom("person_alias_version")
-            .where(whereCurrent as any)
-            .where("person_id", "=", e.ref(`${table as "person_version"}.id`))
-            .where("type", "=", "main")
-            .limit(1)
-            .selectAll()
-        ).as("main_alias")
-      )
-    )
     .execute();
 };
 
@@ -164,29 +149,11 @@ export const getUncommitedChanges = async () => {
 
   const letterChanges = await uncommitedChangesByTable("letter_version");
   const personChanges = await uncommitedChangesByTable("person_version");
-  const personAliasChanges = await uncommitedChangesByTable(
-    "person_alias_version"
-  );
   const placeChanges = await uncommitedChangesByTable("place_version");
 
   return [
     ...letterChanges.map((l) => ({ table: "letter" as const, ...l })),
-    ...personChanges.map((p) => ({
-      table: "person" as const,
-      ...p,
-      aliasChanges: personAliasChanges.filter(
-        (pa) => pa.modified?.person_id === p.modified?.id
-      ),
-    })),
-    ...personAliasChanges
-      .filter(
-        (p) =>
-          !personChanges.some((pc) => pc.modified?.id === p.modified?.person_id)
-      )
-      .map((pa) => ({
-        table: "person_alias" as const,
-        ...pa,
-      })),
+    ...personChanges.map((p) => ({ table: "person" as const, ...p })),
     ...placeChanges.map((pl) => ({ table: "place" as const, ...pl })),
   ];
 };

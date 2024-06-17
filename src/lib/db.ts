@@ -1,8 +1,21 @@
 import "server-only";
 import { Pool } from "pg";
-import { Kysely, PostgresDialect } from "kysely";
-import { DB } from "./generated/kysely-codegen";
+import { JSONColumnType, Kysely, PostgresDialect } from "kysely";
+import { DB as DBGenerated } from "./generated/kysely-codegen";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
+
+export type AliasType = {
+  id?: number | null;
+  forename: string;
+  surname: string;
+  type: string;
+}[];
+
+export type DB = DBGenerated & {
+  person_version: DBGenerated["person_version"] & {
+    aliases: JSONColumnType<AliasType, AliasType, AliasType>;
+  };
+};
 
 // Idea taken from https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-dev-practices
 const clientSingleton = () => {

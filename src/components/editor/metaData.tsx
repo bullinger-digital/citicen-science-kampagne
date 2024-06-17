@@ -143,11 +143,9 @@ const RenderSinglePerson = ({ personNode }: { personNode: Element }) => {
     { id: ref! },
     { skip: !ref }
   );
-  // Todo: Reuse code from properties.tsx
-  const mainAlias = data?.aliases.find((a) => a.type === "main");
   return (
     <>
-      {mainAlias?.forename} {mainAlias?.surname}
+      {data?.forename} {data?.surname}
     </>
   );
 };

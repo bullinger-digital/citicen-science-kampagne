@@ -2,12 +2,11 @@
 import "server-only";
 import { kdb } from "@/lib/db";
 import { Versioning, whereCurrent } from "../versioning";
-import { jsonArrayFrom } from "kysely/helpers/postgres";
 import { EditorAction, applyNewActions } from "../xml";
 import { JSDOM } from "jsdom";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
-import { InferType, number, object, string } from "yup";
+import { InferType, array, number, object, string } from "yup";
 import { sql } from "kysely";
 import { getSingleGndResult } from "./gnd";
 import { getSession } from "@auth0/nextjs-auth0";
@@ -55,30 +54,8 @@ export const personById = async ({
     .$if(!!id, (e) => e.where("person_version.id", "=", parseInt(id!)))
     .$if(!!gnd, (e) => e.where("gnd", "=", gnd!))
     .selectAll("person_version")
-    .select((e) => [
-      jsonArrayFrom(
-        e
-          .selectFrom("person_alias_version")
-          .where(whereCurrent)
-          .where("person_id", "=", e.ref("person_version.id"))
-          .selectAll()
-      ).as("aliases"),
-    ])
     .leftJoin("person", "person.id", "person_version.id")
     .select("person.computed_link_counts")
-    // .select((e) => [
-    //   jsonArrayFrom(
-    //     e
-    //       .selectFrom("letter_version_extract_person as l")
-    //       .innerJoin("letter_version as v2", "v2.version_id", "l.version_id")
-    //       // Todo: fix typing
-    //       .where(whereCurrent as any)
-    //       .where("l.person_id", "=", e.ref("person_version.id"))
-    //       .select(["v2.id"])
-    //       .distinct()
-    //       .orderBy("v2.id", "asc")
-    //   ).as("links"),
-    // ])
     .executeTakeFirst();
 
   if (!p) {
@@ -146,19 +123,9 @@ export const searchPerson = async ({
         e.and(
           keywords.map((k) =>
             e.or([
-              e.exists(
-                e
-                  .selectFrom("person_alias_version")
-                  .where(whereCurrent)
-                  .where("person_id", "=", e.ref("person.id"))
-                  .where((eb) =>
-                    eb.or([
-                      eb("forename", "ilike", `%${k}%`),
-                      eb("surname", "ilike", `%${k}%`),
-                    ])
-                  )
-                  .selectAll()
-              ),
+              e("aliases_string", "ilike", `%${k}%`),
+              e("forename", "ilike", `%${k}%`),
+              e("surname", "ilike", `%${k}%`),
               // Search in text of nodes linked to the person
               e.exists(
                 e
@@ -182,15 +149,6 @@ export const searchPerson = async ({
     .limit(50)
     .selectAll("person_version")
     .select("person.computed_link_counts")
-    .select((e) => [
-      jsonArrayFrom(
-        e
-          .selectFrom("person_alias_version")
-          .where(whereCurrent)
-          .where("person_alias_version.person_id", "=", e.ref("person.id"))
-          .selectAll()
-      ).as("aliases"),
-    ])
     // Order by the number of letters the person is linked to (descending)
     .orderBy("computed_link_counts", "desc")
     .execute();
@@ -271,9 +229,21 @@ const updateOrInsertPersonSchema = object({
     message: "Ungültiger Wikipedia-Link",
     excludeEmptyString: true,
   }),
-  forename: string(),
-  surname: string(),
+  forename: string().required(),
+  surname: string().required(),
   portrait: string(),
+  aliases: array()
+    .required()
+    .of(
+      object({
+        forename: string().required(),
+        surname: string().required(),
+        type: string()
+          .matches(/^alias$/)
+          .required(),
+        id: number().nullable(),
+      })
+    ),
 });
 
 export const insertOrUpdatePerson = async (
@@ -296,6 +266,9 @@ export const insertOrUpdatePerson = async (
           hist_hub: newPerson.hist_hub,
           wiki: newPerson.wiki,
           portrait: newPerson.portrait,
+          forename: newPerson.forename,
+          surname: newPerson.surname,
+          aliases: newPerson.aliases,
         },
         false,
         logId,
@@ -312,17 +285,9 @@ export const insertOrUpdatePerson = async (
           gnd: newPerson.gnd,
           hist_hub: newPerson.hist_hub,
           wiki: newPerson.wiki,
-        },
-        logId
-      );
-
-      await v.insertAndCreateNewVersion(
-        "person_alias",
-        {
-          forename: newPerson.forename || "",
-          surname: newPerson.surname || "",
-          person_id: personVersion.id,
-          type: "main",
+          forename: newPerson.forename,
+          surname: newPerson.surname,
+          aliases: [],
         },
         logId
       );

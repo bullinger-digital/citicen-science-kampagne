@@ -3,8 +3,7 @@ import { simpleGit } from "simple-git";
 import * as prettier from "prettier";
 import { ExpressionBuilder, Kysely, Transaction } from "kysely";
 import path from "path";
-import { kdb } from "../db";
-import { DB } from "../generated/kysely-codegen";
+import { DB, kdb } from "../db";
 import { VersionedTable, Versioning, whereCurrent } from "../versioning";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import {
@@ -34,6 +33,7 @@ const domExportHelpers = (personsDom: Document) => {
       parent.appendChild(node as Node);
     }
     callback(node);
+    return node;
   };
 
   const removeNode = (parent: Element, selector: string) => {
@@ -78,12 +78,25 @@ export const whereExportFilter = <TA extends keyof DB>(
     eb("review_state", "=", "accepted" as any),
   ]);
 
+const isNumber = (value: any) => {
+  return typeof value === "number";
+};
+
 const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
   // Export persons
   const persons = await db
     .selectFrom("person_version")
     .where(whereExportFilter)
-    .select(["id", "gnd", "hist_hub", "portrait", "wiki"])
+    .select([
+      "id",
+      "gnd",
+      "hist_hub",
+      "portrait",
+      "wiki",
+      "aliases",
+      "forename",
+      "surname",
+    ])
     .execute();
 
   const personsString = await fs.promises.readFile(personsFilePath, "utf-8");
@@ -103,6 +116,69 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
       `person[xml:id=P${person.id}]`,
       (personNode) => {
         personNode.setAttribute("xml:id", `P${person.id}`);
+
+        // We replace all aliases, so remove existing ones
+        personNode
+          .querySelectorAll("persName:not([type='main'])")
+          .forEach((node) => {
+            node.remove();
+          });
+
+        // Add main alias
+        const mainAliasNode = h.findOrCreateNode(
+          personNode,
+          "persName",
+          "persName[type='main']",
+          (mainAliasNode) => {
+            h.findOrCreateNode(mainAliasNode, "surname", "surname", (n) => {
+              n.textContent = person.surname;
+            });
+            h.findOrCreateNode(mainAliasNode, "forename", "forename", (n) => {
+              n.textContent = person.forename;
+            });
+            mainAliasNode.setAttribute("ref", `p${person.id}`);
+            mainAliasNode.setAttribute("type", "main");
+          }
+        );
+
+        // Aliases
+        const aliasNodes = person.aliases
+          .sort((a, b) => {
+            if (isNumber(a.id) && !isNumber(b.id)) return -1;
+            if (!isNumber(a.id) && isNumber(b.id)) return 1;
+
+            // If both have id, or neither have id, sort by id if present
+            if (isNumber(a.id) && isNumber(b.id)) {
+              if (a.id !== b.id) return (a.id as number) - (b.id as number);
+            }
+
+            if (a.surname !== b.surname)
+              return a.surname.localeCompare(b.surname);
+
+            return a.forename.localeCompare(b.forename);
+          })
+          .map((alias) => {
+            const aliasNode = personsDom.createElementNS(
+              "http://www.tei-c.org/ns/1.0",
+              "persName"
+            );
+            if (alias.id) {
+              // only existing aliases have an id
+              aliasNode.setAttribute("xml:id", `p${alias.id}`);
+            }
+            aliasNode.setAttribute("ref", `p${person.id}`);
+            aliasNode.setAttribute("type", alias.type);
+            h.findOrCreateNode(aliasNode, "surname", "surname", (node) => {
+              node.textContent = alias.surname;
+            });
+            h.findOrCreateNode(aliasNode, "forename", "forename", (node) => {
+              node.textContent = alias.forename;
+            });
+            return aliasNode;
+          });
+
+        mainAliasNode.after(...(aliasNodes as Node[]));
+
         h.textContentNode(
           personNode,
           `idno[subtype='gnd']`,
@@ -143,32 +219,6 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
     );
   }
 
-  const personAliases = await db
-    .selectFrom("person_alias_version")
-    .where(whereExportFilter)
-    .select(["id", "forename", "surname", "type", "person_id"])
-    .execute();
-
-  for (const alias of personAliases) {
-    const personParent = personsDom.querySelector(
-      `person[xml:id='P${alias.person_id}']`
-    );
-    if (!personParent) {
-      throw new Error(`Could not find parent person for alias ${alias.id}`);
-    }
-    h.findOrCreateNode(
-      personParent,
-      "persName",
-      `persName[xml:id=p${alias.id}]`,
-      (aliasNode) => {
-        aliasNode.setAttribute("xml:id", `p${alias.id}`);
-        aliasNode.setAttribute("type", alias.type);
-        h.textContentNode(aliasNode, "forename", "forename", alias.forename);
-        h.textContentNode(aliasNode, "surname", "surname", alias.surname);
-      }
-    );
-  }
-
   await fs.promises.writeFile(
     personsFilePath,
     await formatXml(xmlSerializeToString(personsDom))
@@ -179,13 +229,6 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
     db,
     "person_version",
     persons.map((p) => p.id),
-    gitExportId
-  );
-
-  await setToCommited(
-    db,
-    "person_alias_version",
-    personAliases.map((a) => a.id),
     gitExportId
   );
 };

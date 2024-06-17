@@ -1,7 +1,7 @@
 import "server-only";
 import { type Kysely } from "kysely";
 import { Versioned } from "./versioning";
-import { DB } from "./generated/kysely-codegen";
+import { DB } from "./db";
 
 export const extractAndStoreMetadata = async ({
   db,
