@@ -319,8 +319,6 @@ export const insertOrUpdatePerson = async (
         false
       );
 
-      // Editing aliases is currently not supported
-
       return await v.getCurrentVersion("person", newPerson.id);
     } else {
       const personVersion = await v.insertAndCreateNewVersion(

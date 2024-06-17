@@ -21,6 +21,8 @@ import type { Geoname } from "@/lib/actions/geonames";
 import { getSingleGndResult } from "@/lib/actions/gnd";
 import { IoWarning } from "react-icons/io5";
 import { Versioned } from "@/lib/versioning";
+import { useUser } from "@auth0/nextjs-auth0/client";
+import { isInRole } from "@/lib/security/isInRole";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -97,6 +99,8 @@ export const EditPersonModal = ({
     useState<Parameters<typeof execute>[0]>(EMPTY_NEW_PERSON);
   const [usages, setUsages] = useState<number | null | undefined>();
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const user = useUser();
+  const isAdmin = isInRole(user, "admin");
 
   useEffect(() => {
     if (id) {
@@ -168,7 +172,7 @@ export const EditPersonModal = ({
           }
           label="Vorname"
           placeholder="Max"
-          disabled={id !== undefined}
+          disabled={!isAdmin && id !== undefined}
         />
         <InputWithLabel
           value={newPerson.surname}
@@ -177,7 +181,7 @@ export const EditPersonModal = ({
           }
           label="Nachname"
           placeholder="Mustermann"
-          disabled={id !== undefined}
+          disabled={!isAdmin && id !== undefined}
         />
         <InputWithLabel
           value={newPerson.wiki}
@@ -206,6 +210,28 @@ export const EditPersonModal = ({
             .filter((n) => !!n)
             .join(" ")}
         />
+        {/* Todo: before enabling this (for admins first), make sure diffs are visible in the admin panel */}
+        {/* <WithLabel label="Namensvarianten">
+          <ul>
+            {newPerson.aliases.map((alias, i) => (
+              <li key={i}>
+                {alias.forename} {alias.surname}{" "}
+                <button
+                  onClick={(e) => {
+                    setNewPerson({
+                      ...newPerson,
+                      aliases: newPerson.aliases.filter((_, j) => j !== i),
+                    });
+                    e.preventDefault();
+                  }}
+                  className="text-emerald-400"
+                >
+                  Löschen
+                </button>
+              </li>
+            ))}
+          </ul>
+        </WithLabel> */}
       </form>
       {id && <CommentsWrapper target={"person/" + id.toString()} />}
     </Modal>
