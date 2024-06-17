@@ -6,8 +6,8 @@ export async function up(db: Kysely<any>): Promise<void> {
     -- by inlining aliases to the person_version table.
 
     ALTER TABLE person_version
-        ADD COLUMN forename TEXT,
-        ADD COLUMN surname TEXT,
+        ADD COLUMN forename TEXT COLLATE "de-CH-x-icu",
+        ADD COLUMN surname TEXT COLLATE "de-CH-x-icu",
         ADD COLUMN aliases JSONB;
 
     WITH person AS (
@@ -58,7 +58,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     $function$;
 
     ALTER TABLE person_version
-        ADD COLUMN aliases_string TEXT GENERATED ALWAYS AS (person_version_extract_aliases_string(aliases)) STORED;
+        ADD COLUMN aliases_string TEXT COLLATE "de-CH-x-icu" GENERATED ALWAYS AS (person_version_extract_aliases_string(aliases)) STORED;
 
     CREATE INDEX idx_person_version__forename_trgm
         ON person_version USING gin (forename gin_trgm_ops);

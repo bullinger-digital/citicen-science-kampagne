@@ -11,10 +11,17 @@ import {
   BlockBrowserNavigation,
   NavigationBlockerProvider,
 } from "@/components/common/navigation-block/navigation-block";
-import { MdMenuBook, MdOutlineRule } from "react-icons/md";
+import { MdEditNote, MdMenuBook, MdOutlineRule } from "react-icons/md";
 import { Menu } from "@/components/menu";
 import { FaChartPie } from "react-icons/fa6";
 import { InfoMessages } from "@/components/common/infoMessages";
+import dynamic from "next/dynamic";
+
+const OpenRegistersButton = dynamic(() =>
+  import("@/components/registers/registerModals").then(
+    (mod) => mod.OpenRegistersButton
+  )
+);
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -69,6 +76,12 @@ export default function RootLayout({
                 >
                   <FaChartPie className="-top-0.5 relative" />
                 </Link>
+                <OpenRegistersButton
+                  className="flex space-x-2 items-center hover:text-emerald-400"
+                  title="Personen- und Orts-Register"
+                >
+                  <MdEditNote className="text-2xl -mt-1" />
+                </OpenRegistersButton>
               </div>
               <div>
                 <ProfileClient />
