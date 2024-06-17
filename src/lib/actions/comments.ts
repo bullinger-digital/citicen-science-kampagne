@@ -2,8 +2,7 @@
 import "server-only";
 
 import { Kysely, Transaction } from "kysely";
-import { DB } from "../generated/kysely-codegen";
-import { kdb } from "@/lib/db";
+import { DB, kdb } from "@/lib/db";
 import { Versioning } from "../versioning";
 import { requireRoleOrThrow } from "../security/withRequireRole";
 

@@ -132,10 +132,22 @@ export const importFromCurrentCommit = async () => {
         person.getAttribute("xml:id")?.replace("P", "") || ""
       );
       console.log("Importing person", id);
+
+      const mainAliasNode = person.querySelector("persName[type='main']");
+      const otherAliasNodes = Array.from(
+        person.querySelectorAll("persName:not([type='main'])")
+      );
       await v.importVersioned(
         "person",
         id,
         {
+          forename: mainAliasNode?.querySelector("forename")?.textContent || "",
+          surname: mainAliasNode?.querySelector("surname")?.textContent || "",
+          aliases: otherAliasNodes.map((alias) => ({
+            forename: alias.querySelector("forename")?.textContent || "",
+            surname: alias.querySelector("surname")?.textContent || "",
+            type: alias.getAttribute("type") || "",
+          })),
           gnd: person.querySelector("idno[subtype='gnd']")?.textContent || "",
           hist_hub:
             person.querySelector("idno[subtype='histHub']")?.textContent || "",
@@ -145,26 +157,6 @@ export const importFromCurrentCommit = async () => {
         },
         gitImportSpecs
       );
-
-      // Import aliases for person
-      const aliases = Array.from(person.querySelectorAll("persName"));
-      for (const alias of aliases) {
-        const aliasId = parseInt(
-          alias.getAttribute("xml:id")?.replace("p", "") || ""
-        );
-        console.log("Importing alias", aliasId);
-        await v.importVersioned(
-          "person_alias",
-          aliasId,
-          {
-            forename: alias.querySelector("forename")?.textContent || "",
-            surname: alias.querySelector("surname")?.textContent || "",
-            type: alias.getAttribute("type") || "",
-            person_id: id,
-          },
-          gitImportSpecs
-        );
-      }
     }
 
     // Import places

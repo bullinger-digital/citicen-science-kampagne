@@ -75,6 +75,7 @@ const EMPTY_NEW_PERSON = {
   hist_hub: "",
   wiki: "",
   portrait: "",
+  aliases: [],
 };
 
 /**
@@ -107,14 +108,14 @@ export const EditPersonModal = ({
           setIsLoading(false);
           return;
         }
-        const primaryAlias = p.aliases.find((a) => a.type === "main");
         setNewPerson({
-          forename: primaryAlias?.forename || "",
-          surname: primaryAlias?.surname || "",
+          forename: p.forename || "",
+          surname: p.surname || "",
           gnd: p.gnd || "",
           hist_hub: p.hist_hub || "",
           wiki: p.wiki || "",
           portrait: p.portrait || "",
+          aliases: p.aliases || [],
         });
         setUsages(p.computed_link_counts);
         setIsLoading(false);

@@ -93,8 +93,7 @@ const PersonItem = ({
   return (
     <div className="relative flex items-center space-x-2 justify-between">
       <span title={"ID: " + entity.id}>
-        {entity.aliases.find((a) => a.type === "main")?.forename}{" "}
-        {entity.aliases.find((a) => a.type === "main")?.surname}
+        {entity.forename} {entity.surname}
       </span>
     </div>
   );
@@ -123,7 +122,6 @@ export const PersonItemDetails = ({
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   const aliases = selectedPerson?.aliases || [];
-  const mainAlias = aliases.find((a) => a.type === "main");
 
   if (loading) {
     return <Loading />;
@@ -139,7 +137,7 @@ export const PersonItemDetails = ({
         <div>
           <div className="flex justify-between">
             <span className="font-bold">
-              {mainAlias?.forename} {mainAlias?.surname}
+              {selectedPerson.forename} {selectedPerson.surname}
               <span className="text-gray-400 font-normal">
                 {" "}
                 ID {selectedPerson.id}

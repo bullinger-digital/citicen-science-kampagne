@@ -272,8 +272,7 @@ const personDisplayName = (
     | Awaited<ReturnType<typeof personById>>
     | Awaited<ReturnType<typeof searchPerson>>[0]
 ) => {
-  const main = p?.aliases.find((a) => a.type === "main");
-  return `${main?.forename} ${main?.surname}`;
+  return `${p?.forename} ${p?.surname}`;
 };
 
 const PersonDropdown = ({

@@ -1,19 +1,13 @@
 import "server-only";
-import { kdb as kdb2 } from "@/lib/db";
+import { DB, kdb as kdb2 } from "@/lib/db";
 import { getSession } from "@auth0/nextjs-auth0";
 import { Kysely, UpdateObject, sql } from "kysely";
 import { ExpressionBuilder, InsertObject, Transaction } from "kysely";
 import { extractAndStoreMetadata } from "./extractMetadata";
 import { xmlParseFromString } from "./xmlSerialize";
-import { DB } from "./generated/kysely-codegen";
 
-export const versionedTables = [
-  "letter",
-  "person",
-  "person_alias",
-  "place",
-] as const;
-export type Versioned = "letter" | "person" | "person_alias" | "place";
+export const versionedTables = ["letter", "person", "place"] as const;
+export type Versioned = "letter" | "person" | "place";
 export type VersionedTable = `${Versioned}_version`;
 
 export type ImportSpecs = {

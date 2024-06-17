@@ -115,28 +115,6 @@ export interface Person {
   id: Generated<number>;
 }
 
-export interface PersonAlias {
-  created_log_id: number;
-  id: Generated<number>;
-}
-
-export interface PersonAliasVersion {
-  created_log_id: number;
-  forename: string;
-  git_export_id: number | null;
-  git_import_id: number;
-  id: number;
-  is_latest: Generated<boolean>;
-  is_new: Generated<boolean>;
-  is_touched: Generated<boolean>;
-  person_id: number;
-  review_state: string;
-  reviewed_log_id: number | null;
-  surname: string;
-  type: string;
-  version_id: Generated<number>;
-}
-
 export interface PersonCacheGnd {
   ok: boolean;
   result: Json;
@@ -147,7 +125,10 @@ export interface PersonCacheGnd {
 }
 
 export interface PersonVersion {
+  aliases: Json;
+  aliases_string: Generated<string | null>;
   created_log_id: number;
+  forename: string;
   git_export_id: number | null;
   git_import_id: number;
   gnd: string | null;
@@ -159,6 +140,7 @@ export interface PersonVersion {
   portrait: string | null;
   review_state: string;
   reviewed_log_id: number | null;
+  surname: string;
   version_id: Generated<number>;
   wiki: string | null;
 }
@@ -188,6 +170,28 @@ export interface PlaceVersion {
   version_id: Generated<number>;
 }
 
+export interface RemovedPersonAlias {
+  created_log_id: number;
+  id: Generated<number>;
+}
+
+export interface RemovedPersonAliasVersion {
+  created_log_id: number;
+  forename: string;
+  git_export_id: number | null;
+  git_import_id: number;
+  id: number;
+  is_latest: Generated<boolean>;
+  is_new: Generated<boolean>;
+  is_touched: Generated<boolean>;
+  person_id: number;
+  review_state: string;
+  reviewed_log_id: number | null;
+  surname: string;
+  type: string;
+  version_id: Generated<number>;
+}
+
 export interface User {
   created_at: Generated<Timestamp>;
   email: string;
@@ -212,11 +216,11 @@ export interface DB {
   log: Log;
   org_names: OrgNames;
   person: Person;
-  person_alias: PersonAlias;
-  person_alias_version: PersonAliasVersion;
   person_cache_gnd: PersonCacheGnd;
   person_version: PersonVersion;
   place: Place;
   place_version: PlaceVersion;
+  removed_person_alias: RemovedPersonAlias;
+  removed_person_alias_version: RemovedPersonAliasVersion;
   user: User;
 }

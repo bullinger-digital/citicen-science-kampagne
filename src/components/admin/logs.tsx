@@ -16,10 +16,6 @@ export const Logs = () => {
         count: log.person_modified_count,
       },
       {
-        type: "Personen-Aliase",
-        count: log.person_alias_modified_count,
-      },
-      {
         type: "Ortschaften",
         count: log.place_modified_count,
       },

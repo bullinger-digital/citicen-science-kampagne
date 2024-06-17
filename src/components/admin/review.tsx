@@ -125,9 +125,9 @@ const ReviewItem = ({
       </div>
       <div className="flex justify-between">
         <div>
-          {log.main_alias && (
+          {log.modified && log.modified.forename && (
             <div className="mb-2">
-              {log.main_alias.forename} {log.main_alias.surname}
+              {log.modified.forename} {log.modified.surname}
             </div>
           )}
           <div className="border-gray-200 border-l-4 pl-3">
@@ -187,12 +187,6 @@ const ReviewItem = ({
                   table: log.table,
                   versionId: log.modified!.version_id,
                 },
-                ...(log.table === "person"
-                  ? log.aliasChanges.map((aliasChange) => ({
-                      table: "person_alias" as const,
-                      versionId: aliasChange.modified!.version_id,
-                    }))
-                  : []),
               ],
             });
 
@@ -211,12 +205,6 @@ const ReviewItem = ({
                   table: log.table,
                   versionId: log.modified!.version_id,
                 },
-                ...(log.table === "person"
-                  ? log.aliasChanges.map((aliasChange) => ({
-                      table: "person_alias" as const,
-                      versionId: aliasChange.modified!.version_id,
-                    }))
-                  : []),
               ],
             });
 
@@ -395,25 +383,22 @@ const DiffItem = ({
 
   return (
     <>
-      {logEntry.table === "person" &&
-        logEntry.aliasChanges?.map((aliasChange) => (
-          <div key={aliasChange.id}>
-            <Diff
-              oldObject={
-                compareWithOriginal
-                  ? aliasChange.unmodified
-                  : aliasChange.last_accepted
-              }
-              newObject={aliasChange.modified}
-            />
-          </div>
-        ))}
       <Diff
         oldObject={
           compareWithOriginal ? logEntry.unmodified : logEntry.last_accepted
         }
         newObject={logEntry.modified}
       />
+      {/* {logEntry.table === "person" && (
+        <Diff
+          oldObject={
+            compareWithOriginal
+              ? logEntry.unmodified?.aliases
+              : logEntry.last_accepted?.aliases
+          }
+          newObject={logEntry.modified?.aliases}
+        />
+      )} */}
       {logEntry.unmodified?.is_touched && (
         <div
           className={`text-xs mt-4 cursor-pointer ${compareWithOriginal ? "text-green-500" : "text-gray-500"}`}
@@ -438,6 +423,9 @@ const fieldsToHide = [
   "created_log_id",
   "reviewed_log_id",
   "id",
+  // Temporarily hide aliases_string and aliases
+  "aliases_string",
+  "aliases",
 ];
 
 const Diff = ({
