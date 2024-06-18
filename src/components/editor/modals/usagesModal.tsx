@@ -29,7 +29,10 @@ export const UsagesModal = ({
     >
       {result.loading && <p>Loading...</p>}
       {result.error && <p>Error: {result.error}</p>}
-      {result.data && (
+      {!result.loading && !result.error && !result.data?.length && (
+        <p>Keine Referenzen gefunden.</p>
+      )}
+      {result.data && result.data.length > 0 && (
         <table className="table table-fixed w-full">
           <thead>
             <tr className="text-left">

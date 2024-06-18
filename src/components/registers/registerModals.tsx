@@ -27,7 +27,10 @@ import { FaArrowDown, FaArrowUp } from "react-icons/fa6";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { isInRole } from "@/lib/security/isInRole";
 
-const getCommonColumns = (setShowEditModal: (id: number) => void) => {
+const getCommonColumns = (
+  type: "person" | "place",
+  setShowEditModal: (id: number) => void
+) => {
   const columnHelper =
     createColumnHelper<
       NonNullable<
@@ -40,7 +43,7 @@ const getCommonColumns = (setShowEditModal: (id: number) => void) => {
       header: "Referenzen",
       cell: (row) => {
         return (
-          <EntityUsagesModalTrigger id={row.row.original.id} table="person">
+          <EntityUsagesModalTrigger id={row.row.original.id} table={type}>
             {row.getValue()}
           </EntityUsagesModalTrigger>
         );
@@ -115,7 +118,7 @@ const registerModalSpecs = {
             ) : null;
           },
         }),
-        ...getCommonColumns(setShowEditModal),
+        ...getCommonColumns("person", setShowEditModal),
       ];
     },
   },
@@ -170,7 +173,7 @@ const registerModalSpecs = {
             ) : null;
           },
         }),
-        ...getCommonColumns(setShowEditModal),
+        ...getCommonColumns("place", setShowEditModal),
       ];
     },
   },
