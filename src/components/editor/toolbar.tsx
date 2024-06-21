@@ -265,6 +265,9 @@ export const Toolbar = () => {
         startOffset: range?.startOffset || 0,
         endOffset: range?.endOffset || 0,
         text: text,
+        attributes: {
+          type: "citizen_name",
+        },
       });
 
       selection?.removeAllRanges();
@@ -281,14 +284,6 @@ export const Toolbar = () => {
   }, [addAction, selectedNode, setSelectedNode]);
 
   const toolbarDisabled = loading;
-
-  // onDoubleClick={(e) => {
-  //   c?.addAction({
-  //     type: "unwrap",
-  //     nodePath: getPathFromNode(node),
-  //   });
-  //   c?.setSelectedNode(null);
-  // }}
 
   return (
     <div className="flex justify-between border-b-2 border-gray-200 mb-7">

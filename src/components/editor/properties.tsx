@@ -42,7 +42,7 @@ const PersName = ({ node }: { node: Node }) => {
       onSelect={(id) => {
         c?.addAction({
           type: "change-attributes",
-          attributes: { ref: `p${id}` },
+          attributes: { type: "citizen_name", ref: `p${id}` },
           nodePath: getPathFromNode(node),
         });
       }}
@@ -71,7 +71,7 @@ const PlaceName = ({ node }: { node: Node }) => {
       onSelect={(id) => {
         c?.addAction({
           type: "change-attributes",
-          attributes: { ref: `l${id}` },
+          attributes: { type: "citizen_name", ref: `l${id}` },
           nodePath: getPathFromNode(node),
         });
       }}
@@ -411,7 +411,10 @@ const CertToggle = ({ node }: { node: Node }) => {
         onChange={() => {
           c?.addAction({
             type: "change-attributes",
-            attributes: { cert: cert === "high" ? "low" : "high" },
+            attributes: {
+              type: "citizen_name",
+              cert: cert === "high" ? "low" : "high",
+            },
             nodePath: getPathFromNode(node),
           });
         }}
@@ -585,7 +588,7 @@ const RemoveReferenceButton = ({ node }: { node: Node }) => {
       onClick={() => {
         c?.addAction({
           type: "change-attributes",
-          attributes: { ref: null },
+          attributes: { type: "citizen_name", ref: null },
           nodePath: getPathFromNode(node),
         });
       }}

@@ -154,6 +154,7 @@ export const importFromCurrentCommit = async () => {
           portrait:
             person.querySelector("idno[subtype='portrait']")?.textContent || "",
           wiki: person.querySelector("idno[subtype='wiki']")?.textContent || "",
+          review_state: person.getAttribute("change") || "accepted",
         },
         gitImportSpecs
       );
@@ -180,6 +181,7 @@ export const importFromCurrentCommit = async () => {
           longitude: longitudeString ? parseFloat(longitudeString) : null,
           geonames:
             place.querySelector("idno[subtype='geonames']")?.textContent || "",
+          review_state: place.getAttribute("change") || "accepted",
         },
         gitImportSpecs
       );
@@ -216,6 +218,7 @@ export const importFromCurrentCommit = async () => {
         letterId,
         {
           xml: fileContents,
+          review_state: "accepted",
         },
         gitImportSpecs
       );

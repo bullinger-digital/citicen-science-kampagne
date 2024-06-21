@@ -10,7 +10,7 @@ export type EditorAction =
   | {
       type: "wrap";
       dom?: {
-        affectedNodes: [Node];
+        affectedNodes: Node[];
         applied: boolean;
       };
       startNode: NodePath[];
@@ -36,6 +36,16 @@ export type EditorAction =
         applied: boolean;
       };
       nodePath: NodePath[];
+      attributes: NodeAttributes;
+    }
+  | {
+      // Used for moving usages of a person/place to another id (in admin actions)
+      type: "selector-set-attributes";
+      dom?: {
+        affectedNodes: Node[];
+        applied: boolean;
+      };
+      selector: string;
       attributes: NodeAttributes;
     };
 
@@ -74,6 +84,18 @@ const getNodeFromPath = (dom: Document, path: NodePath[]): Node => {
   return node;
 };
 
+const applyNodeAttributes = (node: Node, attributes: NodeAttributes) => {
+  Object.entries(attributes)
+    .sort((a, b) => {
+      // Order attributes by key
+      return a[0].localeCompare(b[0]);
+    })
+    .forEach(([key, value]) => {
+      if (value === null) node.removeAttribute(key);
+      else node.setAttribute(key, String(value));
+    });
+};
+
 export const applyNewActions = (dom: Document, actions: EditorAction[]) => {
   const unappliedActions = actions.filter((a) => !a.dom || !a.dom?.applied);
   unappliedActions.forEach((action) => {
@@ -86,9 +108,7 @@ export const applyNewActions = (dom: Document, actions: EditorAction[]) => {
           action.nodeName
         ) as Node;
         if (action.attributes) {
-          Object.entries(action.attributes).forEach(([key, value]) => {
-            annotationNode.setAttribute(key, String(value));
-          });
+          applyNodeAttributes(annotationNode, action.attributes);
         }
         const range = dom.createRange();
         range.setStart(startNode, action.startOffset);
@@ -106,11 +126,16 @@ export const applyNewActions = (dom: Document, actions: EditorAction[]) => {
       }
       case "change-attributes": {
         const node = getNodeFromPath(dom, action.nodePath);
-        Object.entries(action.attributes).forEach(([key, value]) => {
-          if (value === null) node.removeAttribute(key);
-          else node.setAttribute(key, String(value));
-        });
+        applyNodeAttributes(node, action.attributes);
         action.dom = { affectedNode: node, applied: true };
+        break;
+      }
+      case "selector-set-attributes": {
+        const nodes = Array.from(dom.querySelectorAll(action.selector));
+        nodes.forEach((node) => {
+          applyNodeAttributes(node as Node, action.attributes);
+        });
+        action.dom = { affectedNodes: nodes as Node[], applied: true };
         break;
       }
       default:
@@ -120,4 +145,15 @@ export const applyNewActions = (dom: Document, actions: EditorAction[]) => {
     // Todo: Is this required? (https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize)
     dom.normalize();
   });
+};
+
+export const prepareActionsForSave = (actions: EditorAction[]): string => {
+  return JSON.stringify(
+    actions.map((a) => {
+      return {
+        ...a,
+        dom: undefined,
+      };
+    })
+  );
 };
