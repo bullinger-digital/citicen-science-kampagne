@@ -13,7 +13,7 @@ import {
   EditPlaceModal,
 } from "../editor/modals/modals";
 import { useState } from "react";
-import { BsFiletypeXml, BsPersonFill } from "react-icons/bs";
+import { BsPersonFill } from "react-icons/bs";
 import { TbLocation } from "react-icons/tb";
 import { IconType } from "react-icons";
 import {
@@ -204,6 +204,7 @@ const ReviewItem = ({
                 {
                   table: log.table,
                   versionId: log.modified!.version_id,
+                  restoreToVersionId: log.last_accepted?.version_id,
                 },
               ],
             });
@@ -379,35 +380,9 @@ const DiffItem = ({
 }: {
   logEntry: Awaited<ReturnType<typeof getUncommitedChanges>>[0];
 }) => {
-  const [compareWithOriginal, setCompareWithOriginal] = useState(false);
-
   return (
     <>
-      <Diff
-        oldObject={
-          compareWithOriginal ? logEntry.unmodified : logEntry.last_accepted
-        }
-        newObject={logEntry.modified}
-      />
-      {/* {logEntry.table === "person" && (
-        <Diff
-          oldObject={
-            compareWithOriginal
-              ? logEntry.unmodified?.aliases
-              : logEntry.last_accepted?.aliases
-          }
-          newObject={logEntry.modified?.aliases}
-        />
-      )} */}
-      {logEntry.unmodified?.is_touched && (
-        <div
-          className={`text-xs mt-4 cursor-pointer ${compareWithOriginal ? "text-green-500" : "text-gray-500"}`}
-          title="Mit Original (letzter Korpus-Import) vergleichen"
-          onClick={() => setCompareWithOriginal(!compareWithOriginal)}
-        >
-          <BsFiletypeXml />
-        </div>
-      )}
+      <Diff oldObject={logEntry.last_accepted} newObject={logEntry.modified} />
     </>
   );
 };

@@ -79,33 +79,21 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
       jsonObjectFrom(
         e
           .selectFrom(`${table as "letter_version"} as last_accepted`)
-          .where("git_import_id", "=", (e) =>
-            e.ref(`${table as "letter_version"}.git_import_id`)
-          )
           .where("review_state", "=", "accepted")
           .where(
             "last_accepted.id",
             "=",
             e.ref(`${table as "letter_version"}.id`)
           )
+          .where(
+            "last_accepted.version_id",
+            "<",
+            e.ref(`${table as "letter_version"}.version_id`)
+          )
           .orderBy("last_accepted.version_id", "desc")
           .limit(1)
           .selectAll()
       ).as("last_accepted")
-    )
-    // Select the imported version (unmodified)
-    .select((e) =>
-      jsonObjectFrom(
-        e
-          .selectFrom(`${table as "letter_version"} as unmodified`)
-          .where("git_import_id", "=", (e) =>
-            e.ref(`${table as "letter_version"}.git_import_id`)
-          )
-          .where("is_touched", "=", false)
-          .where("unmodified.id", "=", e.ref(`${table as "letter_version"}.id`))
-          .limit(1)
-          .selectAll()
-      ).as("unmodified")
     )
     .select((e) =>
       jsonObjectFrom(
@@ -130,6 +118,7 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
             sql<string>`${e.val(table.replace("_version", "") + "/")} || ${e.ref(`${table as "letter_version"}.id`)}`
           )
           .where("comment.deleted_log_id", "is", null)
+          .where("comment.resolved_log_id", "is", null)
           .select((e) => e.fn.countAll<number>().as("count"))
       ).as("comment_count")
     )
@@ -309,7 +298,7 @@ export const acceptChanges = async ({
 export const rejectChanges = async ({
   items,
 }: {
-  items: { table: Versioned; versionId: number }[];
+  items: { table: Versioned; versionId: number; restoreToVersionId?: number }[];
 }) => {
   await requireRoleOrThrow("admin");
 
