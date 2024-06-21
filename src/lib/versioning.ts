@@ -36,12 +36,7 @@ export class Versioning {
     id: number,
     data: Omit<
       InsertObject<DB, TV>,
-      | "id"
-      | "created_log_id"
-      | "git_import_id"
-      | "is_touched"
-      | "version_id"
-      | "review_state"
+      "id" | "created_log_id" | "git_import_id" | "is_touched" | "version_id"
     >,
     importSpecs: ImportSpecs
   ) {
@@ -400,7 +395,9 @@ export class Versioning {
     );
   };
 
-  createLogId = async (type: "import" | "user" | "export" | "review") => {
+  createLogId = async (
+    type: "import" | "user" | "export" | "review" | "move-usages"
+  ) => {
     return (
       await this.db
         .insertInto("log")

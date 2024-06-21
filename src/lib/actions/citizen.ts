@@ -2,7 +2,7 @@
 import "server-only";
 import { kdb } from "@/lib/db";
 import { Versioning, whereCurrent } from "../versioning";
-import { EditorAction, applyNewActions } from "../xml";
+import { EditorAction, applyNewActions, prepareActionsForSave } from "../xml";
 import { JSDOM } from "jsdom";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
@@ -447,9 +447,7 @@ export const saveVersion = async ({
     version_id,
     {
       xml: newXml,
-      actions: actions.map((a) => {
-        return { ...a, dom: undefined };
-      }),
+      actions: prepareActionsForSave(actions),
     },
     false,
     undefined,

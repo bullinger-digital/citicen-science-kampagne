@@ -75,11 +75,19 @@ export const whereExportFilter = <TA extends keyof DB>(
     ),
     // Todo: fix typing
     eb("is_touched", "is", true as any),
-    eb("review_state", "=", "accepted" as any),
+    eb("review_state", "<>", "rejected" as any),
   ]);
 
 const isNumber = (value: any) => {
   return typeof value === "number";
+};
+
+const setReviewAttribute = (node: Element, reviewState: string) => {
+  if (reviewState === "accepted") {
+    node.removeAttribute("change");
+  } else {
+    node.setAttribute("change", reviewState);
+  }
 };
 
 const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
@@ -96,6 +104,7 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
       "aliases",
       "forename",
       "surname",
+      "review_state",
     ])
     .execute();
 
@@ -116,6 +125,7 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
       `person[xml:id=P${person.id}]`,
       (personNode) => {
         personNode.setAttribute("xml:id", `P${person.id}`);
+        setReviewAttribute(personNode, person.review_state);
 
         // We replace all aliases, so remove existing ones
         personNode
@@ -246,6 +256,7 @@ const exportPlaces = async (db: Kysely<DB>, gitExportId: number) => {
       "latitude",
       "longitude",
       "geonames",
+      "review_state",
     ])
     .execute();
 
@@ -266,6 +277,7 @@ const exportPlaces = async (db: Kysely<DB>, gitExportId: number) => {
       `place[xml:id=l${place.id}]`,
       (placeNode) => {
         placeNode.setAttribute("xml:id", `l${place.id}`);
+        setReviewAttribute(placeNode, place.review_state);
         h.textContentNode(
           placeNode,
           "settlement",
@@ -361,46 +373,6 @@ export const exportToCurrentCommit = async () => {
     const letters = await db
       .selectFrom("letter_version")
       .where(whereExportFilter)
-      .where((e) =>
-        e.and([
-          e.not(
-            e.exists(
-              e
-                .selectFrom("person_version")
-                .where(whereCurrent)
-                .where("person_version.review_state", "<>", "accepted")
-                .leftJoin(
-                  "letter_version_extract_person",
-                  "letter_version_extract_person.person_id",
-                  "person_version.id"
-                )
-                .where(
-                  "letter_version_extract_person.version_id",
-                  "=",
-                  e.ref("letter_version.version_id")
-                )
-            )
-          ),
-          e.not(
-            e.exists(
-              e
-                .selectFrom("place_version")
-                .where(whereCurrent)
-                .where("place_version.review_state", "<>", "accepted")
-                .leftJoin(
-                  "letter_version_extract_place",
-                  "letter_version_extract_place.place_id",
-                  "place_version.id"
-                )
-                .where(
-                  "letter_version_extract_place.version_id",
-                  "=",
-                  e.ref("letter_version.version_id")
-                )
-            )
-          ),
-        ])
-      )
       .select(["id", "xml"])
       .execute();
 
@@ -427,7 +399,7 @@ export const exportToCurrentCommit = async () => {
     await git.checkoutBranch(BRANCH_NAME, commitHash);
     await git.add(".");
     await git.commit(
-      `Citizen Science export ${new Date().toISOString()} (based on ${commitHash.substring(
+      `Citizen Science export ${gitExportId} ${new Date().toISOString()} (based on ${commitHash.substring(
         0,
         7
       )})`
