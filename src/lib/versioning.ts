@@ -599,6 +599,7 @@ export const whereCurrent = <TA extends keyof DB>(
       e.selectFrom("git_import").select("id").where("is_current", "is", true)
     ),
     eb("review_state", "<>", "rejected" as any),
+    eb("deleted_log_id", "is", null),
   ]);
 
 const wrapTransaction = async <T>(
