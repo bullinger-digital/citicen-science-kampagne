@@ -112,7 +112,9 @@ export const importFromCurrentCommit = async () => {
       .returningAll()
       .executeTakeFirst();
 
-    await v.removeNontouchedLatest();
+    // Disabled for now because we could loose data
+    // as this is a space optimization we can do it later if required
+    // await v.removeNontouchedLatest();
 
     const gitImportSpecs: ImportSpecs = {
       gitImportId: git_import!.id,

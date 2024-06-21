@@ -210,6 +210,60 @@ export class Versioning {
       .executeTakeFirst();
   }
 
+  async throwIfVersionIsNotPending(
+    db: Kysely<DB>,
+    {
+      table,
+      versionId,
+    }: {
+      table: Versioned;
+      versionId: number;
+    }
+  ) {
+    const versions_table = `${table}_version` as VersionedTable;
+
+    const currentReviewState = await this.db
+      .selectFrom<VersionedTable>(versions_table)
+      .where("version_id", "=", versionId)
+      .select("review_state")
+      .executeTakeFirstOrThrow();
+
+    if (currentReviewState.review_state !== "pending") {
+      throw new Error(
+        `Cannot accept version ${versionId} as it is already ${currentReviewState.review_state}`
+      );
+    }
+  }
+
+  async getUsageCount({
+    db,
+    table,
+    id,
+  }: {
+    db: Kysely<DB>;
+    table: Versioned;
+    id: number;
+  }): Promise<number> {
+    // Find usages
+    const usages = await db
+      .selectFrom(`letter_version_extract_${table as "person"}`)
+      .leftJoin(
+        "letter_version",
+        "letter_version.version_id",
+        `letter_version_extract_${table as "person"}.version_id`
+      )
+      .where(whereCurrent)
+      .where(
+        `letter_version_extract_${table as "person"}.${table as "person"}_id`,
+        "=",
+        id
+      )
+      .select((e) => e.fn.countAll<number>().as("count"))
+      .executeTakeFirstOrThrow();
+
+    return usages.count;
+  }
+
   async acceptChanges({
     items,
   }: {
@@ -230,7 +284,9 @@ export class Versioning {
     versionId: number;
   }) {
     await wrapTransaction(this.db, async (db) => {
+      await this.throwIfVersionIsNotPending(db, { table, versionId });
       const versions_table = `${table}_version` as VersionedTable;
+
       await db
         .updateTable<VersionedTable>(versions_table)
         .set({
@@ -245,7 +301,11 @@ export class Versioning {
   async rejectChanges({
     items,
   }: {
-    items: { table: Versioned; versionId: number }[];
+    items: {
+      table: Versioned;
+      versionId: number;
+      restoreToVersionId?: number;
+    }[];
   }) {
     await wrapTransaction(this.db, async (db) => {
       for (const item of items) {
@@ -257,74 +317,50 @@ export class Versioning {
   async rejectChange({
     table,
     versionId,
+    restoreToVersionId,
   }: {
     table: Versioned;
     versionId: number;
+    restoreToVersionId?: number;
   }) {
     await wrapTransaction(this.db, async (db) => {
+      await this.throwIfVersionIsNotPending(db, { table, versionId });
       const versions_table = `${table}_version` as VersionedTable;
+
       const logId = await this.createLogId("review");
 
       // Get (master) id of entry
-      const { id: masterId, git_import_id: gitImportId } = await db
+      const { id: masterId } = await db
         .selectFrom<VersionedTable>(versions_table)
         .where("version_id", "=", versionId)
         .select(["id", "git_import_id"])
         .executeTakeFirstOrThrow();
 
-      // Prevent rejection if item is new and in use
       const latestAcceptedVersion = await db
         .selectFrom<VersionedTable>(versions_table)
-        .where("git_import_id", "=", gitImportId)
         .where("id", "=", masterId)
         .where("review_state", "=", "accepted")
+        .where("version_id", "<", versionId)
         .orderBy("version_id", "desc")
         .limit(1)
         .selectAll()
         .executeTakeFirst();
 
-      if (!latestAcceptedVersion && ["person", "place"].includes(table)) {
-        // Find usages
-        const usages = await db
-          .selectFrom(`letter_version_extract_${table as "person"}`)
-          .leftJoin(
-            "letter_version",
-            "letter_version.version_id",
-            `letter_version_extract_${table as "person"}.version_id`
-          )
-          .where(whereCurrent)
-          .where(
-            `letter_version_extract_${table as "person"}.${table as "person"}_id`,
-            "=",
-            masterId
-          )
-          .selectAll()
-          .execute();
-
-        if (usages.length > 0) {
+      if (latestAcceptedVersion) {
+        // A previous version was accepted, so we need to restore to that version
+        // Requirement: restoreToVersionId must match the version_id of the latest accepted version
+        if (restoreToVersionId !== latestAcceptedVersion.version_id) {
           throw new Error(
-            `Cannot reject new ${table} ${masterId} as it is used ${usages.length} times.`
+            `Cannot reject new ${table} ${masterId}: entry has been accepted before, but the provided restore version id does not match the latest accepted version.`
           );
         }
-      }
 
-      // Set version to rejected
-      const modifiedVersion = await db
-        .updateTable<VersionedTable>(versions_table)
-        .set({
-          review_state: "rejected",
-          reviewed_log_id: logId,
-        })
-        .where("version_id", "=", versionId)
-        .returningAll()
-        .execute();
-
-      // If the entry existed before, we need to create a new approved version with the content of the latest accepted version
-      if (latestAcceptedVersion) {
-        // Set is_latest to false for the target version
+        // Set version to rejected and is_latest to false
         await db
           .updateTable<VersionedTable>(versions_table)
           .set({
+            review_state: "rejected",
+            reviewed_log_id: logId,
             is_latest: false,
           })
           .where("version_id", "=", versionId)
@@ -342,12 +378,42 @@ export class Versioning {
               ? {
                   // alias_string is a generated field and cannot be inserted
                   aliases_string: undefined,
-                  // I'm not sure why we need to stringify this - in other places we don't
-                  // Todo: Investigate
                   aliases: JSON.stringify(latestAcceptedVersion.aliases),
                 }
               : {}),
           })
+          .execute();
+      } else {
+        // No previous version was accepted, so mark the entry as deleted
+        // Requirement: restoreToVersionId must be null
+        if (restoreToVersionId) {
+          throw new Error(
+            `Cannot reject new ${table} ${masterId}: entry has not been accepted before, but a restore version id was provided.`
+          );
+        }
+
+        // Deletion can only happen if the entry is not in use
+        // Prevent rejection if item is new and in use
+        if (["person", "place"].includes(table)) {
+          const usages = await this.getUsageCount({ db, table, id: masterId });
+
+          if (usages > 0) {
+            throw new Error(
+              `Cannot reject new ${table} ${masterId} as it is used ${usages} times.`
+            );
+          }
+        }
+
+        // Simple case, set version to rejected and deleted
+        await db
+          .updateTable<VersionedTable>(versions_table)
+          .set({
+            review_state: "rejected",
+            reviewed_log_id: logId,
+            // If latest accepted version does not exist, reverting means deleting the entry - also set deleted_log_id
+            deleted_log_id: logId,
+          })
+          .where("version_id", "=", versionId)
           .execute();
       }
     });
@@ -381,19 +447,19 @@ export class Versioning {
     return uncommitedChanges;
   }
 
-  /** Remove all latest, non-touched entries */
-  removeNontouchedLatest = async () => {
-    await Promise.all(
-      versionedTables.map(async (table) => {
-        await this.db
-          .deleteFrom<VersionedTable>(`${table}_version`)
-          .where((e) =>
-            e.and([e("is_latest", "is", true), e("is_touched", "is", false)])
-          )
-          .execute();
-      })
-    );
-  };
+  // /** Remove all latest, non-touched entries */
+  // removeNontouchedLatest = async () => {
+  //   await Promise.all(
+  //     versionedTables.map(async (table) => {
+  //       await this.db
+  //         .deleteFrom<VersionedTable>(`${table}_version`)
+  //         .where((e) =>
+  //           e.and([e("is_latest", "is", true), e("is_touched", "is", false)])
+  //         )
+  //         .execute();
+  //     })
+  //   );
+  // };
 
   createLogId = async (
     type: "import" | "user" | "export" | "review" | "move-usages"
