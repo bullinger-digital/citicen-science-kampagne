@@ -9,6 +9,8 @@ import { requireRoleOrThrow } from "../security/withRequireRole";
 import { Versioning, whereCurrent } from "../versioning";
 import { applyNewActions, prepareActionsForSave, EditorAction } from "../xml";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
+import { importFromCurrentCommit } from "../git/import";
+import { BRANCH_NAME, exportToCurrentCommit } from "../git/export";
 
 export const getGitStatus = async () => {
   await requireRoleOrThrow("data-admin");
@@ -41,15 +43,11 @@ export const runImport = async () => {
 
 export const runExport = async () => {
   await exportToCurrentCommit();
-  return Response.redirect(
-    `https://github.com/bullinger-digital/bullinger-korpus-tei/compare/${BRANCH_NAME}?expand=1`
-  );
+  return `https://github.com/bullinger-digital/bullinger-korpus-tei/compare/${BRANCH_NAME}?expand=1`;
 };
 
 // Temporary functions to clean up data issues
 import fs from "fs";
-import { importFromCurrentCommit } from "../git/import";
-import { BRANCH_NAME, exportToCurrentCommit } from "../git/export";
 
 // In the first stage, we did not add type="citizen_name" to <persName> and <placeName> elements
 // this function adds this attribute to all existing elements.
