@@ -332,9 +332,10 @@ export class Versioning {
       const logId = await this.createLogId("review");
 
       // Get (master) id of entry
-      const { id: masterId } = await db
+      const { id: masterId, git_import_id: gitImportId } = await db
         .selectFrom<VersionedTable>(versions_table)
         .where("version_id", "=", versionId)
+        .where(whereCurrent)
         .select(["id", "git_import_id"])
         .executeTakeFirstOrThrow();
 
@@ -373,8 +374,12 @@ export class Versioning {
           .insertInto<VersionedTable>(versions_table)
           .values({
             ...latestAcceptedVersion,
+            git_import_id: gitImportId,
             created_log_id: logId,
+            git_export_id: undefined,
+            is_new: false,
             is_latest: true,
+            is_touched: true,
             version_id: undefined,
             ...(table === "person"
               ? {
