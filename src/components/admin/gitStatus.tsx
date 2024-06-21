@@ -1,6 +1,5 @@
 "use client";
-import { getGitStatus, gitCheckoutMainAndPull } from "@/lib/actions/admin";
-import { useState } from "react";
+import { getGitStatus, gitCheckoutMainAndPull } from "@/lib/actions/admin-data";
 import { useServerAction, useServerFetch } from "../common/serverActions";
 import { Loading } from "../common/loadingIndicator";
 
