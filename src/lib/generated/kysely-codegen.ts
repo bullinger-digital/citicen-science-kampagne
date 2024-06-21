@@ -57,6 +57,7 @@ export interface LetterLock {
 export interface LetterVersion {
   actions: Generated<Json>;
   created_log_id: number;
+  deleted_log_id: number | null;
   extract_date: string | null;
   extract_language: string | null;
   extract_source: string | null;
@@ -128,6 +129,7 @@ export interface PersonVersion {
   aliases: Json;
   aliases_string: Generated<string | null>;
   created_log_id: number;
+  deleted_log_id: number | null;
   forename: string;
   git_export_id: number | null;
   git_import_id: number;
@@ -154,6 +156,7 @@ export interface Place {
 export interface PlaceVersion {
   country: string;
   created_log_id: number;
+  deleted_log_id: number | null;
   district: string;
   geonames: Generated<string>;
   git_export_id: number | null;

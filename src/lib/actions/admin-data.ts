@@ -234,7 +234,7 @@ export const tempAddTypeCitizenNameAttribute = async () => {
         await db
           .updateTable("letter_version")
           .set("xml", newXml)
-          .set("actions", prepareActionsForSave(actions))
+          .set("actions", prepareActionsForSave(newActions))
           .where("id", "=", id)
           .where("version_id", "=", version.version_id)
           .execute();
@@ -243,7 +243,11 @@ export const tempAddTypeCitizenNameAttribute = async () => {
 
     // Validate all versions
     console.log("Validating all versions");
-    const letterIds = await db.selectFrom("letter").select("id").execute();
+    const letterIds = await db
+      .selectFrom("letter")
+      .select("id")
+      .orderBy("id asc")
+      .execute();
 
     for (const { id } of letterIds) {
       const versions = await db
@@ -278,8 +282,8 @@ export const tempAddTypeCitizenNameAttribute = async () => {
         const newXml = xmlSerializeToString(dom);
 
         if (newXml !== version.xml) {
-          fs.writeFileSync("./temp-should.xml", version.xml);
-          fs.writeFileSync("./temp-is.xml", newXml);
+          //   fs.writeFileSync("./temp-should.xml", version.xml);
+          //   fs.writeFileSync("./temp-is.xml", newXml);
           throw new Error(
             `New XML does not equal old XML for letter ${id} version ${version.version_id}`
           );
