@@ -91,7 +91,8 @@ export const importFromCurrentCommit = async () => {
       .executeTakeFirst();
 
     if (existing_git_import) {
-      console.log("Commit already imported, will re-import", commitHash);
+      //console.log("Commit already imported, will re-import", commitHash);
+      throw new Error("Commit already imported");
     }
 
     // Set all existing git_imports to not current
@@ -145,11 +146,18 @@ export const importFromCurrentCommit = async () => {
         {
           forename: mainAliasNode?.querySelector("forename")?.textContent || "",
           surname: mainAliasNode?.querySelector("surname")?.textContent || "",
-          aliases: otherAliasNodes.map((alias) => ({
-            forename: alias.querySelector("forename")?.textContent || "",
-            surname: alias.querySelector("surname")?.textContent || "",
-            type: alias.getAttribute("type") || "",
-          })),
+          aliases: JSON.stringify(
+            otherAliasNodes.map((alias) => {
+              const id = alias.getAttribute("xml:id");
+              return {
+                id: id ? parseInt(id.replace("p", "")) : null,
+                forename: alias.querySelector("forename")?.textContent || "",
+                surname: alias.querySelector("surname")?.textContent || "",
+                type: alias.getAttribute("type") || "",
+              };
+            })
+            // // Todo: Fix typing
+          ) as any,
           gnd: person.querySelector("idno[subtype='gnd']")?.textContent || "",
           hist_hub:
             person.querySelector("idno[subtype='histHub']")?.textContent || "",

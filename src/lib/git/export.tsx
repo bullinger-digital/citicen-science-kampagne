@@ -67,16 +67,7 @@ const domExportHelpers = (personsDom: Document) => {
 
 export const whereExportFilter = <TA extends keyof DB>(
   eb: ExpressionBuilder<DB, TA & VersionedTable>
-) =>
-  eb.and([
-    eb("is_latest", "is", true as any),
-    eb("git_import_id", "=", (e: any) =>
-      e.selectFrom("git_import").select("id").where("is_current", "is", true)
-    ),
-    // Todo: fix typing
-    eb("is_touched", "is", true as any),
-    eb("review_state", "<>", "rejected" as any),
-  ]);
+) => eb.and([whereCurrent(eb), eb("is_touched", "is", true as any)]);
 
 const isNumber = (value: any) => {
   return typeof value === "number";

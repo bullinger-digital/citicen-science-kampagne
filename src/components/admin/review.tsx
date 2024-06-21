@@ -76,10 +76,6 @@ const REVIEW_ITEM_SPECS: {
     editModalComponent: EditPlaceModal,
     iconComponent: TbLocation,
   },
-  person_alias: {
-    itemLabel: "Person-Alias",
-    iconComponent: BsPersonFill,
-  },
 };
 
 const ReviewItem = ({

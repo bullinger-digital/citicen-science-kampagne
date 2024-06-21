@@ -5,6 +5,7 @@ import { Kysely, UpdateObject, sql } from "kysely";
 import { ExpressionBuilder, InsertObject, Transaction } from "kysely";
 import { extractAndStoreMetadata } from "./extractMetadata";
 import { xmlParseFromString } from "./xmlSerialize";
+import { whereExportFilter } from "./git/export";
 
 export const versionedTables = ["letter", "person", "place"] as const;
 export type Versioned = "letter" | "person" | "place";
@@ -68,7 +69,8 @@ export class Versioning {
       created_log_id: importSpecs.logId,
       git_import_id: importSpecs.gitImportId,
       is_touched: false,
-      review_state: "accepted",
+      // Todo: Fix typing
+      review_state: (data as any).review_state,
     };
 
     const v = await this.db
@@ -426,12 +428,7 @@ export class Versioning {
           await this.db
             .selectFrom<VersionedTable>(`${table}_version`)
             .where((e) =>
-              e.and([
-                e("is_touched", "is", true),
-                e("git_export_id", "is", null),
-                e("is_latest", "is", true),
-                e("review_state", "<>", "rejected"),
-              ])
+              e.and([whereExportFilter(e), e("git_export_id", "is", null)])
             )
             .select((e) => {
               return e.fn.countAll<number>().as("count");
@@ -579,7 +576,7 @@ export class Versioning {
   }
 
   async resetPostgresIdSequences() {
-    const tables = ["person", "place", "person_alias"];
+    const tables = ["person", "place"];
     await wrapTransaction(this.db, async (db) => {
       for (const table of tables) {
         await sql`SELECT setval('${sql.id(
