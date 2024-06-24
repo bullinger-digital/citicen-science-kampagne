@@ -593,15 +593,17 @@ export class Versioning {
 }
 
 export const whereCurrent = <TA extends keyof DB>(
-  eb: ExpressionBuilder<DB, TA & VersionedTable>
+  eb: ExpressionBuilder<DB, TA & VersionedTable>,
+  includeDeleted = false
 ) =>
   eb.and([
     eb("is_latest", "is", true as any),
     eb("git_import_id", "=", (e: any) =>
       e.selectFrom("git_import").select("id").where("is_current", "is", true)
     ),
-    eb("review_state", "<>", "rejected" as any),
-    eb("deleted_log_id", "is", null),
+    // Probably, we could remove this filter, because latest versions should not be rejected if not deleted
+    ...(includeDeleted ? [] : [eb("review_state", "<>", "rejected" as any)]),
+    ...(includeDeleted ? [] : [eb("deleted_log_id", "is", null)]),
   ]);
 
 const wrapTransaction = async <T>(
