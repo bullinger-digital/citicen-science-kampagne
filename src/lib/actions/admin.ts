@@ -65,8 +65,6 @@ export const getLogs = async () => {
 };
 
 const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
-  const rawTable = table.replace("_version", "");
-
   return await kdb
     .selectFrom<VersionedTable>(table)
     .leftJoin("log", "created_log_id", "log.id")
@@ -74,6 +72,24 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
     .where("review_state", "=", "pending")
     .selectAll("log")
     .orderBy(`${table as "letter_version"}.id`, "asc")
+    // Select user ID and time of recent user change
+    .select((e) =>
+      jsonObjectFrom(
+        e
+          .selectFrom<`${VersionedTable} as recent`>(`${table} as recent`)
+          .where("recent.id", "=", e.ref(`${table as "letter_version"}.id`))
+          .orderBy("recent.version_id desc")
+          .leftJoin(
+            "log as log_recent",
+            "recent.created_log_id",
+            "log_recent.id"
+          )
+          .where("log_recent.log_type", "=", "user")
+          .select("log_recent.created_by_id")
+          .select("log_recent.timestamp")
+          .limit(1)
+      ).as("recently_changed_log")
+    )
     // Select the last accepted version
     .select((e) =>
       jsonObjectFrom(

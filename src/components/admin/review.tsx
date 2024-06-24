@@ -93,6 +93,10 @@ const ReviewItem = ({
   const rejectAction = useServerAction(rejectChanges);
   const acceptAction = useServerAction(acceptChanges);
 
+  const timestamp = log.recently_changed_log?.timestamp
+    ? new Date(log.recently_changed_log?.timestamp)
+    : null;
+
   return (
     <div className="p-3 relative rounded-xl bg-white border-gray-300 border mb-2">
       {showEditModal && EditModalComponent && (
@@ -114,9 +118,9 @@ const ReviewItem = ({
           {log.last_accepted === null ? "erstellt" : "verändert"}
         </div>
         <div>
-          Benutzer {log.created_by_id} am{" "}
-          {log.timestamp?.toLocaleDateString("de")}{" "}
-          {log.timestamp?.toLocaleTimeString("de")} ({log.log_type})
+          Benutzer {log.recently_changed_log?.created_by_id} am{" "}
+          {timestamp?.toLocaleDateString("de")}{" "}
+          {timestamp?.toLocaleTimeString("de")}
         </div>
       </div>
       <div className="flex justify-between">
