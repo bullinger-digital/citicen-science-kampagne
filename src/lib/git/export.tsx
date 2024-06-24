@@ -69,7 +69,7 @@ export const whereExportFilter = <TA extends keyof DB>(
   eb: ExpressionBuilder<DB, TA & VersionedTable>
 ) =>
   eb.and([
-    whereCurrent(eb),
+    whereCurrent(eb, true),
     eb.or([
       eb("is_touched", "is", true as any),
       eb("reviewed_log_id", "is not", null),
@@ -104,6 +104,7 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
       "forename",
       "surname",
       "review_state",
+      "deleted_log_id",
     ])
     .execute();
 
@@ -115,9 +116,20 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
     throw new Error("Could not find root element in persons.xml");
   }
 
+  // Remove deleted persons
+  const removedPersons = persons.filter((p) => p.deleted_log_id !== null);
+  for (const removedPerson of removedPersons) {
+    const node = personsRoot.querySelector(
+      `person[xml:id=P${removedPerson.id}]`
+    );
+    if (node) {
+      node.remove();
+    }
+  }
+
   const h = domExportHelpers(personsDom);
 
-  for (const person of persons) {
+  for (const person of persons.filter((p) => p.deleted_log_id === null)) {
     h.findOrCreateNode(
       personsRoot,
       "person",
@@ -256,6 +268,7 @@ const exportPlaces = async (db: Kysely<DB>, gitExportId: number) => {
       "longitude",
       "geonames",
       "review_state",
+      "deleted_log_id",
     ])
     .execute();
 
@@ -267,9 +280,18 @@ const exportPlaces = async (db: Kysely<DB>, gitExportId: number) => {
     throw new Error("Could not find root element in localities.xml");
   }
 
+  // Remove deleted places
+  const removedPlaces = places.filter((p) => p.deleted_log_id !== null);
+  for (const removedPlace of removedPlaces) {
+    const node = placesRoot.querySelector(`place[xml:id=l${removedPlace.id}]`);
+    if (node) {
+      node.remove();
+    }
+  }
+
   const h = domExportHelpers(placesDom);
 
-  for (const place of places) {
+  for (const place of places.filter((p) => p.deleted_log_id === null)) {
     h.findOrCreateNode(
       placesRoot,
       "place",
