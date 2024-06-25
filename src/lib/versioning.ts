@@ -266,6 +266,37 @@ export class Versioning {
     return usages.count;
   }
 
+  async deleteVersioned<T extends Versioned, TV extends `${T}_version`>(
+    table: T,
+    id: number
+  ) {
+    const versions_table = `${table}_version` as TV;
+
+    await wrapTransaction(this.db, async (db) => {
+      const usages = await this.getUsageCount({ db, table, id });
+
+      if (usages > 0) {
+        throw new Error(
+          `Cannot delete ${table} ${id} as it is used ${usages} times.`
+        );
+      }
+
+      const deletedIds = await db
+        .updateTable<VersionedTable>(versions_table)
+        .set({
+          deleted_log_id: await this.createLogId("delete"),
+        })
+        .where(whereCurrent)
+        .where("id", "=", id)
+        .returning("id")
+        .execute();
+
+      if (deletedIds.length === 0) {
+        throw new Error(`No entries to remove found: ${table} ${id}`);
+      }
+    });
+  }
+
   async acceptChanges({
     items,
   }: {
@@ -464,7 +495,7 @@ export class Versioning {
   // };
 
   createLogId = async (
-    type: "import" | "user" | "export" | "review" | "move-usages"
+    type: "import" | "user" | "export" | "review" | "move-usages" | "delete"
   ) => {
     return (
       await this.db

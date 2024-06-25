@@ -12,12 +12,11 @@ import {
   whereCurrent,
 } from "../versioning";
 import { jsonObjectFrom } from "kysely/helpers/postgres";
-import simpleGit from "simple-git";
-import { repoPath } from "../git/common";
 import { sql } from "kysely";
 import { LOCK_DURATION } from "./locking_common";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
-import { EditorAction, applyNewActions, prepareActionsForSave } from "../xml";
+import { applyNewActions, prepareActionsForSave } from "../xml";
+import { Kysely } from "kysely";
 
 export const getPeopleOnline = async () => {
   return (
@@ -164,6 +163,24 @@ export const getUncommitedChanges = async () => {
   ];
 };
 
+const getUsages = async ({
+  db,
+  table,
+  id,
+}: {
+  db: Kysely<DB>;
+  table: "person" | "place";
+  id: number;
+}) => {
+  return await kdb
+    .selectFrom(`letter_version_extract_${table as "place"}`)
+    .leftJoin("letter_version", "version_id", "letter_version.version_id")
+    .where(`${table as "place"}_id`, "=", id)
+    .where(whereCurrent as any)
+    .selectAll()
+    .execute();
+};
+
 /**
  * Move all usages of a person or place to another person or place
  * @param param0
@@ -186,22 +203,7 @@ export const moveUsages = async ({
     const logId = await v.createLogId("move-usages");
 
     // Get all usages of the person or place
-    const usages = await db
-      .selectFrom(`letter_version_extract_${table as "place"} as ex`)
-      .leftJoin("letter_version", "ex.version_id", "letter_version.version_id")
-      .where(`${table as "place"}_id`, "=", fromId)
-      .where(whereCurrent as any)
-      // .where((e) =>
-      //   e.exists(
-      //     e
-      //       .selectFrom(`letter_version_extract_${table as "place"} as ex`)
-      //       .where("ex.version_id", "=", e.ref("letter_version.version_id"))
-      //       .where(`${table as "place"}_id`, "=", fromId)
-      //   )
-      // )
-      .select("letter_version.id")
-      .select("ex.link_type")
-      .execute();
+    const usages = await getUsages({ db, table, id: fromId });
 
     if (usages.length === 0) {
       throw new Error("Cannot move usages: No usages found");
@@ -320,4 +322,17 @@ export const rejectChanges = async ({
 
   const v = new Versioning();
   await v.rejectChanges({ items });
+};
+
+export const deleteRegisterEntry = async ({
+  table,
+  id,
+}: {
+  table: "person" | "place";
+  id: number;
+}) => {
+  await requireRoleOrThrow("admin");
+
+  const v = new Versioning();
+  await v.deleteVersioned(table, id);
 };

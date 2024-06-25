@@ -11,7 +11,7 @@ import {
   SortingState,
   ColumnSort,
 } from "@tanstack/react-table";
-import { useServerFetch } from "../common/serverActions";
+import { useServerAction, useServerFetch } from "../common/serverActions";
 import {
   FilterTableOptions,
   FilterTableResult,
@@ -26,11 +26,15 @@ import { EditPersonModal, EditPlaceModal } from "../editor/modals/modals";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa6";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { isInRole } from "@/lib/security/isInRole";
+import { deleteRegisterEntry } from "@/lib/actions/admin";
+import { MdDeleteForever } from "react-icons/md";
 
-const getCommonColumns = (
-  type: "person" | "place",
-  setShowEditModal: (id: number) => void
-) => {
+type GetColumnsProps = {
+  setShowEditModal: (id: number) => void;
+  deleteAction: (id: number) => void;
+};
+
+const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
   const columnHelper =
     createColumnHelper<
       NonNullable<
@@ -55,12 +59,33 @@ const getCommonColumns = (
       cell: (row) => {
         return (
           <button
+            title="Bearbeiten"
             onClick={() => {
-              setShowEditModal(row.row.original.id);
+              props.setShowEditModal(row.row.original.id);
             }}
-            className="text-emerald-400"
+            className="text-emerald-400 hover:text-emerald-500"
           >
             <FaEdit />
+          </button>
+        );
+      },
+    }),
+    columnHelper.display({
+      id: "delete",
+      header: "",
+      cell: (row) => {
+        return (
+          <button
+            title="Löschen"
+            onClick={() => {
+              confirm(
+                `Sind Sie sicher, dass Sie den Eintrag ${row.row.original.id} löschen möchten?`
+              ) && props.deleteAction(row.row.original.id);
+            }}
+            className="text-red-400 hover:text-red-500 disabled:text-gray-200"
+            disabled={row.row.original.computed_link_counts > 0}
+          >
+            <MdDeleteForever />
           </button>
         );
       },
@@ -77,7 +102,7 @@ const registerModalSpecs = {
       id: "surname",
       desc: false,
     },
-    getColumns: (setShowEditModal: (id: number) => void) => {
+    getColumns: (props: GetColumnsProps) => {
       const columnHelper =
         createColumnHelper<
           NonNullable<
@@ -118,7 +143,7 @@ const registerModalSpecs = {
             ) : null;
           },
         }),
-        ...getCommonColumns("person", setShowEditModal),
+        ...getCommonColumns("person", props),
       ];
     },
   },
@@ -130,7 +155,7 @@ const registerModalSpecs = {
       id: "settlement",
       desc: false,
     },
-    getColumns: (setShowEditModal: (id: number) => void) => {
+    getColumns: (props: GetColumnsProps) => {
       const columnHelper =
         createColumnHelper<
           NonNullable<Awaited<ReturnType<typeof searchPlace>>>["result"][number]
@@ -173,7 +198,7 @@ const registerModalSpecs = {
             ) : null;
           },
         }),
-        ...getCommonColumns("place", setShowEditModal),
+        ...getCommonColumns("place", props),
       ];
     },
   },
@@ -249,6 +274,8 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
   const [showEditModal, setShowEditModal] = useState<number | null>();
   const sortingOrDefault = sorting.length === 0 ? [defaultSorting] : sorting;
 
+  const deleteAction = useServerAction(deleteRegisterEntry);
+
   const [query, setQuery] = useState("");
 
   const { data, loading, refetch } = useServerFetch(
@@ -267,8 +294,14 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
   );
 
   const columns = useMemo(() => {
-    return specs.getColumns(setShowEditModal);
-  }, [specs, setShowEditModal]);
+    return specs.getColumns({
+      setShowEditModal,
+      deleteAction: async (id: number) => {
+        await deleteAction.execute({ id, table: type });
+        refetch();
+      },
+    });
+  }, [specs, setShowEditModal, deleteAction, refetch, type]);
 
   const table = useReactTable({
     columns: columns as ColumnDef<any>[],
