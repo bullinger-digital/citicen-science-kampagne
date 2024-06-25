@@ -173,6 +173,15 @@ export interface PlaceVersion {
   version_id: Generated<number>;
 }
 
+export interface RegisterFile {
+  created_log_id: number | null;
+  extract_person_references: Generated<number[] | null>;
+  extract_place_references: Generated<number[] | null>;
+  git_import_id: number;
+  name: string;
+  xml: string;
+}
+
 export interface RemovedPersonAlias {
   created_log_id: number;
   id: Generated<number>;
@@ -223,6 +232,7 @@ export interface DB {
   person_version: PersonVersion;
   place: Place;
   place_version: PlaceVersion;
+  register_file: RegisterFile;
   removed_person_alias: RemovedPersonAlias;
   removed_person_alias_version: RemovedPersonAliasVersion;
   user: User;

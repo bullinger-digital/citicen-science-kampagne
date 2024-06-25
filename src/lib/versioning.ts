@@ -266,6 +266,62 @@ export class Versioning {
     return usages.count;
   }
 
+  async isUsedInRegisterFile({
+    db,
+    table,
+    id,
+  }: {
+    db: Kysely<DB>;
+    table: Versioned;
+    id: number;
+  }): Promise<boolean> {
+    const usages = await db
+      .selectFrom("register_file")
+      .where("git_import_id", "=", (e) =>
+        e.selectFrom("git_import").select("id").where("is_current", "is", true)
+      )
+      .where(
+        table === "person"
+          ? "extract_person_references"
+          : "extract_place_references",
+        "@>",
+        (e) => sql`ARRAY[${id}]::integer[]`
+      )
+      .select((e) => e.fn.countAll<number>().as("count"))
+      .executeTakeFirstOrThrow();
+    return usages.count > 0;
+  }
+
+  async throwIfItemInUse({
+    db,
+    table,
+    id,
+  }: {
+    db: Kysely<DB>;
+    table: Versioned;
+    id: number;
+  }) {
+    const usages = await this.getUsageCount({ db, table, id });
+
+    if (usages > 0) {
+      throw new Error(
+        `Cannot delete ${table} ${id} as it is used ${usages} times.`
+      );
+    }
+
+    const isUsedInRegisterFile = await this.isUsedInRegisterFile({
+      db,
+      table,
+      id,
+    });
+
+    if (isUsedInRegisterFile) {
+      throw new Error(
+        `Cannot delete ${table} ${id} as it is used in register_file.`
+      );
+    }
+  }
+
   async deleteVersioned<T extends Versioned, TV extends `${T}_version`>(
     table: T,
     id: number
@@ -273,13 +329,7 @@ export class Versioning {
     const versions_table = `${table}_version` as TV;
 
     await wrapTransaction(this.db, async (db) => {
-      const usages = await this.getUsageCount({ db, table, id });
-
-      if (usages > 0) {
-        throw new Error(
-          `Cannot delete ${table} ${id} as it is used ${usages} times.`
-        );
-      }
+      await this.throwIfItemInUse({ db, table, id });
 
       const deletedIds = await db
         .updateTable<VersionedTable>(versions_table)
@@ -433,13 +483,7 @@ export class Versioning {
         // Deletion can only happen if the entry is not in use
         // Prevent rejection if item is new and in use
         if (["person", "place"].includes(table)) {
-          const usages = await this.getUsageCount({ db, table, id: masterId });
-
-          if (usages > 0) {
-            throw new Error(
-              `Cannot reject new ${table} ${masterId} as it is used ${usages} times.`
-            );
-          }
+          await this.throwIfItemInUse({ db, table, id: masterId });
         }
 
         // Simple case, set version to rejected and deleted

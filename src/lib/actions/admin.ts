@@ -174,10 +174,15 @@ const getUsages = async ({
 }) => {
   return await kdb
     .selectFrom(`letter_version_extract_${table as "place"}`)
-    .leftJoin("letter_version", "version_id", "letter_version.version_id")
+    .leftJoin(
+      "letter_version",
+      `letter_version_extract_${table as "place"}.version_id`,
+      "letter_version.version_id"
+    )
     .where(`${table as "place"}_id`, "=", id)
     .where(whereCurrent as any)
-    .selectAll()
+    .selectAll(`letter_version_extract_${table as "place"}`)
+    .select("id")
     .execute();
 };
 
@@ -209,10 +214,16 @@ export const moveUsages = async ({
       throw new Error("Cannot move usages: No usages found");
     }
 
-    if (usages.some((e) => e.link_type !== "mentioned")) {
-      console.log(usages);
+    // Person or places referenced in register files cannot be moved
+    const referencedInRegister = await v.isUsedInRegisterFile({
+      db,
+      table,
+      id: fromId,
+    });
+
+    if (referencedInRegister) {
       throw new Error(
-        "Cannot move usages: Only mentions can be moved (but there are letters with other link types)"
+        `Cannot move usages: ${table} with ID ${fromId} is referenced in register files`
       );
     }
 
@@ -273,12 +284,6 @@ export const moveUsages = async ({
 
       applyNewActions(dom, actions);
 
-      if (Array.from(dom.querySelectorAll(selector)).length > 0) {
-        // If there are still instances of the old person / place, we should throw an error
-        throw new Error(
-          `Cannot move usages: Not all instances of ${tagName} with ref ${refPrefix}${fromId} were updated, probably because those are located outside of the <text> element. This will be fixed in a later version.`
-        );
-      }
       // Update the letter
       await v.createNewVersion(
         "letter",
