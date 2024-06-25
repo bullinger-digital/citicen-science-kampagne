@@ -281,7 +281,7 @@ const UsageMoverButton = ({
   );
 };
 
-const UsageMoverModal = ({
+export const UsageMoverModal = ({
   table,
   fromId,
   close,
@@ -355,7 +355,7 @@ const UsageMover = ({
       </div>
       <ActionButton
         className="bg-emerald-300 hover:bg-emerald-400"
-        disabled={toId === null}
+        disabled={toId === null || moveUsagesAction.loading}
         onClick={async () => {
           if (toId === null) {
             return;
@@ -366,6 +366,7 @@ const UsageMover = ({
           } catch (e) {}
         }}
       >
+        {moveUsagesAction.loading && <Loading />}
         Ausführen
       </ActionButton>
       {moveUsagesAction.error && (

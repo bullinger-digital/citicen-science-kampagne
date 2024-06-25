@@ -9,6 +9,7 @@ if (!globalThis.window) {
 
 export const repoPath = path.join(process.cwd(), "tei-corpus");
 export const letterPath = path.join(repoPath, "./data/letters");
+export const registersPath = path.join(repoPath, "./data/index");
 export const personsFilePath = path.join(repoPath, "./data/index/persons.xml");
 export const placesFilePath = path.join(
   repoPath,

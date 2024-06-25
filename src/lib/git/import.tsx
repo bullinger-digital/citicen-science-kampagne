@@ -13,6 +13,7 @@ import {
   placesFilePath,
   letterPath,
   orgNamesFilePath,
+  registersPath,
 } from "./common";
 
 const fileOrDirectoryExists = async (path: string) => {
@@ -121,6 +122,27 @@ export const importFromCurrentCommit = async () => {
       gitImportId: git_import!.id,
       logId: logId,
     };
+
+    // Import register files
+    const indexFiles = fs.readdirSync(path.join(registersPath)).filter((f) => {
+      return f.endsWith(".xml");
+    });
+
+    for (const indexFile of indexFiles) {
+      const indexFileContents = await fs.promises.readFile(
+        path.join(registersPath, indexFile),
+        "utf-8"
+      );
+      await db
+        .insertInto("register_file")
+        .values({
+          name: indexFile,
+          xml: indexFileContents,
+          git_import_id: gitImportSpecs.gitImportId,
+          created_log_id: gitImportSpecs.logId,
+        })
+        .execute();
+    }
 
     // Import persons
     const xmlPersonsString = await fs.promises.readFile(

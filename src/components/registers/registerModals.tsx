@@ -20,7 +20,7 @@ import {
 } from "@/lib/actions/citizen";
 import { Link } from "../common/navigation-block/link";
 import { EntityUsagesModalTrigger } from "../editor/properties";
-import { FaEdit, FaSearch } from "react-icons/fa";
+import { FaEdit, FaExternalLinkAlt, FaSearch } from "react-icons/fa";
 import { Loading } from "../common/loadingIndicator";
 import { EditPersonModal, EditPlaceModal } from "../editor/modals/modals";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa6";
@@ -28,9 +28,11 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import { isInRole } from "@/lib/security/isInRole";
 import { deleteRegisterEntry } from "@/lib/actions/admin";
 import { MdDeleteForever } from "react-icons/md";
+import { UsageMoverModal } from "../admin/review";
 
 type GetColumnsProps = {
   setShowEditModal: (id: number) => void;
+  setShowMoveUsagesModal: (id: number) => void;
   deleteAction: (id: number) => void;
 };
 
@@ -66,6 +68,23 @@ const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
             className="text-emerald-400 hover:text-emerald-500"
           >
             <FaEdit />
+          </button>
+        );
+      },
+    }),
+    columnHelper.display({
+      id: "moveUsages",
+      header: "",
+      cell: (row) => {
+        return (
+          <button
+            title="Referenzen verschieben"
+            onClick={() => {
+              props.setShowMoveUsagesModal(row.row.original.id);
+            }}
+            className="text-blue-400 hover:text-blue-500"
+          >
+            <FaExternalLinkAlt />
           </button>
         );
       },
@@ -272,6 +291,9 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
 
   const [sorting, setSorting] = useState<SortingState>([defaultSorting]);
   const [showEditModal, setShowEditModal] = useState<number | null>();
+  const [showMoveUsagesModal, setShowMoveUsagesModal] = useState<
+    number | null
+  >();
   const sortingOrDefault = sorting.length === 0 ? [defaultSorting] : sorting;
 
   const deleteAction = useServerAction(deleteRegisterEntry);
@@ -300,6 +322,7 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
         await deleteAction.execute({ id, table: type });
         refetch();
       },
+      setShowMoveUsagesModal,
     });
   }, [specs, setShowEditModal, deleteAction, refetch, type]);
 
@@ -328,6 +351,17 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
             refetch();
           }}
           open={true}
+        />
+      ) : null}
+      {showMoveUsagesModal ? (
+        <UsageMoverModal
+          table={type}
+          fromId={showMoveUsagesModal}
+          open={!!showMoveUsagesModal}
+          close={() => {
+            setShowMoveUsagesModal(null);
+            refetch();
+          }}
         />
       ) : null}
       <div className="flex items-center space-x-2">
