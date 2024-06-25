@@ -230,6 +230,7 @@ export const searchPlace = async ({
     .selectAll("place_version")
     .select("place.computed_link_counts")
     .orderBy(orderBy.column as any, orderBy.direction)
+    .orderBy("place.id")
     .limit(limit)
     .offset(offset)
     .execute();
