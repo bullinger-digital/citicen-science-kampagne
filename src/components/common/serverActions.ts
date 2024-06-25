@@ -1,25 +1,28 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export const useServerAction = <T, R>(action: (props: T) => Promise<R>) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  return {
-    loading,
-    error,
-    execute: async (props: T) => {
-      setLoading(true);
-      try {
-        setError(null);
-        return await action(props);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Unbekannter Fehler");
-        console.error(e);
-        return Promise.reject(e);
-      } finally {
-        setLoading(false);
-      }
-    },
-  };
+  return useMemo(
+    () => ({
+      loading,
+      error,
+      execute: async (props: T) => {
+        setLoading(true);
+        try {
+          setError(null);
+          return await action(props);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "Unbekannter Fehler");
+          console.error(e);
+          return Promise.reject(e);
+        } finally {
+          setLoading(false);
+        }
+      },
+    }),
+    [action, loading, error]
+  );
 };
 
 export const useServerFetch = <P, R>(
