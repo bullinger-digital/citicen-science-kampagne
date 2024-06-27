@@ -214,6 +214,10 @@ export const moveUsages = async ({
       throw new Error("Cannot move usages: No usages found");
     }
 
+    if (usages.some((u) => u.link_type !== "mentioned")) {
+      throw new Error("Cannot move usages: Only mentioned usages can be moved");
+    }
+
     // Person or places referenced in register files cannot be moved
     const referencedInRegister = await v.isUsedInRegisterFile({
       db,
