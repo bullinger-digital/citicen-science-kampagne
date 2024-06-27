@@ -46,7 +46,11 @@ export const Review = () => {
         {data
           ?.slice(0, limit)
           .map((log) => (
-            <ReviewItem log={log} key={log.id} refetch={refetch} />
+            <ReviewItem
+              log={log}
+              key={`${log.table}-${log.modified?.id}`}
+              refetch={refetch}
+            />
           ))}
       </div>
       <button
