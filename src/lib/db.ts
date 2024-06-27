@@ -35,7 +35,7 @@ const clientSingleton = () => {
   return new Kysely<DB>({
     dialect,
     // log(event) {
-    //   if (event.level === "query") {
+    //   if (event.level === "query" || event.level === "error") {
     //     console.log(event.query.sql);
     //     console.log(event.query.parameters);
     //     console.log(event.queryDurationMillis);

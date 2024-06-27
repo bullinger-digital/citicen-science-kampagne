@@ -644,6 +644,17 @@ export class Versioning {
           )
         )
       )
+      .$if(!!letterIds, (e) =>
+        e.where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom("letter_version_extract_place as p")
+              .innerJoin("letter_version as v", "v.version_id", "p.version_id")
+              .where("p.place_id", "=", eb.ref("place.id"))
+              .where("v.id", "in", letterIds!)
+          )
+        )
+      )
       .set((eb) => {
         return {
           computed_link_counts: eb
