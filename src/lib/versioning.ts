@@ -577,8 +577,10 @@ export class Versioning {
 
   async updateComputedLinkCounts({
     letterId,
+    letterIds,
   }: {
     letterId?: number | undefined;
+    letterIds?: number[] | undefined;
   }) {
     await this.db
       .updateTable("person")
@@ -590,6 +592,17 @@ export class Versioning {
               .innerJoin("letter_version as v", "v.version_id", "p.version_id")
               .where("p.person_id", "=", eb.ref("person.id"))
               .where("v.id", "=", letterId!)
+          )
+        )
+      )
+      .$if(!!letterIds, (e) =>
+        e.where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom("letter_version_extract_person as p")
+              .innerJoin("letter_version as v", "v.version_id", "p.version_id")
+              .where("p.person_id", "=", eb.ref("person.id"))
+              .where("v.id", "in", letterIds!)
           )
         )
       )

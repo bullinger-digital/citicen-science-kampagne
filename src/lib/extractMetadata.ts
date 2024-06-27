@@ -66,6 +66,7 @@ export const extractAndStoreMetadata = async ({
       };
     });
 
+    // Todo: insert all at once
     for (const insert of inserts) {
       if (isNaN(insert.link_to)) {
         console.error(

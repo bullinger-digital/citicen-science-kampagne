@@ -297,11 +297,11 @@ export const moveUsages = async ({
         logId,
         true
       );
-
-      await v.updateComputedLinkCounts({
-        letterId: currentVersion.id,
-      });
     }
+
+    await v.updateComputedLinkCounts({
+      letterIds: usages.map((u) => u.id!),
+    });
   });
 };
 
