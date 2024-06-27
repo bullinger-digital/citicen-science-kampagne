@@ -29,6 +29,7 @@ import { isInRole } from "@/lib/security/isInRole";
 import { deleteRegisterEntry } from "@/lib/actions/admin";
 import { MdDeleteForever } from "react-icons/md";
 import { UsageMoverModal } from "../admin/review";
+import { Popover } from "../common/info";
 
 type GetColumnsProps = {
   setShowEditModal: (id: number) => void;
@@ -60,15 +61,17 @@ const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
       header: "",
       cell: (row) => {
         return (
-          <button
-            title="Bearbeiten"
-            onClick={() => {
-              props.setShowEditModal(row.row.original.id);
-            }}
-            className="text-emerald-400 hover:text-emerald-500"
-          >
-            <FaEdit />
-          </button>
+          <Popover content="Bearbeiten" trigger="hover">
+            <button
+              title="Bearbeiten"
+              onClick={() => {
+                props.setShowEditModal(row.row.original.id);
+              }}
+              className="text-emerald-400 hover:text-emerald-500"
+            >
+              <FaEdit />
+            </button>
+          </Popover>
         );
       },
     }),
@@ -77,15 +80,24 @@ const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
       header: "",
       cell: (row) => {
         return (
-          <button
-            title="Referenzen verschieben"
-            onClick={() => {
-              props.setShowMoveUsagesModal(row.row.original.id);
-            }}
-            className="text-blue-400 hover:text-blue-500"
+          <Popover
+            content={`Referenzen verschieben${row.row.original.computed_link_counts > 50 ? " (aufgrund von Performance-Problemen ist eine Verschiebung von mehr als 50 Referenzen momentan nicht möglich)" : ""}`}
+            trigger="hover"
           >
-            <FaExternalLinkAlt />
-          </button>
+            <button
+              title="Referenzen verschieben"
+              onClick={() => {
+                props.setShowMoveUsagesModal(row.row.original.id);
+              }}
+              className="text-emerald-400 hover:text-emerald-500 disabled:text-gray-200"
+              disabled={
+                row.row.original.computed_link_counts === 0 ||
+                row.row.original.computed_link_counts > 50
+              }
+            >
+              <FaExternalLinkAlt className="text-sm" />
+            </button>
+          </Popover>
         );
       },
     }),
@@ -94,18 +106,19 @@ const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
       header: "",
       cell: (row) => {
         return (
-          <button
-            title="Löschen"
-            onClick={() => {
-              confirm(
-                `Sind Sie sicher, dass Sie den Eintrag ${row.row.original.id} löschen möchten?`
-              ) && props.deleteAction(row.row.original.id);
-            }}
-            className="text-red-400 hover:text-red-500 disabled:text-gray-200"
-            disabled={row.row.original.computed_link_counts > 0}
-          >
-            <MdDeleteForever />
-          </button>
+          <Popover content="Eintrag entfernen" trigger="hover">
+            <button
+              onClick={() => {
+                confirm(
+                  `Sind Sie sicher, dass Sie den Eintrag ${row.row.original.id} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`
+                ) && props.deleteAction(row.row.original.id);
+              }}
+              className="text-red-400 hover:text-red-500 disabled:text-gray-200"
+              disabled={row.row.original.computed_link_counts > 0}
+            >
+              <MdDeleteForever />
+            </button>
+          </Popover>
         );
       },
     }),
