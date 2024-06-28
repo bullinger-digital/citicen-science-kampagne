@@ -7,10 +7,6 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 
   await sql`
-  -- Convert xml column to actual xml type
-  ALTER TABLE letter_version
-  ALTER COLUMN xml TYPE xml USING xml::xml;
-
   -- Add some missing indexes
   CREATE INDEX letter_version_version_id ON letter_version (version_id);
   CREATE INDEX letter_version_is_latest_git_import_id ON letter_version (is_latest, git_import_id);
