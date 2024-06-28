@@ -38,8 +38,9 @@ export const UsagesModal = ({
             <tr className="text-left">
               <th>Typ</th>
               <th className="w-1/3">Text</th>
-              <th>Brief ID</th>
               <th>Verifiziert</th>
+              <th>Brief ID</th>
+              <th>Briefdatum</th>
             </tr>
           </thead>
           {result.data.map((usage, i) => (
@@ -54,6 +55,7 @@ export const UsagesModal = ({
                       : ""}
               </td>
               <td>{usage.node_text}</td>
+              <td>{usage.cert === "high" ? "Ja" : "Nein"}</td>
               <td>
                 <Link
                   className="text-emerald-400"
@@ -67,7 +69,7 @@ export const UsagesModal = ({
                   {usage.id}
                 </Link>
               </td>
-              <td>{usage.cert === "high" ? "Ja" : "Nein"}</td>
+              <td>{usage.extract_date_string}</td>
             </tr>
           ))}
         </table>

@@ -631,7 +631,7 @@ export const getPersonUsages = async ({ id }: { id: number }) => {
     .where(whereCurrent)
     .where("letter_version_extract_person.person_id", "=", id)
     .orderBy("id")
-    .select(["id", "cert", "link_type", "node_text"])
+    .select(["id", "cert", "link_type", "node_text", "extract_date_string"])
     .execute();
   return usages;
 };
@@ -648,7 +648,14 @@ export const getPlaceUsages = async ({ id }: { id: number }) => {
     .where(whereCurrent)
     .where("letter_version_extract_place.place_id", "=", id)
     .orderBy("id")
-    .select(["id", "cert", "link_type", "node_text"])
+    .select([
+      "id",
+      "cert",
+      "link_type",
+      "node_text",
+      "extract_date",
+      "extract_date_string",
+    ])
     .execute();
   return usages;
 };
