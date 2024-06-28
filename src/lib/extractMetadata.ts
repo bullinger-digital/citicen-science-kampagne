@@ -2,6 +2,7 @@ import "server-only";
 import { type Kysely } from "kysely";
 import { Versioned } from "./versioning";
 import { DB } from "./db";
+import { dateAsString } from "./metadataCommon";
 
 export const extractAndStoreMetadata = async ({
   db,
@@ -29,6 +30,9 @@ export const extractAndStoreMetadata = async ({
     dateNode?.getAttribute("notBefore") ||
     dateNode?.getAttribute("notAfter") ||
     null;
+
+  const dateString = !dateNode ? null : dateAsString(dateNode);
+
   await db
     .updateTable("letter_version")
     .where("version_id", "=", versionId)
@@ -39,6 +43,7 @@ export const extractAndStoreMetadata = async ({
       extract_language: language || null,
       extract_status: state || null,
       extract_date: date || null,
+      extract_date_string: dateString || null,
     })
     .execute();
 
@@ -66,15 +71,16 @@ export const extractAndStoreMetadata = async ({
       };
     });
 
-    // Todo: insert all at once
-    for (const insert of inserts) {
-      if (isNaN(insert.link_to)) {
+    inserts
+      .filter((insert) => isNaN(insert.link_to))
+      .forEach((insert) => {
         console.error(
           `Warning: Letter id ${letterId} - wrong ${table} reference ${insert.link_to}`
         );
-        continue;
-      }
+      });
 
+    // Todo: insert all at once
+    for (const insert of inserts) {
       const p = await db
         .selectFrom(table)
         .where("id", "=", insert.link_to)
