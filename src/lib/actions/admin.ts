@@ -182,7 +182,7 @@ const getUsages = async ({
     .where(`${table as "place"}_id`, "=", id)
     .where(whereCurrent as any)
     .selectAll(`letter_version_extract_${table as "place"}`)
-    .select("id")
+    .select("letter_version.id as letter_id")
     .execute();
 };
 
@@ -251,7 +251,7 @@ export const moveUsages = async ({
       .where(
         "id",
         "in",
-        usages.map((u) => u.id)
+        usages.map((u) => u.letter_id)
       )
       .where("letter_lock.locked_at", ">", new Date(Date.now() - LOCK_DURATION))
       .select((e) => e.fn.countAll<number>().as("count"))
@@ -266,16 +266,21 @@ export const moveUsages = async ({
 
     // Update all usages
     for (const usage of usages) {
-      if (!usage.id) throw new Error("Letter id not found to move");
+      if (!usage.letter_id) throw new Error("Letter id not found to move");
 
-      const currentVersion = await v.getCurrentVersion("letter", usage.id);
+      const currentVersion = await v.getCurrentVersion(
+        "letter",
+        usage.letter_id
+      );
       if (!currentVersion) {
-        throw new Error(`Cannot move usages: Letter ${usage.id} not found`);
+        throw new Error(
+          `Cannot move usages: Letter ${usage.letter_id} not found`
+        );
       }
       // Replace the old instance id with the new one
       const dom = xmlParseFromString(currentVersion.xml);
       // Find all instances of tagName[ref=fromId] INSIDE  and replace them with tagName[ref=toId]
-      const selector = `${tagName}[ref="${refPrefix}${fromId}"]`;
+      const selector = `${tagName}[ref="${refPrefix}${fromId}"],${tagName}[ref="${fromId}"]`;
       const actions = [
         {
           type: "selector-set-attributes" as const,
@@ -303,8 +308,10 @@ export const moveUsages = async ({
       );
     }
 
+    console.log(`Letter IDs: ${usages.map((u) => u.letter_id).join(", ")}`);
+
     await v.updateComputedLinkCounts({
-      letterIds: usages.map((u) => u.id!),
+      letterIds: usages.map((u) => u.letter_id!),
     });
   });
 };

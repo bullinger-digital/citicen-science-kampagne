@@ -250,6 +250,7 @@ export const importFromCurrentCommit = async () => {
         letterId,
         {
           xml: fileContents,
+          // Letters are always accepted
           review_state: "accepted",
         },
         gitImportSpecs

@@ -619,9 +619,7 @@ export class Versioning {
                 )
                 // Todo: Fix typing
                 .where(whereCurrent as any)
-                .where((e) =>
-                  e.and([e("v.person_id", "=", eb.ref("person.id"))])
-                )
+                .where("v.person_id", "=", eb.ref("person.id"))
                 .select(["lv.id"])
                 .distinct()
                 .as("link_count")

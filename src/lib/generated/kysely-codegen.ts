@@ -59,6 +59,7 @@ export interface LetterVersion {
   created_log_id: number;
   deleted_log_id: number | null;
   extract_date: string | null;
+  extract_date_string: string | null;
   extract_language: string | null;
   extract_source: string | null;
   extract_status: string | null;
