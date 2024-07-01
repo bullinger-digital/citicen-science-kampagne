@@ -308,8 +308,6 @@ export const moveUsages = async ({
       );
     }
 
-    console.log(`Letter IDs: ${usages.map((u) => u.letter_id).join(", ")}`);
-
     await v.updateComputedLinkCounts({
       letterIds: usages.map((u) => u.letter_id!),
     });
