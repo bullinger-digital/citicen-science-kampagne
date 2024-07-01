@@ -471,6 +471,8 @@ export class Versioning {
               : {}),
           })
           .execute();
+
+        // Here we could call the afterSaveHook, but it is not necessary, because letters are always accepted
       } else {
         // No previous version was accepted, so mark the entry as deleted
         // Requirement: restoreToVersionId must be null
