@@ -14,12 +14,7 @@ export const getLetterStats = unstable_cache(
       .where(whereCurrent)
       // Filter out automatic transcriptions
       // Todo: reuse code from citizen.ts
-      .where((e) =>
-        e.or([
-          e("extract_source", "like", "HBBW-%"),
-          e("extract_source", "like", "TUSTEP-%"),
-        ])
-      )
+      .where("extract_source", "<>", "keine")
       .groupBy("extract_status")
       .select("extract_status")
       .select((e) => e.fn.countAll<string>().as("count"))
