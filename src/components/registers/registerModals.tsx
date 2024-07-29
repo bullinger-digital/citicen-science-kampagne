@@ -30,6 +30,7 @@ import { deleteRegisterEntry } from "@/lib/actions/admin";
 import { MdDeleteForever } from "react-icons/md";
 import { UsageMoverModal } from "../admin/review";
 import { Popover } from "../common/info";
+import { LuFileWarning } from "react-icons/lu";
 
 type GetColumnsProps = {
   setShowEditModal: (id: number) => void;
@@ -53,6 +54,23 @@ const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
           <EntityUsagesModalTrigger id={row.row.original.id} table={type}>
             {row.getValue()}
           </EntityUsagesModalTrigger>
+        );
+      },
+    }),
+    columnHelper.accessor("review_state", {
+      id: "review_state",
+      header: "Status",
+      cell: (row) => {
+        const status = row.getValue();
+        return (
+          <div>
+            {status === "accepted" ? null : (
+              <LuFileWarning
+                className="text-yellow-400"
+                title="Enthält Änderungsvorschläge, die noch nicht akzeptiert wurden"
+              />
+            )}
+          </div>
         );
       },
     }),

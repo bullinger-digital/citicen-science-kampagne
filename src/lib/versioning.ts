@@ -6,6 +6,7 @@ import { ExpressionBuilder, InsertObject, Transaction } from "kysely";
 import { extractAndStoreMetadata } from "./extractMetadata";
 import { xmlParseFromString } from "./xmlSerialize";
 import { whereExportFilter } from "./git/export";
+import { isInRole } from "./security/isInRole";
 
 export const versionedTables = ["letter", "person", "place"] as const;
 export type Versioned = "letter" | "person" | "place";
@@ -132,13 +133,16 @@ export class Versioning {
     autoAccept: boolean = true
   ) {
     const versions_table = `${table}_version` as TV;
+    const session = await getSession();
+    const isAdmin = isInRole(session!, "admin");
 
     return await wrapTransaction(this.db, async (db) => {
-      const existingVersion = parent_version_id
-        ? await this.getCurrentVersion(table, id, parent_version_id)
-        : null;
+      const existingVersion = await this.getCurrentVersion(table, id);
 
-      if (parent_version_id && !existingVersion) {
+      if (
+        parent_version_id &&
+        (!existingVersion || existingVersion.version_id !== parent_version_id)
+      ) {
         throw new Error(
           "Previous version not found, version id: " + parent_version_id
         );
@@ -166,6 +170,14 @@ export class Versioning {
             .executeTakeFirstOrThrow()
         )?.id;
 
+      // Change should be accepted if
+      // - user is admin and there is no existing version
+      // - user is admin and existing version is accepted
+      // - autoAccept is true
+      const acceptChange = isAdmin
+        ? !existingVersion || existingVersion?.review_state === "accepted"
+        : autoAccept;
+
       const values: InsertObject<DB, VersionedTable> = {
         ...existingVersion,
         ...data,
@@ -175,7 +187,7 @@ export class Versioning {
         is_latest: true,
         is_new: isNew,
         version_id: undefined,
-        review_state: autoAccept ? "accepted" : "pending",
+        review_state: acceptChange ? "accepted" : "pending",
         git_import_id: gitImportId,
       };
 

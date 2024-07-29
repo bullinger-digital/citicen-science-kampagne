@@ -314,6 +314,7 @@ export const insertOrUpdatePerson = async (
           forename: newPerson.forename,
           surname: newPerson.surname,
           aliases: newPerson.aliases,
+          aliases_string: undefined,
         },
         false,
         logId,
@@ -331,6 +332,7 @@ export const insertOrUpdatePerson = async (
           forename: newPerson.forename,
           surname: newPerson.surname,
           aliases: [],
+          aliases_string: undefined,
         },
         logId
       );
