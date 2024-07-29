@@ -402,10 +402,10 @@ const fieldsToHide = [
   "git_export_id",
   "created_log_id",
   "reviewed_log_id",
+  "deleted_log_id",
   "id",
   // Temporarily hide aliases_string and aliases
   "aliases_string",
-  "aliases",
 ];
 
 const Diff = ({
@@ -423,13 +423,19 @@ const Diff = ({
         }
         const oldV = oldObject?.[key] || null;
         const newV = newObject?.[key] || null;
+        const changed = Array.isArray(newV)
+          ? JSON.stringify(oldV) !== JSON.stringify(newV)
+          : oldV !== newV;
+
         return (
           <div className="flex space-x-2" key={key}>
-            <div className={`w-32 ${oldV === newV ? "text-gray-300" : ""}`}>
+            <div className={`w-32 ${!changed ? "text-gray-300" : ""}`}>
               <span>{key}</span>
             </div>
             <div>
-              {oldV === newV ? (
+              {Array.isArray(newV) && key === "aliases" ? (
+                <AliasesDiff oldV={oldV} newV={newV} changed={changed} />
+              ) : !changed ? (
                 <>
                   <ValueOrLink value={newV} />
                 </>
@@ -453,6 +459,42 @@ const Diff = ({
         );
       })}
     </div>
+  );
+};
+
+const AliasesDiff = ({
+  oldV,
+  newV,
+  changed,
+}: {
+  oldV: any[] | undefined | null;
+  newV: any[] | undefined | null;
+  changed: boolean;
+}) => {
+  const fullName = (v: any) => v.forename + " " + v.surname;
+
+  const oldNames = oldV?.map(fullName) || [];
+  const newNames = newV?.map(fullName) || [];
+  const removed = oldNames.filter((v) => !newNames.includes(v));
+
+  return changed ? (
+    <div>
+      {removed.map((v, i) => (
+        <div key={i} className="text-red-500 line-through">
+          {v}
+        </div>
+      ))}
+      {(newV || []).map((v, i) => (
+        <div
+          key={i}
+          className={!oldNames.includes(fullName(v)) ? "text-green-500" : ""}
+        >
+          {v.forename} {v.surname}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-gray-300">(keine Änderungen)</div>
   );
 };
 

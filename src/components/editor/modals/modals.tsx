@@ -23,6 +23,7 @@ import { IoWarning } from "react-icons/io5";
 import { Versioned } from "@/lib/versioning";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { isInRole } from "@/lib/security/isInRole";
+import { AliasesField } from "./aliases";
 const LeafletMap = dynamic(() => import("./map").then((m) => m.LeafletMap), {
   ssr: false,
 });
@@ -44,7 +45,7 @@ export const WithLabel = ({
   </div>
 );
 
-const InputField = ({
+export const InputField = ({
   ...props
 }: React.DetailedHTMLProps<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -183,6 +184,12 @@ export const EditPersonModal = ({
           placeholder="Mustermann"
           disabled={!isAdmin && id !== undefined}
         />
+        {isAdmin && (
+          <AliasesField
+            value={newPerson.aliases}
+            onChange={(v) => setNewPerson({ ...newPerson, aliases: v })}
+          />
+        )}
         <InputWithLabel
           value={newPerson.wiki}
           onChange={(e) => setNewPerson({ ...newPerson, wiki: e.target.value })}
