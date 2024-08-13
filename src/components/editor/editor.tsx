@@ -21,7 +21,7 @@ import { LockOverlay, useLetterLock } from "./locking";
 import { LetterMetaData } from "./metaData";
 import { Blocker } from "../common/navigation-block/navigation-block";
 import { Comments } from "../common/comments";
-import { InfoIcon } from "../common/info";
+import { InfoIcon, Popover } from "../common/info";
 
 export const Editor = ({ letterId }: { letterId: number }) => {
   const {
@@ -139,16 +139,40 @@ const EditorInternal = ({
                       )}
                     </div>
                     <ol className="leading-8 font-serif">
-                      {Array.from(footNotes).map((node, i) => (
-                        <li className="flex" key={i}>
-                          <span className="w-8 shrink-0 text-emerald-400">
-                            {node.getAttribute("n")}
-                          </span>
-                          <div>
-                            <RenderText nodes={Array.from(node.childNodes)} />
-                          </div>
-                        </li>
-                      ))}
+                      {Array.from(footNotes)
+                        .sort((a, b) => {
+                          // n attribute could be missing, so we need to handle that
+                          try {
+                            return parseInt(a.getAttribute("n") || "0") <
+                              parseInt(b.getAttribute("n") || "0")
+                              ? -1
+                              : 1;
+                          } catch (e) {
+                            return 0;
+                          }
+                        })
+                        .map((node, i) => (
+                          <li className="flex" key={i}>
+                            <span className="w-8 shrink-0 text-emerald-400">
+                              {node.getAttribute("n")}
+                            </span>
+                            {node.getAttribute("subtype") === "metadata" && (
+                              <span>
+                                <Popover
+                                  trigger="hover"
+                                  content="Diese Fussnote bezieht sich auf Informationen in den Metadaten des Briefes (Absender, Empfänger, Datum etc.)"
+                                >
+                                  <span className=" text-xs mr-3 bg-gray-200 p-1 rounded-xl font-sans">
+                                    Metadaten
+                                  </span>
+                                </Popover>
+                              </span>
+                            )}
+                            <div>
+                              <RenderText nodes={Array.from(node.childNodes)} />
+                            </div>
+                          </li>
+                        ))}
                     </ol>
                   </>
                 )}
