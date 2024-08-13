@@ -147,6 +147,14 @@ const renderers: {
       </span>
     );
   },
+  // Span elements appear in persName elements and denote an "inserted pronoun"
+  span: function Span({ node }) {
+    return (
+      <span className="italic">
+        <RenderTextInternal nodes={Array.from(node.childNodes)} />
+      </span>
+    );
+  },
   placename: function PlaceName({ node }) {
     const c = useContext(EditorContext);
     const cert = node.getAttribute("cert");
