@@ -58,10 +58,11 @@ export const extractAndStoreMetadata = async ({
       .execute();
 
     const inserts = entities.map((entity) => {
-      const ref = entity.getAttribute("ref") || entity.getAttribute("source");
+      const ref = entity.getAttribute("ref");
       const cert = entity.getAttribute("cert") || "low";
       const textContent = entity.textContent || "";
       const entityId = parseInt(ref!.toLowerCase().replace(refPrefix, ""));
+
       return {
         version_id: versionId,
         link_to: entityId,
