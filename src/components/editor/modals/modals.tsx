@@ -173,7 +173,6 @@ export const EditPersonModal = ({
           }
           label="Vorname"
           placeholder="Max"
-          disabled={!isAdmin && id !== undefined}
         />
         <InputWithLabel
           value={newPerson.surname}
@@ -182,7 +181,6 @@ export const EditPersonModal = ({
           }
           label="Nachname"
           placeholder="Mustermann"
-          disabled={!isAdmin && id !== undefined}
         />
         {isAdmin && (
           <AliasesField
