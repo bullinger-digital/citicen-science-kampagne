@@ -210,13 +210,13 @@ export const EditPersonModal = ({
             onUseExisting={(id) => close(id)}
           />
         )}
-        <HistHubField
+        {/* <HistHubField
           value={newPerson.hist_hub}
           onChange={(v) => setNewPerson({ ...newPerson, hist_hub: v })}
           searchTerm={[newPerson.forename, newPerson.surname]
             .filter((n) => !!n)
             .join(" ")}
-        />
+        /> */}
         {/* Todo: before enabling this (for admins first), make sure diffs are visible in the admin panel */}
         {/* <WithLabel label="Namensvarianten">
           <ul>
@@ -329,76 +329,76 @@ export const CommentsWrapper = ({
   );
 };
 
-const HistHubField = ({
-  value,
-  onChange,
-  searchTerm,
-}: {
-  value: string | undefined;
-  onChange: (e: string) => void;
-  searchTerm?: string;
-}) => {
-  const histHubId = value?.replace("https://data.histhub.ch/person/", "");
+// const HistHubField = ({
+//   value,
+//   onChange,
+//   searchTerm,
+// }: {
+//   value: string | undefined;
+//   onChange: (e: string) => void;
+//   searchTerm?: string;
+// }) => {
+//   const histHubId = value?.replace("https://data.histhub.ch/person/", "");
 
-  const [histHubResult, setHistHubResult] = useState<any | null>(null);
-  useEffect(() => {
-    if (histHubId && typeof histHubId === "string") {
-      singleHistHubResult(histHubId)
-        .then((data) => setHistHubResult(data))
-        .catch(() => setHistHubResult(null));
-    } else {
-      setHistHubResult(null);
-    }
-  }, [histHubId]);
+//   const [histHubResult, setHistHubResult] = useState<any | null>(null);
+//   useEffect(() => {
+//     if (histHubId && typeof histHubId === "string") {
+//       singleHistHubResult(histHubId)
+//         .then((data) => setHistHubResult(data))
+//         .catch(() => setHistHubResult(null));
+//     } else {
+//       setHistHubResult(null);
+//     }
+//   }, [histHubId]);
 
-  return (
-    <WithLabel label={"HistHub-ID"}>
-      {value ? (
-        <div className="flex justify-between">
-          <div>
-            {histHubId}
-            {histHubResult && (
-              <div>
-                <a
-                  target="_blank"
-                  className="text-emerald-400"
-                  href={`https://data.histhub.ch/person/${histHubId}`}
-                >
-                  {histHubResult.label_name}
-                </a>
-              </div>
-            )}
-            {/* {gndId && !isValidGndIdentifier(gndId || "") && (
-              <div>Ungültige GND-ID</div>
-            )} */}
-          </div>
-          <button
-            onClick={() => onChange("")}
-            className="ml-2 text-2xl p-2 text-emerald-400"
-            title="HistHub-ID entfernen"
-          >
-            <TiDeleteOutline />
-          </button>
-        </div>
-      ) : (
-        <SearchInput
-          fallbackTerm={searchTerm}
-          searchFn={searchHistHub}
-          onSelect={(result) => onChange(result.value)}
-          SelectionComponent={({ item, isFocused }) => {
-            return (
-              <div className={`p-2 ${isFocused ? "bg-emerald-100" : ""}`}>
-                <div>{item.label}</div>
-                <div>{item.value}</div>
-              </div>
-            );
-          }}
-          InputComponent={InputField}
-        ></SearchInput>
-      )}
-    </WithLabel>
-  );
-};
+//   return (
+//     <WithLabel label={"HistHub-ID"}>
+//       {value ? (
+//         <div className="flex justify-between">
+//           <div>
+//             {histHubId}
+//             {histHubResult && (
+//               <div>
+//                 <a
+//                   target="_blank"
+//                   className="text-emerald-400"
+//                   href={`https://data.histhub.ch/person/${histHubId}`}
+//                 >
+//                   {histHubResult.label_name}
+//                 </a>
+//               </div>
+//             )}
+//             {/* {gndId && !isValidGndIdentifier(gndId || "") && (
+//               <div>Ungültige GND-ID</div>
+//             )} */}
+//           </div>
+//           <button
+//             onClick={() => onChange("")}
+//             className="ml-2 text-2xl p-2 text-emerald-400"
+//             title="HistHub-ID entfernen"
+//           >
+//             <TiDeleteOutline />
+//           </button>
+//         </div>
+//       ) : (
+//         <SearchInput
+//           fallbackTerm={searchTerm}
+//           searchFn={searchHistHub}
+//           onSelect={(result) => onChange(result.value)}
+//           SelectionComponent={({ item, isFocused }) => {
+//             return (
+//               <div className={`p-2 ${isFocused ? "bg-emerald-100" : ""}`}>
+//                 <div>{item.label}</div>
+//                 <div>{item.value}</div>
+//               </div>
+//             );
+//           }}
+//           InputComponent={InputField}
+//         ></SearchInput>
+//       )}
+//     </WithLabel>
+//   );
+// };
 
 const GndField = ({
   value,
