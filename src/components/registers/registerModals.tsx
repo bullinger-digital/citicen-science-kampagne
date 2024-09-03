@@ -36,6 +36,7 @@ type GetColumnsProps = {
   setShowEditModal: (id: number) => void;
   setShowMoveUsagesModal: (id: number) => void;
   deleteAction: (id: number) => void;
+  isAdmin: boolean;
 };
 
 const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
@@ -57,89 +58,93 @@ const getCommonColumns = (type: "person" | "place", props: GetColumnsProps) => {
         );
       },
     }),
-    columnHelper.accessor("review_state", {
-      id: "review_state",
-      header: "Status",
-      cell: (row) => {
-        const status = row.getValue();
-        return (
-          <div>
-            {status === "accepted" ? null : (
-              <LuFileWarning
-                className="text-yellow-400"
-                title="Enthält Änderungsvorschläge, die noch nicht akzeptiert wurden"
-              />
-            )}
-          </div>
-        );
-      },
-    }),
-    columnHelper.display({
-      id: "edit",
-      header: "",
-      cell: (row) => {
-        return (
-          <Popover content="Bearbeiten" trigger="hover">
-            <button
-              title="Bearbeiten"
-              onClick={() => {
-                props.setShowEditModal(row.row.original.id);
-              }}
-              className="text-emerald-400 hover:text-emerald-500"
-            >
-              <FaEdit />
-            </button>
-          </Popover>
-        );
-      },
-    }),
-    columnHelper.display({
-      id: "moveUsages",
-      header: "",
-      cell: (row) => {
-        return (
-          <Popover
-            content={`Referenzen verschieben${row.row.original.computed_link_counts > 50 ? " (aufgrund von Performance-Problemen ist eine Verschiebung von mehr als 50 Referenzen momentan nicht möglich)" : ""}`}
-            trigger="hover"
-          >
-            <button
-              title="Referenzen verschieben"
-              onClick={() => {
-                props.setShowMoveUsagesModal(row.row.original.id);
-              }}
-              className="text-emerald-400 hover:text-emerald-500 disabled:text-gray-200"
-              disabled={
-                row.row.original.computed_link_counts === 0 ||
-                row.row.original.computed_link_counts > 50
-              }
-            >
-              <FaExternalLinkAlt className="text-sm" />
-            </button>
-          </Popover>
-        );
-      },
-    }),
-    columnHelper.display({
-      id: "delete",
-      header: "",
-      cell: (row) => {
-        return (
-          <Popover content="Eintrag entfernen" trigger="hover">
-            <button
-              onClick={() => {
-                confirm(
-                  `Sind Sie sicher, dass Sie den Eintrag ${row.row.original.id} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`
-                ) && props.deleteAction(row.row.original.id);
-              }}
-              className="text-red-400 hover:text-red-500 disabled:text-gray-200"
-              disabled={row.row.original.computed_link_counts > 0}
-            >
-              <MdDeleteForever />
-            </button>
-          </Popover>
-        );
-      },
-    }),
+    ...(props.isAdmin
+      ? [
+          columnHelper.accessor("review_state", {
+            id: "review_state",
+            header: "Status",
+            cell: (row) => {
+              const status = row.getValue();
+              return (
+                <div>
+                  {status === "accepted" ? null : (
+                    <LuFileWarning
+                      className="text-yellow-400"
+                      title="Enthält Änderungsvorschläge, die noch nicht akzeptiert wurden"
+                    />
+                  )}
+                </div>
+              );
+            },
+          }),
+          columnHelper.display({
+            id: "edit",
+            header: "",
+            cell: (row) => {
+              return (
+                <Popover content="Bearbeiten" trigger="hover">
+                  <button
+                    title="Bearbeiten"
+                    onClick={() => {
+                      props.setShowEditModal(row.row.original.id);
+                    }}
+                    className="text-emerald-400 hover:text-emerald-500"
+                  >
+                    <FaEdit />
+                  </button>
+                </Popover>
+              );
+            },
+          }),
+          columnHelper.display({
+            id: "moveUsages",
+            header: "",
+            cell: (row) => {
+              return (
+                <Popover
+                  content={`Referenzen verschieben${row.row.original.computed_link_counts > 50 ? " (aufgrund von Performance-Problemen ist eine Verschiebung von mehr als 50 Referenzen momentan nicht möglich)" : ""}`}
+                  trigger="hover"
+                >
+                  <button
+                    title="Referenzen verschieben"
+                    onClick={() => {
+                      props.setShowMoveUsagesModal(row.row.original.id);
+                    }}
+                    className="text-emerald-400 hover:text-emerald-500 disabled:text-gray-200"
+                    disabled={
+                      row.row.original.computed_link_counts === 0 ||
+                      row.row.original.computed_link_counts > 50
+                    }
+                  >
+                    <FaExternalLinkAlt className="text-sm" />
+                  </button>
+                </Popover>
+              );
+            },
+          }),
+          columnHelper.display({
+            id: "delete",
+            header: "",
+            cell: (row) => {
+              return (
+                <Popover content="Eintrag entfernen" trigger="hover">
+                  <button
+                    onClick={() => {
+                      confirm(
+                        `Sind Sie sicher, dass Sie den Eintrag ${row.row.original.id} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`
+                      ) && props.deleteAction(row.row.original.id);
+                    }}
+                    className="text-red-400 hover:text-red-500 disabled:text-gray-200"
+                    disabled={row.row.original.computed_link_counts > 0}
+                  >
+                    <MdDeleteForever />
+                  </button>
+                </Popover>
+              );
+            },
+          }),
+        ]
+      : []),
   ];
 };
 
@@ -268,7 +273,7 @@ export const OpenRegistersButton = ({
   const session = useUser();
   const isAdmin = isInRole(session, "admin");
 
-  return !isAdmin ? null : (
+  return (
     <div>
       <button
         onClick={() => setIsOpen(true)}
@@ -283,9 +288,12 @@ export const OpenRegistersButton = ({
         closeOnOutsideClick={true}
         cancel={() => setIsOpen(false)}
       >
-        <div className="mb-4">
-          Das Register steht zurzeit nur für Administratoren zur Verfügung.
-        </div>
+        {isAdmin && (
+          <div className="mb-4">
+            Erweiterte Funktionen (Referenzen verschieben, direktes Bearbeiten,
+            Löschen) sind nur für Administratoren verfügbar.
+          </div>
+        )}
         <div className="flex space-x-2">
           <button
             onClick={() => setActiveTab("person")}
@@ -311,6 +319,8 @@ export const OpenRegistersButton = ({
 };
 
 const RegisterModal = ({ type }: { type: "person" | "place" }) => {
+  const session = useUser();
+  const isAdmin = isInRole(session, "admin") || false;
   const specs = registerModalSpecs[type];
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -354,8 +364,9 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
         refetch();
       },
       setShowMoveUsagesModal,
+      isAdmin: isAdmin,
     });
-  }, [specs, setShowEditModal, deleteAction, refetch, type]);
+  }, [specs, setShowEditModal, deleteAction, refetch, type, isAdmin]);
 
   const table = useReactTable({
     columns: columns as ColumnDef<any>[],
