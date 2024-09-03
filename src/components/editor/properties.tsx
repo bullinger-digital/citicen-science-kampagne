@@ -379,7 +379,10 @@ export const EntityUsagesModalTrigger = ({
 
   return (
     <>
-      <button className="font-bold" onClick={() => setUsagesModalVisible(true)}>
+      <button
+        className="font-bold text-emerald-400"
+        onClick={() => setUsagesModalVisible(true)}
+      >
         {children}
       </button>
       {usagesModalVisible && (
