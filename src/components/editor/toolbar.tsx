@@ -19,7 +19,7 @@ const XmlView = dynamic(
 );
 import { BsFiletypeXml, BsPersonFill } from "react-icons/bs";
 import { TbLocation } from "react-icons/tb";
-import { Loading } from "../common/loadingIndicator";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const ToolbarButton = ({
   children,
@@ -356,7 +356,7 @@ export const Toolbar = () => {
           </div>
         </Modal>
       </div>
-      <div>
+      <div className="flex">
         {isInRole(session, "admin") && (
           <ToolbarButton onClick={() => setShowXmlView(true)} title="XML">
             <BsFiletypeXml />
@@ -368,7 +368,11 @@ export const Toolbar = () => {
           title="Speichern"
         >
           <span className="flex space-x-1 items-center">
-            <FaSave className="text-xl" />
+            {loading ? (
+              <AiOutlineLoading3Quarters className="inline-block text-gray-400 animate-spin" />
+            ) : (
+              <FaSave className="text-xl" />
+            )}
             <div className="text-sm">Änderungen speichern</div>
           </span>
         </ToolbarButton>
