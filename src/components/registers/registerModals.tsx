@@ -31,6 +31,7 @@ import { MdDeleteForever } from "react-icons/md";
 import { UsageMoverModal } from "../admin/review";
 import { Popover } from "../common/info";
 import { LuFileWarning } from "react-icons/lu";
+import { useDequeued } from "../common/useDequeued";
 
 type GetColumnsProps = {
   setShowEditModal: (id: number) => void;
@@ -341,6 +342,7 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
   const deleteAction = useServerAction(deleteRegisterEntry);
 
   const [query, setQuery] = useState("");
+  const { dequeuedValue: dequeuedQuery, queueing } = useDequeued(query, 500);
 
   const { data, loading, refetch } = useServerFetch(
     specs.query as (
@@ -353,7 +355,7 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
         direction: sortingOrDefault[0].desc ? "desc" : "asc",
       },
       offset: pagination.pageIndex * pagination.pageSize,
-      query: query,
+      query: dequeuedQuery,
     }
   );
 
@@ -419,7 +421,7 @@ const RegisterModal = ({ type }: { type: "person" | "place" }) => {
             {data.count.toLocaleString()} Einträge
           </div>
         ) : null}
-        {loading ? <Loading /> : null}
+        {loading || queueing ? <Loading /> : null}
       </div>
       <div className="p-2">
         <table className="w-full">

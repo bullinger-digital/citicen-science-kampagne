@@ -26,6 +26,7 @@ import ReactDOM from "react-dom";
 import { GndResult } from "@/lib/actions/gnd";
 import { Versioned } from "@/lib/versioning";
 import { UsagesModal } from "./modals/usagesModal";
+import { useDequeued } from "../common/useDequeued";
 
 const PersName = ({ node }: { node: Node }) => {
   const c = useContext(EditorContext);
@@ -429,23 +430,6 @@ const CertToggle = ({ node }: { node: Node }) => {
 };
 
 type SearchFunction = typeof searchPerson | typeof searchPlace;
-
-const useDequeued = (value: string, intervalMs: number) => {
-  const [dequeuedValue, setDequeuedValue] = useState(value);
-  const [queueing, setQueueing] = useState(false);
-
-  useEffect(() => {
-    setQueueing(true);
-    const timeout = setTimeout(() => {
-      setDequeuedValue(value);
-      console.log("Dequeued value", value);
-      setQueueing(false);
-    }, intervalMs);
-    return () => clearTimeout(timeout);
-  }, [value, intervalMs]);
-
-  return { dequeuedValue, queueing };
-};
 
 const EntitySelector = <T extends SearchFunction>({
   initialSearch,
