@@ -1,5 +1,4 @@
 import { Review } from "@/components/admin/review";
-import { OpenRegistersButton } from "@/components/registers/registerModals";
 import { getPeopleOnline } from "@/lib/actions/admin";
 import { requireRoleOrThrow } from "@/lib/security/withRequireRole";
 import { withPageAuthRequired } from "@auth0/nextjs-auth0";

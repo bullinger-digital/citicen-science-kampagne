@@ -271,9 +271,10 @@ export const OpenRegistersButton = ({
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"person" | "place">("person");
   const session = useUser();
+  const isLoggedIn = !!session.user;
   const isAdmin = isInRole(session, "admin");
 
-  return (
+  return !isLoggedIn ? null : (
     <div>
       <button
         onClick={() => setIsOpen(true)}
