@@ -28,7 +28,7 @@ export const getLetterStats = unstable_cache(
 
 export const getUserStats = unstable_cache(
   async () => {
-    console.log("Get user stats called (should be cached)");
+    const before = performance.now();
     const query = kdb
       .with("users_counts", (eb) =>
         eb
@@ -42,9 +42,7 @@ export const getUserStats = unstable_cache(
               .where("letter_version.review_state", "<>", "rejected")
               .select((e) =>
                 e.fn
-                  .coalesce((e2) =>
-                    e2.fn.sum<number>(sql`jsonb_array_length(actions)`)
-                  )
+                  .coalesce((e2) => e2.fn.sum<number>(sql`stats_actions_count`))
                   .as("actions_count")
               )
               .as("actions_count")
@@ -55,11 +53,7 @@ export const getUserStats = unstable_cache(
               .leftJoin("log", "log.id", "letter_version.created_log_id")
               .where("log.created_by_id", "=", e.ref("user.id"))
               .where("letter_version.review_state", "<>", "rejected")
-              .where(
-                "letter_version.actions",
-                "@>",
-                `[{ "nodePath": [{ "nodeName": "revisionDesc" }], "attributes": { "status": "finished" } }]`
-              )
+              .where("letter_version.stats_finished_letter", "=", true)
               .select((e) =>
                 e.fn.countAll<number>().as("letters_finished_count")
               )
@@ -80,6 +74,11 @@ export const getUserStats = unstable_cache(
       .limit(100);
 
     const userStats = await query.execute();
+    console.log(
+      "Get user stats called (should be cached); took",
+      performance.now() - before,
+      "ms"
+    );
     return userStats;
   },
   ["citizen-stats"],
