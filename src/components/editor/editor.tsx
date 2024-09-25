@@ -208,7 +208,7 @@ const EditorInternal = ({
                 </div>
               </div>
             </ContextBox>
-            <ContextBox title="Kommentare">
+            <ContextBox title="Kommentare zum Brief">
               <Comments target={"letter/" + letter_version.id.toString()} />
             </ContextBox>
             {isInRole(session, "data-admin") && (
