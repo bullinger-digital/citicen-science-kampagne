@@ -11,7 +11,7 @@ import { Loading } from "../../common/loadingIndicator";
 import { TiDeleteOutline } from "react-icons/ti";
 import { SearchInput } from "../../common/searchInput";
 import { isValidGndIdentifier, searchGnd } from "./gnd";
-import { searchHistHub, singleHistHubResult } from "./histHub";
+import { searchMetagrid, singleMetagridResult } from "./metaGrid";
 import dynamic from "next/dynamic";
 import { Comments } from "@/components/common/comments";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
@@ -208,9 +208,9 @@ export const EditPersonModal = ({
             onUseExisting={(id) => close(id)}
           />
         )}
-        {/* <HistHubField
-          value={newPerson.hist_hub}
-          onChange={(v) => setNewPerson({ ...newPerson, hist_hub: v })}
+        {/* <MetaGridField
+          value={newPerson.meta_grid}
+          onChange={(v) => setNewPerson({ ...newPerson, meta_grid: v })}
           searchTerm={[newPerson.forename, newPerson.surname]
             .filter((n) => !!n)
             .join(" ")}
@@ -327,76 +327,79 @@ export const CommentsWrapper = ({
   );
 };
 
-// const HistHubField = ({
-//   value,
-//   onChange,
-//   searchTerm,
-// }: {
-//   value: string | undefined;
-//   onChange: (e: string) => void;
-//   searchTerm?: string;
-// }) => {
-//   const histHubId = value?.replace("https://data.histhub.ch/person/", "");
+const MetaGridField = ({
+  value,
+  onChange,
+  searchTerm,
+}: {
+  value: string | undefined;
+  onChange: (e: string) => void;
+  searchTerm?: string;
+}) => {
+  const metaGridId = value?.replace(
+    /https?\:\/\/api\.metagrid\.ch\/concordance\/(.+)\/.json/gi,
+    "$1"
+  );
 
-//   const [histHubResult, setHistHubResult] = useState<any | null>(null);
-//   useEffect(() => {
-//     if (histHubId && typeof histHubId === "string") {
-//       singleHistHubResult(histHubId)
-//         .then((data) => setHistHubResult(data))
-//         .catch(() => setHistHubResult(null));
-//     } else {
-//       setHistHubResult(null);
-//     }
-//   }, [histHubId]);
+  const [metaGridResult, setMetaGridResult] = useState<any | null>(null);
+  useEffect(() => {
+    if (metaGridId && typeof metaGridId === "string") {
+      singleMetagridResult(metaGridId)
+        .then((data) => setMetaGridResult(data))
+        .catch(() => setMetaGridResult(null));
+    } else {
+      setMetaGridResult(null);
+    }
+  }, [metaGridId]);
 
-//   return (
-//     <WithLabel label={"HistHub-ID"}>
-//       {value ? (
-//         <div className="flex justify-between">
-//           <div>
-//             {histHubId}
-//             {histHubResult && (
-//               <div>
-//                 <a
-//                   target="_blank"
-//                   className="text-emerald-400"
-//                   href={`https://data.histhub.ch/person/${histHubId}`}
-//                 >
-//                   {histHubResult.label_name}
-//                 </a>
-//               </div>
-//             )}
-//             {/* {gndId && !isValidGndIdentifier(gndId || "") && (
-//               <div>Ungültige GND-ID</div>
-//             )} */}
-//           </div>
-//           <button
-//             onClick={() => onChange("")}
-//             className="ml-2 text-2xl p-2 text-emerald-400"
-//             title="HistHub-ID entfernen"
-//           >
-//             <TiDeleteOutline />
-//           </button>
-//         </div>
-//       ) : (
-//         <SearchInput
-//           fallbackTerm={searchTerm}
-//           searchFn={searchHistHub}
-//           onSelect={(result) => onChange(result.value)}
-//           SelectionComponent={({ item, isFocused }) => {
-//             return (
-//               <div className={`p-2 ${isFocused ? "bg-emerald-100" : ""}`}>
-//                 <div>{item.label}</div>
-//                 <div>{item.value}</div>
-//               </div>
-//             );
-//           }}
-//           InputComponent={InputField}
-//         ></SearchInput>
-//       )}
-//     </WithLabel>
-//   );
-// };
+  return (
+    <WithLabel label={"MetaGrid-ID"}>
+      {value ? (
+        <div className="flex justify-between">
+          <div>
+            {metaGridId}
+            {metaGridResult && (
+              <div>
+                <a
+                  target="_blank"
+                  className="text-emerald-400"
+                  href={`https://metagrid.ch/metagrid_search/#!/concordance/${metaGridId}.html`}
+                >
+                  {metaGridResult.label_name}
+                </a>
+              </div>
+            )}
+            {/* {gndId && !isValidGndIdentifier(gndId || "") && (
+              <div>Ungültige GND-ID</div>
+            )} */}
+          </div>
+          <button
+            onClick={() => onChange("")}
+            className="ml-2 text-2xl p-2 text-emerald-400"
+            title="MetaGrid-ID entfernen"
+          >
+            <TiDeleteOutline />
+          </button>
+        </div>
+      ) : (
+        <SearchInput
+          fallbackTerm={searchTerm}
+          searchFn={searchMetagrid}
+          onSelect={(result) => onChange(result.value)}
+          SelectionComponent={({ item, isFocused }) => {
+            return (
+              <div className={`p-2 ${isFocused ? "bg-emerald-100" : ""}`}>
+                <div>{item.label}</div>
+                <div>{item.value}</div>
+              </div>
+            );
+          }}
+          InputComponent={InputField}
+        ></SearchInput>
+      )}
+    </WithLabel>
+  );
+};
 
 const GndField = ({
   value,
