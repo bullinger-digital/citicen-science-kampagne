@@ -9,6 +9,7 @@ export const SearchInput = <T,>({
   onSelect,
   SelectionComponent,
   InputComponent,
+  noResultsText = "Keine Ergebnisse gefunden",
 }: {
   fallbackTerm: string | undefined;
   searchFn: (term: string) => Promise<T[]>;
@@ -26,6 +27,7 @@ export const SearchInput = <T,>({
       HTMLInputElement
     >
   >;
+  noResultsText?: React.ReactNode;
 }) => {
   const [results, setResults] = useState<T[] | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -137,9 +139,7 @@ export const SearchInput = <T,>({
                 );
               })}
             {!isLoading && hasFocus && results?.length === 0 && (
-              <div className="text-gray-300 p-2">
-                Keine Ergebnisse gefunden.
-              </div>
+              <div className="text-gray-300 p-2">{noResultsText}</div>
             )}
             {!isLoading &&
               hasFocus &&
