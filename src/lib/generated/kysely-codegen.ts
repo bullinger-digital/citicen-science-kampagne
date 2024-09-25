@@ -72,6 +72,8 @@ export interface LetterVersion {
   is_touched: Generated<boolean>;
   review_state: string;
   reviewed_log_id: number | null;
+  stats_actions_count: Generated<number | null>;
+  stats_finished_letter: Generated<boolean | null>;
   version_id: Generated<number>;
   xml: string;
 }
