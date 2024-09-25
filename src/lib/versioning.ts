@@ -187,6 +187,10 @@ export class Versioning {
         is_latest: true,
         is_new: isNew,
         version_id: undefined,
+        // Set stats_actions_count and stats_finished_letter to undefined
+        // to prevent "cannot insert a non-DEFAULT value into a generated column" error
+        stats_actions_count: undefined,
+        stats_finished_letter: undefined,
         review_state: acceptChange ? "accepted" : "pending",
         git_import_id: gitImportId,
       };
