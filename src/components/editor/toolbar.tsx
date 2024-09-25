@@ -20,6 +20,7 @@ const XmlView = dynamic(
 import { BsFiletypeXml, BsPersonFill } from "react-icons/bs";
 import { TbLocation } from "react-icons/tb";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { usePrevious } from "../common/usePrevious";
 
 const ToolbarButton = ({
   children,
@@ -274,6 +275,14 @@ export const Toolbar = () => {
     },
     [addAction, xmlDoc]
   );
+
+  // When a user selects text, clear the selectedNode state
+  const previousHasMarkableSelection = usePrevious(hasMarkableSelection);
+  useEffect(() => {
+    if (hasMarkableSelection && !previousHasMarkableSelection) {
+      setSelectedNode(null);
+    }
+  }, [setSelectedNode, hasMarkableSelection, previousHasMarkableSelection]);
 
   const removeMark = useCallback(() => {
     addAction({
