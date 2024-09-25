@@ -90,6 +90,9 @@ export const useEditorState = ({
 
   useEffect(() => {
     applyNewActions(xmlDoc, actions);
+    // Remove selection because the current node would
+    // belong to the previous DOM
+    setSelectedNode(null);
 
     // Try to select dom node of latest action
     const latestAction = actions[actions.length - 1];
