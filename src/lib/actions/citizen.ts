@@ -656,3 +656,27 @@ export const getPlaceUsages = async ({ id }: { id: number }) => {
     .execute();
   return usages;
 };
+
+export const getLatestWork = async () => {
+  await requireRoleOrThrow("user");
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return [];
+  }
+  const latestWork = await kdb
+    .selectFrom((e) =>
+      e
+        .selectFrom("letter_version")
+        .leftJoin("log", "letter_version.created_log_id", "log.id")
+        .where("log.created_by_id", "=", userId.id)
+        .where("log.log_type", "=", "user")
+        .distinctOn("letter_version.id")
+        .select(["letter_version.id", "timestamp"])
+        .as("subquery")
+    )
+    .orderBy("timestamp", "desc")
+    .select(["id", "timestamp"])
+    .limit(5)
+    .execute();
+  return latestWork;
+};
