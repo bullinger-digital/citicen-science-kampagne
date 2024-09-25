@@ -455,6 +455,9 @@ const GndField = ({
       ) : (
         <SearchInput
           fallbackTerm={searchTerm}
+          noResultsText={
+            "Keine Ergebnisse gefunden - Hinweis: Sie können eine GND-ID auch manuell in das Feld kopieren"
+          }
           searchFn={searchGnd}
           onSelect={(result) => onChange(result.value)}
           SelectionComponent={({ item, isFocused }) => {
