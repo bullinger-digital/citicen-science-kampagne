@@ -64,6 +64,9 @@ const EditorInternal = ({
       </div>
     );
 
+  const isAutomaticTranscription =
+    xmlDoc.querySelector("TEI")?.getAttribute("source") === "keine";
+
   const regestNode = xmlDoc.querySelector(
     "TEI > teiHeader > fileDesc > sourceDesc > msDesc > msContents > summary"
   );
@@ -91,6 +94,13 @@ const EditorInternal = ({
             {state.letterState === LetterState.Finished && (
               <div className="bg-green-100 p-2 mb-2">
                 Dieser Brief wurde als abgeschlossen markiert.
+              </div>
+            )}
+            {isAutomaticTranscription && (
+              <div className="bg-yellow-100 p-2 mb-2">
+                Bei untenstehendem Text handelt es sich um eine automatische
+                Transkription. Diese sind momentan nicht zu annotieren. Bitte
+                fahren Sie mit einem anderen Brief fort.
               </div>
             )}
             <Toolbar />
