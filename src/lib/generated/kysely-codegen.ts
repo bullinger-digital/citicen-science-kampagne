@@ -185,28 +185,6 @@ export interface RegisterFile {
   xml: string;
 }
 
-export interface RemovedPersonAlias {
-  created_log_id: number;
-  id: Generated<number>;
-}
-
-export interface RemovedPersonAliasVersion {
-  created_log_id: number;
-  forename: string;
-  git_export_id: number | null;
-  git_import_id: number;
-  id: number;
-  is_latest: Generated<boolean>;
-  is_new: Generated<boolean>;
-  is_touched: Generated<boolean>;
-  person_id: number;
-  review_state: string;
-  reviewed_log_id: number | null;
-  surname: string;
-  type: string;
-  version_id: Generated<number>;
-}
-
 export interface User {
   created_at: Generated<Timestamp>;
   email: string;
@@ -236,7 +214,5 @@ export interface DB {
   place: Place;
   place_version: PlaceVersion;
   register_file: RegisterFile;
-  removed_person_alias: RemovedPersonAlias;
-  removed_person_alias_version: RemovedPersonAliasVersion;
   user: User;
 }
