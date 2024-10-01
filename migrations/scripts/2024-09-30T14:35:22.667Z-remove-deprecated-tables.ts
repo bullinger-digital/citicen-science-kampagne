@@ -4,6 +4,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   await sql`
   DROP TABLE removed_person_alias_version;
   DROP TABLE removed_person_alias;
+  DROP TABLE letter_version_action;
   `.execute(db);
 }
 
