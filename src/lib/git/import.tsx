@@ -96,6 +96,12 @@ export const importFromCurrentCommit = async () => {
       throw new Error("Commit already imported");
     }
 
+    // Performance optimization: remove all existing entries in letter_version_extract_place / letter_version_extract_person
+    // because entries from older commits are not needed anywhere in the code.
+    // The import process will re-import all entries from the current commit.
+    await db.deleteFrom("letter_version_extract_place").execute();
+    await db.deleteFrom("letter_version_extract_person").execute();
+
     // Set all existing git_imports to not current
     await db
       .updateTable("git_import")
