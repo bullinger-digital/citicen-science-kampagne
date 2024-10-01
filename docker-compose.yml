@@ -19,6 +19,8 @@ services:
       POSTGRES_DB: citizen-science
     volumes:
       - database-data:/var/lib/postgresql/data/
+    command: >
+      -c work_mem=1024MB
   
   pgadmin:
     image: dpage/pgadmin4:8.8

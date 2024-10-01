@@ -44,6 +44,8 @@ services:
       - citizen-science-database-data:/var/lib/postgresql/data/
     networks:
       - citizen_science
+    command: >
+      -c work_mem=1024MB
   
 
   # Source: https://github.com/ixc/restic-pg-dump-docker
