@@ -78,10 +78,6 @@ export interface LetterVersion {
   xml: string;
 }
 
-export interface LetterVersionAction {
-  action_id: Generated<number>;
-}
-
 export interface LetterVersionExtractPerson {
   cert: string;
   link_type: string;
@@ -203,7 +199,6 @@ export interface DB {
   letter: Letter;
   letter_lock: LetterLock;
   letter_version: LetterVersion;
-  letter_version_action: LetterVersionAction;
   letter_version_extract_person: LetterVersionExtractPerson;
   letter_version_extract_place: LetterVersionExtractPlace;
   log: Log;
