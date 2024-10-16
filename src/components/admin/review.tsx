@@ -31,11 +31,25 @@ import { VersionedTable } from "@/lib/versioning";
 export const Review = () => {
   const [table, setTable] = useState<VersionedTable>("person_version");
   const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(0);
+  const pageSize = limit;
 
   const { loading, error, data, refetch } = useServerFetch(
     getUncommitedChanges,
-    { limit: limit, offset: 0, table: table }
+    { limit: limit, offset: pageSize * page, table: table }
   );
+
+  const itemCount =
+    (table === "person_version"
+      ? data?.person_counts?.count
+      : data?.place_counts?.count) || 0;
+
+  const pageCount = Math.ceil(itemCount / pageSize);
+
+  const reset = () => {
+    setPage(0);
+    setLimit(10);
+  };
 
   return !data && loading ? (
     <Loading />
@@ -47,8 +61,8 @@ export const Review = () => {
       <div className="flex space-x-2 mb-5">
         <button
           onClick={() => {
+            reset();
             setTable("person_version");
-            setLimit(10);
           }}
           className={`${
             table === "person_version" ? "bg-emerald-200" : "bg-gray-100"
@@ -58,8 +72,8 @@ export const Review = () => {
         </button>
         <button
           onClick={() => {
+            reset();
             setTable("place_version");
-            setLimit(10);
           }}
           className={`${
             table === "place_version" ? "bg-emerald-200" : "bg-gray-100"
@@ -77,12 +91,42 @@ export const Review = () => {
           />
         ))}
       </div>
-      <button
-        className="bg-gray-200 hover:bg-gray-300 p-2 rounded-xl"
-        onClick={() => setLimit(limit + 10)}
-      >
-        Mehr anzeigen
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          className="border rounded p-1"
+          onClick={() => setPage(0)}
+          disabled={page === 0}
+        >
+          {"<<"}
+        </button>
+        <button
+          className="border rounded p-1"
+          onClick={() => setPage(page - 1)}
+          disabled={page === 0}
+        >
+          {"<"}
+        </button>
+        <button
+          className="border rounded p-1"
+          onClick={() => setPage(page + 1)}
+          disabled={page + 1 === pageCount}
+        >
+          {">"}
+        </button>
+        <button
+          className="border rounded p-1"
+          onClick={() => setPage(pageCount - 1)}
+          disabled={page + 1 === pageCount}
+        >
+          {">>"}
+        </button>
+        <span className="flex items-center gap-1">
+          <div>Seite</div>
+          <strong>
+            {page + 1} von {pageCount.toLocaleString()}
+          </strong>
+        </span>
+      </div>
     </div>
   );
 };
