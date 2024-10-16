@@ -63,7 +63,28 @@ export const getLogs = async () => {
   return await query.execute();
 };
 
-const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
+const countUncommitedChangesByTable = async <T extends VersionedTable>({
+  table,
+}: {
+  table: T;
+}) => {
+  return await kdb
+    .selectFrom<VersionedTable>(table)
+    .where(whereCurrent)
+    .where("review_state", "=", "pending")
+    .select((e) => e.fn.countAll<number>().as("count"))
+    .executeTakeFirst();
+};
+
+const uncommitedChangesByTable = async <T extends VersionedTable>({
+  table,
+  limit,
+  offset,
+}: {
+  table: T;
+  limit: number;
+  offset: number;
+}) => {
   return await kdb
     .selectFrom<VersionedTable>(table)
     .leftJoin("log", "created_log_id", "log.id")
@@ -146,21 +167,34 @@ const uncommitedChangesByTable = async <T extends VersionedTable>(table: T) => {
           .as("computed_link_counts")
       )
     )
+    .limit(limit)
+    .offset(offset)
     .execute();
 };
 
-export const getUncommitedChanges = async () => {
+export const getUncommitedChanges = async ({
+  table,
+  limit,
+  offset = 0,
+}: {
+  table: VersionedTable;
+  limit: number;
+  offset?: number;
+}) => {
   await requireRoleOrThrow("admin");
 
-  const letterChanges = await uncommitedChangesByTable("letter_version");
-  const personChanges = await uncommitedChangesByTable("person_version");
-  const placeChanges = await uncommitedChangesByTable("place_version");
-
-  return [
-    ...letterChanges.map((l) => ({ table: "letter" as const, ...l })),
-    ...personChanges.map((p) => ({ table: "person" as const, ...p })),
-    ...placeChanges.map((pl) => ({ table: "place" as const, ...pl })),
-  ];
+  const changes = await uncommitedChangesByTable({ table, limit, offset });
+  return {
+    changes: changes.map((c) => {
+      return { table: table.replace("_version", "") as Versioned, ...c };
+    }),
+    person_counts: await countUncommitedChangesByTable({
+      table: "person_version",
+    }),
+    place_counts: await countUncommitedChangesByTable({
+      table: "place_version",
+    }),
+  };
 };
 
 const getUsages = async ({
