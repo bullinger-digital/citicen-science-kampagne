@@ -26,14 +26,16 @@ import { FaEdit, FaExternalLinkAlt } from "react-icons/fa";
 import { FaCheck } from "react-icons/fa6";
 import { GrClose } from "react-icons/gr";
 import { Link } from "../common/navigation-block/link";
+import { VersionedTable } from "@/lib/versioning";
 
 export const Review = () => {
+  const [table, setTable] = useState<VersionedTable>("person_version");
+  const [limit, setLimit] = useState(10);
+
   const { loading, error, data, refetch } = useServerFetch(
     getUncommitedChanges,
-    {}
+    { limit: limit, offset: 0, table: table }
   );
-
-  const [limit, setLimit] = useState(10);
 
   return !data && loading ? (
     <Loading />
@@ -41,23 +43,45 @@ export const Review = () => {
     <div>{error}</div>
   ) : (
     <div className="pb-20">
-      <h2 className="text-xl mb-3 mt-5">{data?.length} Änderungsvorschläge</h2>
+      <h2 className="text-xl mb-3 mt-5">Änderungsvorschläge</h2>
+      <div className="flex space-x-2 mb-5">
+        <button
+          onClick={() => {
+            setTable("person_version");
+            setLimit(10);
+          }}
+          className={`${
+            table === "person_version" ? "bg-emerald-200" : "bg-gray-100"
+          } hover:bg-emerald-300 p-2 rounded-xl`}
+        >
+          Personen ({data?.person_counts?.count})
+        </button>
+        <button
+          onClick={() => {
+            setTable("place_version");
+            setLimit(10);
+          }}
+          className={`${
+            table === "place_version" ? "bg-emerald-200" : "bg-gray-100"
+          } hover:bg-emerald-300 p-2 rounded-xl`}
+        >
+          Orte ({data?.place_counts?.count})
+        </button>
+      </div>
       <div className={`${loading ? "opacity-20" : ""}`}>
-        {data
-          ?.slice(0, limit)
-          .map((log) => (
-            <ReviewItem
-              log={log}
-              key={`${log.table}-${log.modified?.id}`}
-              refetch={refetch}
-            />
-          ))}
+        {data?.changes.map((log) => (
+          <ReviewItem
+            log={log}
+            key={`${table}-${log.modified?.id}`}
+            refetch={refetch}
+          />
+        ))}
       </div>
       <button
         className="bg-gray-200 hover:bg-gray-300 p-2 rounded-xl"
-        onClick={() => setLimit(data?.length || 0)}
+        onClick={() => setLimit(limit + 10)}
       >
-        Alle anzeigen
+        Mehr anzeigen
       </button>
     </div>
   );
@@ -86,7 +110,7 @@ const ReviewItem = ({
   log,
   refetch,
 }: {
-  log: Awaited<ReturnType<typeof getUncommitedChanges>>[0];
+  log: Awaited<ReturnType<typeof getUncommitedChanges>>["changes"][0];
   refetch: () => void;
 }) => {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -383,7 +407,7 @@ const UsageMover = ({
 const DiffItem = ({
   logEntry,
 }: {
-  logEntry: Awaited<ReturnType<typeof getUncommitedChanges>>[0];
+  logEntry: Awaited<ReturnType<typeof getUncommitedChanges>>["changes"][0];
 }) => {
   return (
     <>
