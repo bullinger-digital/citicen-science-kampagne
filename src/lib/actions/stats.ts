@@ -9,18 +9,27 @@ const CACHE_DURATION = 60 * 60; // 1 hour
 
 export const getLetterStats = unstable_cache(
   async () => {
-    const letterStats = await kdb
+    const baseQuery = kdb
       .selectFrom("letter_version")
       .where(whereCurrent)
       // Filter out automatic transcriptions
       // Todo: reuse code from citizen.ts
-      .where("extract_source", "<>", "keine")
+      .where("extract_source", "<>", "keine");
+
+    const letterStats = await baseQuery
       .groupBy("extract_status")
       .select("extract_status")
       .select((e) => e.fn.countAll<string>().as("count"))
       .execute();
 
-    return letterStats;
+    const editedLettersStats = await baseQuery
+      .where("extract_source", "like", "HBBW-%")
+      .groupBy("extract_status")
+      .select("extract_status")
+      .select((e) => e.fn.countAll<string>().as("count"))
+      .execute();
+
+    return { letterStats, editedLettersStats };
   },
   ["citizen-stats"],
   { revalidate: CACHE_DURATION }

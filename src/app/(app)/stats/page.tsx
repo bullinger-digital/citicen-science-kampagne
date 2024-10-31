@@ -1,5 +1,7 @@
 import { getCurrentUserId } from "@/lib/actions/citizen";
 import { getLetterStats, getUserStats } from "@/lib/actions/stats";
+import { isInRole } from "@/lib/security/isInRole";
+import { getSession } from "@auth0/nextjs-auth0";
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +30,18 @@ export default function StatisticsPage() {
 
 const PercentageChart = async () => {
   const letterStats = await getLetterStats();
+  const session = await getSession();
+  const isAdmin = session ? isInRole(session, "admin") : false;
+
   const finishedCount = parseInt(
-    letterStats.find((s) => s.extract_status === "finished")?.count || "0"
+    letterStats.letterStats.find((s) => s.extract_status === "finished")
+      ?.count || "0"
   );
   const totalCount =
-    letterStats.reduce<number>((acc, s) => acc + parseInt(s.count), 0) || 0;
+    letterStats.letterStats.reduce<number>(
+      (acc, s) => acc + parseInt(s.count),
+      0
+    ) || 0;
   const percentage = finishedCount / totalCount;
 
   return (
@@ -49,6 +58,22 @@ const PercentageChart = async () => {
       <span className="font-bold">{(percentage * 100).toFixed(1)}%</span>
       <br />
       {finishedCount} von {totalCount} zu bearbeitenden Briefen abgeschlossen
+      {isAdmin && (
+        <div className="text-sm mt-5 text-gray-400">
+          (<i>Nur für Administratoren sichtbar</i>:{" "}
+          {
+            letterStats.editedLettersStats.find(
+              (s) => s.extract_status === "finished"
+            )?.count
+          }{" "}
+          von{" "}
+          {letterStats.editedLettersStats.reduce<number>(
+            (acc, s) => acc + parseInt(s.count),
+            0
+          )}{" "}
+          edierten Briefen abgeschlossen)
+        </div>
+      )}
     </div>
   );
 };

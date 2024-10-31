@@ -505,7 +505,7 @@ export const letterNavigation = async ({
             )
           )
         )
-        .select(["id", "extract_date"])
+        .select(["id", "extract_date", "extract_source"])
     )
     .with("current_letter", (e) =>
       e
@@ -513,6 +513,12 @@ export const letterNavigation = async ({
         .where(whereCurrent)
         .where("id", "=", current_letter_id)
         .select("extract_date as d")
+    )
+    // Define if edited letters should be prioritized - 20% chance for non-edited letters
+    .with("should_prioritize_edited", (e) =>
+      e.selectNoFrom([
+        sql<boolean>`random() > 0.2`.as("should_prioritize_edited"),
+      ])
     )
     .selectNoFrom((e) => [
       e
@@ -581,7 +587,18 @@ export const letterNavigation = async ({
         .as("last"),
       e
         .selectFrom("selection")
-        .orderBy((e) => sql`random()`)
+        // Edited letters (where source starts with HBBW) have priority
+        .orderBy(
+          (e) =>
+            e.and([
+              e
+                .selectFrom("should_prioritize_edited")
+                .select("should_prioritize_edited"),
+              e("extract_source", "like", "HBBW-%"),
+            ]),
+          "desc"
+        )
+        .orderBy(() => sql`random()`)
         .$if(!!current_letter_id, (e) =>
           e.where("selection.id", "!=", current_letter_id)
         )
