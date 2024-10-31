@@ -24,6 +24,7 @@ services:
   
   pgadmin:
     image: dpage/pgadmin4:8.8
+    restart: always
     ports:
       - 6434:80
     environment:
