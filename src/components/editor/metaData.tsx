@@ -35,16 +35,20 @@ const LetterMetaDataInternal = ({
     <div className="pr-4 mb-4 flex justify-between">
       <div>
         <div>
-          {senderNode && (
+          {senderNode ? (
             <span className="text-emerald-500 font-bold">
               <RenderCorrespondents correspActionNode={senderNode} />
             </span>
+          ) : (
+            <InformationNotAvailable />
           )}{" "}
           an{" "}
-          {recipientNode && (
+          {recipientNode ? (
             <span className="text-emerald-500 font-bold">
               <RenderCorrespondents correspActionNode={recipientNode} />
             </span>
+          ) : (
+            <InformationNotAvailable />
           )}
         </div>
         <div>
@@ -71,6 +75,17 @@ const LetterMetaDataInternal = ({
   );
 };
 
+const InformationNotAvailable = () => {
+  return (
+    <span
+      title="Information nicht verfügbar / unbekannt"
+      className="text-gray-400"
+    >
+      [...]
+    </span>
+  );
+};
+
 const RenderCorrespondents = ({
   correspActionNode,
 }: {
@@ -83,17 +98,19 @@ const RenderCorrespondents = ({
     correspActionNode.querySelectorAll(":scope > persName, :scope > orgName")
   );
 
-  return targets.length === 0
-    ? "[...]"
-    : targets.map((node, i) => (
-        <span key={i}>
-          <RenderSingleCorrespondent
-            persNameOrOrgNameNode={node as Element}
-            key={i}
-          />
-          {targets.indexOf(node) < targets.length - 1 && ", "}
-        </span>
-      ));
+  return targets.length === 0 ? (
+    <InformationNotAvailable />
+  ) : (
+    targets.map((node, i) => (
+      <span key={i}>
+        <RenderSingleCorrespondent
+          persNameOrOrgNameNode={node as Element}
+          key={i}
+        />
+        {targets.indexOf(node) < targets.length - 1 && ", "}
+      </span>
+    ))
+  );
 };
 
 const RenderSingleCorrespondent = ({
