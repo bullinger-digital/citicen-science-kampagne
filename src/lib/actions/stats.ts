@@ -29,7 +29,44 @@ export const getLetterStats = unstable_cache(
       .select((e) => e.fn.countAll<string>().as("count"))
       .execute();
 
-    return { letterStats, editedLettersStats };
+    const timeLineStats = await sql<{
+      day: Date;
+      current_items_count: number;
+      current_items_count_edited: number;
+    }>`WITH date_series AS (
+          SELECT generate_series(
+              '2024-05-31',
+              CURRENT_DATE,
+              '3 days'::interval
+          )::date AS day
+      ),
+      version_history AS (
+          SELECT lv.id,
+            CASE WHEN (lv.extract_source LIKE 'HBBW-%') THEN lv.id ELSE NULL END as id_if_edited,
+                lv.version_id,
+                lv.extract_status,
+                l."timestamp",
+                ROW_NUMBER() OVER (PARTITION BY lv.id, l."timestamp"::date ORDER BY lv.version_id DESC) AS rn
+          FROM public.letter_version lv
+          JOIN public.log l ON lv.created_log_id = l.id
+          WHERE lv.extract_status = 'finished'
+        AND lv.extract_source <> 'keine'
+        -- only letters which - based on the current data - need to be worked on
+        AND EXISTS(
+            SELECT id FROM letter_version WHERE extract_source <> 'keine' AND id = lv.id AND is_latest AND git_import_id = (SELECT id FROM git_import WHERE is_current)
+          )
+      )
+      SELECT ds.day,
+            COUNT(DISTINCT vh.id)::int AS current_items_count,
+          COUNT(DISTINCT vh.id_if_edited)::int AS current_items_count_edited
+      FROM date_series ds
+      LEFT JOIN version_history vh ON vh."timestamp"::date <= ds.day AND vh.rn = 1
+      GROUP BY ds.day
+      ORDER BY ds.day;`
+      .execute(kdb)
+      .then((res) => res.rows);
+
+    return { letterStats, editedLettersStats, timeLineStats };
   },
   ["citizen-stats"],
   { revalidate: CACHE_DURATION }

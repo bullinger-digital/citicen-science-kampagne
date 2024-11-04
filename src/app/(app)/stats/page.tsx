@@ -1,3 +1,4 @@
+import { TimelineChart } from "@/components/stats/timelineChart";
 import { getCurrentUserId } from "@/lib/actions/citizen";
 import { getLetterStats, getUserStats } from "@/lib/actions/stats";
 import { isInRole } from "@/lib/security/isInRole";
@@ -5,12 +6,15 @@ import { getSession } from "@auth0/nextjs-auth0";
 
 export const dynamic = "force-dynamic";
 
-export default function StatisticsPage() {
+export default async function StatisticsPage() {
+  const letterStats = await getLetterStats();
+
   return (
     <main className="px-5 pb-5 max-w-screen-xl mx-auto">
       <h1 className="text-center font-light mt-5 text-3xl mb-10">
         Statistiken
       </h1>
+      <TimelineChart data={letterStats.timeLineStats} />
       <div className="flex space-x-20">
         <div className="w-60">
           <PercentageChart />
