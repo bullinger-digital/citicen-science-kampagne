@@ -10,6 +10,12 @@ export type GeonamesResult = {
 
 // We route the geonames requests through the server to avoid leaking the username
 export const searchGeonames = async (inputValue: string) => {
+  // If the input value is a number with more than 5 digits, we assume it is a geonameId
+  // in this case, we directly return the geoname
+  if (/^\d{5,}$/.test(inputValue)) {
+    return [await getGeoname(inputValue)];
+  }
+
   const res = await fetch(
     `http://api.geonames.org/searchJSON?q=${encodeURIComponent(inputValue)}&maxRows=100&lang=de&continentCode=EU&countryBias=CH,DE,AT&username=${GEONAMES_USERNAME}`
   );
