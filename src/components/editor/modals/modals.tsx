@@ -15,7 +15,11 @@ import { searchMetagrid, singleMetagridResult } from "./metaGrid";
 import dynamic from "next/dynamic";
 import { Comments } from "@/components/common/comments";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
-import { EntityUsagesModalTrigger, PersonItemDetails } from "../properties";
+import {
+  EntityUsagesModalTrigger,
+  PersonItemDetails,
+  PlaceItemDetails,
+} from "../properties";
 import { getGeoname, searchGeonames } from "@/lib/actions/geonames";
 import type { Geoname } from "@/lib/actions/geonames";
 import { getSingleGndResult } from "@/lib/actions/gnd";
@@ -283,6 +287,50 @@ const PersonMightAlreadyExistHint = ({
             id={existing.data.id.toString()}
             isPreview={true}
           />
+        </div>
+      </div>
+    );
+  }
+};
+
+const PlaceMightAlreadyExistHint = ({
+  geonames,
+  onUseExisting,
+}: {
+  geonames?: string;
+  onUseExisting: (id: number) => void;
+}) => {
+  const existing = useServerFetch(
+    placeById,
+    {
+      geonames: geonames!,
+    },
+    {
+      skip: !geonames,
+    }
+  );
+
+  if (existing.loading || !existing.data) {
+    return null;
+  }
+
+  if (existing.data.id) {
+    return (
+      <div className="bg-yellow-100 p-2 mb-4 text-sm">
+        <div className="flex space-x-2">
+          <IoWarning className="text-lg" />
+          <span>
+            Es existiert bereits eine Ortschaft mit dieser Geonames-ID
+          </span>
+        </div>
+        <div className="pl-4 pt-2 pb-4">
+          <button
+            onClick={() => onUseExisting(existing.data!.id!)}
+            className="underline pb-2 rounded-sm text-emerald-400"
+          >
+            Diese Ortschaft verwenden, anstatt neu zu erfassen
+          </button>
+          <PlaceItemDetails id={existing.data.id.toString()} isPreview={true} />
         </div>
       </div>
     );
@@ -608,6 +656,12 @@ export const EditPlaceModal = ({
             .filter((n) => !!n)
             .join(" ")}
         ></GeonamesField>
+        {!id && (
+          <PlaceMightAlreadyExistHint
+            geonames={newPlace.geonames}
+            onUseExisting={(id) => close(id)}
+          />
+        )}
         <div>
           <WithLabel label="Koordinaten">
             {newPlace.latitude && newPlace.longitude ? (

@@ -244,13 +244,18 @@ export const searchPlace = async ({
   >;
 };
 
-export const placeById = async ({ id }: { id: string }) => {
+export const placeById = async (
+  params: { id: string } | { geonames: string }
+) => {
   await requireRoleOrThrow("user");
-  if (!id) throw new Error("ID is required");
+  const id = "id" in params ? params.id : null;
+  const geonames = "geonames" in params ? params.geonames : null;
+  if (!id && !geonames) throw new Error("ID or Geonames ID is required");
   const p = await kdb
     .selectFrom("place_version")
     .where(whereCurrent)
-    .where("place_version.id", "=", parseInt(id))
+    .$if(!!id, (e) => e.where("place_version.id", "=", parseInt(id!)))
+    .$if(!!geonames, (e) => e.where("geonames", "=", geonames!))
     .selectAll("place_version")
     .leftJoin("place", "place.id", "place_version.id")
     .select("place.computed_link_counts")
