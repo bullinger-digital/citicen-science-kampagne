@@ -489,6 +489,7 @@ export const letterNavigation = async ({
         .where(whereCurrent)
         // Filter out automatic transcriptions
         .where("extract_source", "<>", "keine")
+        .where("extract_type", "not in", ["Hinweis", "Verweis"])
         .$if(!!filter.language, (e) =>
           e.where("extract_language", "=", filter.language!)
         )

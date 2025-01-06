@@ -14,7 +14,8 @@ export const getLetterStats = unstable_cache(
       .where(whereCurrent)
       // Filter out automatic transcriptions
       // Todo: reuse code from citizen.ts
-      .where("extract_source", "<>", "keine");
+      .where("extract_source", "<>", "keine")
+      .where("extract_type", "not in", ["Hinweis", "Verweis"]);
 
     const letterStats = await baseQuery
       .groupBy("extract_status")
