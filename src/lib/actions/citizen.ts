@@ -496,8 +496,8 @@ export const letterNavigation = async ({
         .$if(!!filter.status, (e) =>
           e.where(
             "extract_status",
-            filter.status === "finished" ? "=" : "!=",
-            "finished"
+            filter.status?.startsWith("!") ? "!=" : "=",
+            filter.status?.replace("!", "")!
           )
         )
         .$if(!!filter.person_id, (e) =>

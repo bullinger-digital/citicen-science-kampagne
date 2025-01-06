@@ -19,9 +19,20 @@ export const extractAndStoreMetadata = async ({
   const source = xmlDom.querySelector("TEI")?.getAttribute("source");
   const type = xmlDom.querySelector("TEI")?.getAttribute("type");
   const language = xmlDom.querySelector("TEI > text")?.getAttribute("xml:lang");
-  const state = xmlDom
+  let state = xmlDom
     .querySelector("TEI > teiHeader > revisionDesc")
     ?.getAttribute("status");
+  // Set state (extract_status) to "touched" if letter contains any citizen_name elements
+  if (
+    state !== "finished" &&
+    Array.from(
+      xmlDom.querySelectorAll(
+        "persName[type=citizen_name], placeName[type=citizen_name]"
+      )
+    ).length > 0
+  ) {
+    state = "touched";
+  }
   const dateNode = xmlDom.querySelector(
     "TEI > teiHeader > profileDesc > correspDesc > correspAction[type='sent'] > date"
   );

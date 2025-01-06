@@ -28,7 +28,7 @@ const INPUT_CLASSNAMES =
   "w-full px-2 py-2 border-b-2 border-gray-300 outline-none focus:border-beige-500 placeholder-gray-300 text-gray-700";
 
 const DEFAULT_FILTER: LetterNavigationFilter = {
-  status: "notfinished",
+  status: "!finished",
 };
 
 const useLocalStorage = <T,>(key: string, fallbackValue: T) => {
@@ -56,7 +56,7 @@ export const LetterNavigation = () => {
 
   // Read filter from localstorage if available; otherwise use DEFAULT_FILTER
   const [filter, setFilter] = useLocalStorage(
-    "letterNavigationFilter",
+    "letterNavigationFilter-v2",
     DEFAULT_FILTER
   );
 
@@ -143,8 +143,9 @@ export const LetterNavigation = () => {
                 })
               }
             >
-              <option value="notfinished">Zu bearbeiten</option>
+              <option value="!finished">Zu bearbeiten</option>
               <option value="finished">Abgeschlossen</option>
+              <option value="untouched">Unberührt</option>
               <option value="">Alle</option>
             </select>
           </FilterWithLabel>
