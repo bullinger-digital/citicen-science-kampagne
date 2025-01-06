@@ -145,7 +145,7 @@ export const LetterNavigation = () => {
             >
               <option value="!finished">Zu bearbeiten</option>
               <option value="finished">Abgeschlossen</option>
-              <option value="untouched">Unberührt</option>
+              <option value="untouched">Unbearbeitet</option>
               <option value="">Alle</option>
             </select>
           </FilterWithLabel>
