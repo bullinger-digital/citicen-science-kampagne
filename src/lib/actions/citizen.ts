@@ -511,7 +511,7 @@ export const letterNavigation = async ({
             )
           )
         )
-        .select(["id", "extract_date", "extract_source"])
+        .select(["id", "extract_date", "extract_source", "extract_status"])
     )
     .with("current_letter", (e) =>
       e
@@ -600,7 +600,10 @@ export const letterNavigation = async ({
               e
                 .selectFrom("should_prioritize_edited")
                 .select("should_prioritize_edited"),
-              e("extract_source", "like", "HBBW-%"),
+              e.or([
+                e("extract_source", "like", "HBBW-%"),
+                e("extract_status", "=", "untouched"),
+              ]),
             ]),
           "desc"
         )
