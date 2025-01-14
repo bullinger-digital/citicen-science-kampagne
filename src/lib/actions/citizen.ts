@@ -1,13 +1,13 @@
 "use server";
 import "server-only";
-import { kdb } from "@/lib/db";
+import { DB, kdb } from "@/lib/db";
 import { Versioning, whereCurrent } from "../versioning";
 import { EditorAction, applyNewActions, prepareActionsForSave } from "../xml";
 import { JSDOM } from "jsdom";
 import { xmlParseFromString, xmlSerializeToString } from "../xmlSerialize";
 import { requireRoleOrThrow } from "../security/withRequireRole";
 import { InferType, array, mixed, number, object, string } from "yup";
-import { sql } from "kysely";
+import { QueryCreator, sql } from "kysely";
 import { getSingleGndResult } from "./gnd";
 import { getSession } from "@auth0/nextjs-auth0";
 import logger from "../logger/logger";
@@ -473,6 +473,62 @@ export type LetterNavigationFilter = {
   status?: string;
 };
 
+const letterSelection = (
+  db: typeof kdb | QueryCreator<DB>,
+  filter: LetterNavigationFilter
+) => {
+  return (
+    db
+      .selectFrom("letter_version")
+      .where(whereCurrent)
+      // Filter out automatic transcriptions
+      .where("extract_source", "<>", "keine")
+      .where("extract_type", "not in", ["Hinweis", "Verweis"])
+      .$if(!!filter.language, (e) =>
+        e.where("extract_language", "=", filter.language!)
+      )
+      .$if(!!filter.status, (e) =>
+        e.where(
+          "extract_status",
+          filter.status?.startsWith("!") ? "!=" : "=",
+          filter.status?.replace("!", "")!
+        )
+      )
+      .$if(!!filter.person_id, (e) =>
+        e.where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom("letter_version_extract_person as p")
+              .where("p.version_id", "=", eb.ref("letter_version.version_id"))
+              .where("p.person_id", "=", filter.person_id!)
+              .where("p.link_type", "=", "correspondent")
+          )
+        )
+      )
+  );
+};
+
+export const letterProgressList = async ({
+  filter,
+  sortBy,
+}: {
+  filter: LetterNavigationFilter;
+  sortBy: "extract_date" | "id";
+}) => {
+  await requireRoleOrThrow("user");
+
+  return {
+    all: await letterSelection(kdb, { ...filter, status: undefined })
+      .select(["id", "extract_status", "extract_date_string"])
+      .orderBy(sortBy)
+      .execute(),
+    untouched: await letterSelection(kdb, { ...filter, status: "untouched" })
+      .select(["id", "extract_status", "extract_date_string"])
+      .orderBy(sortBy)
+      .execute(),
+  };
+};
+
 export const letterNavigation = async ({
   filter,
   current_letter_id,
@@ -484,34 +540,12 @@ export const letterNavigation = async ({
 
   const result = await kdb
     .with("selection", (e) =>
-      e
-        .selectFrom("letter_version")
-        .where(whereCurrent)
-        // Filter out automatic transcriptions
-        .where("extract_source", "<>", "keine")
-        .where("extract_type", "not in", ["Hinweis", "Verweis"])
-        .$if(!!filter.language, (e) =>
-          e.where("extract_language", "=", filter.language!)
-        )
-        .$if(!!filter.status, (e) =>
-          e.where(
-            "extract_status",
-            filter.status?.startsWith("!") ? "!=" : "=",
-            filter.status?.replace("!", "")!
-          )
-        )
-        .$if(!!filter.person_id, (e) =>
-          e.where((eb) =>
-            eb.exists(
-              eb
-                .selectFrom("letter_version_extract_person as p")
-                .where("p.version_id", "=", eb.ref("letter_version.version_id"))
-                .where("p.person_id", "=", filter.person_id!)
-                .where("p.link_type", "=", "correspondent")
-            )
-          )
-        )
-        .select(["id", "extract_date", "extract_source", "extract_status"])
+      letterSelection(e, filter).select([
+        "id",
+        "extract_date",
+        "extract_source",
+        "extract_status",
+      ])
     )
     .with("current_letter", (e) =>
       e

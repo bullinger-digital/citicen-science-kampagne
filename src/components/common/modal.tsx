@@ -37,7 +37,7 @@ const Modal = ({
     ? createPortal(
         <div
           ref={wrapperRef}
-          className="fixed top-0 left-0 w-screen h-screen p-10 overflow-auto"
+          className="fixed z-10 top-0 left-0 w-screen h-screen p-10 overflow-auto"
           style={{ background: "rgba(100,100,100,0.2)" }}
           onClick={(e) =>
             e.target === wrapperRef.current && closeOnOutsideClick && cancel

@@ -16,6 +16,7 @@ import { useServerFetch } from "./common/serverActions";
 import {
   LetterNavigationFilter,
   letterNavigation,
+  letterProgressList,
   personById,
   searchPerson,
 } from "@/lib/actions/citizen";
@@ -23,6 +24,9 @@ import { usePathname } from "next/navigation";
 import { Link } from "./common/navigation-block/link";
 import { DynamicAsyncSelect } from "./common/dynamicAsyncSelect";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import Modal from "./common/modal";
+import { Loading } from "./common/loadingIndicator";
+import { MdOutlineCheckBox } from "react-icons/md";
 
 const INPUT_CLASSNAMES =
   "w-full px-2 py-2 border-b-2 border-gray-300 outline-none focus:border-beige-500 placeholder-gray-300 text-gray-700";
@@ -52,6 +56,7 @@ const useLocalStorage = <T,>(key: string, fallbackValue: T) => {
 
 export const LetterNavigation = () => {
   const [showFilter, setShowFilter] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
   const session = useUser();
 
   // Read filter from localstorage if available; otherwise use DEFAULT_FILTER
@@ -145,7 +150,7 @@ export const LetterNavigation = () => {
             >
               <option value="!finished">Zu bearbeiten</option>
               <option value="finished">Abgeschlossen</option>
-              <option value="untouched">Unbearbeitet</option>
+              <option value="untouched">Noch nicht kontrolliert</option>
               <option value="">Alle</option>
             </select>
           </FilterWithLabel>
@@ -207,13 +212,150 @@ export const LetterNavigation = () => {
         >
           <FaAnglesRight className="text-2xl" />
         </NavigationButton>
-        <div
+        <NavigationButton
           className="text-sm flex items-center pl-2 pr-4"
-          title="Anzahl Briefe mit den gewählten Filter-Kriterien"
+          label="Briefe mit den gewählten Filter-Kriterien"
+          onClick={() => setShowProgressModal(true)}
         >
+          <MdOutlineCheckBox className="inline-block text-xl -mt-1" />{" "}
           {data?.count} Briefe
-        </div>
+        </NavigationButton>
+        {showProgressModal && (
+          <ProgressModal
+            currentLetter={current_letter_id}
+            close={() => setShowProgressModal(false)}
+            filters={filter}
+          />
+        )}
       </div>
+    </div>
+  );
+};
+
+const ProgressModal = ({
+  currentLetter,
+  filters,
+  close,
+}: {
+  currentLetter?: number;
+  filters: LetterNavigationFilter;
+  close: () => void;
+}) => {
+  const [sortBy, setSortBy] = useState<"extract_date" | "id">("extract_date");
+  const { data, loading, error } = useServerFetch(letterProgressList, {
+    filter: filters,
+    sortBy: sortBy,
+  });
+
+  return (
+    <Modal
+      closeOnOutsideClick={true}
+      cancel={close}
+      open={true}
+      title={
+        <span>
+          Fortschritts-Übersicht für die gewählten Filter{" "}
+          <IoFilterSharp className="inline-block -mt-1" />
+        </span>
+      }
+    >
+      <div>
+        Sortiert nach{" "}
+        <select
+          className="mb-4 bg-slate-100"
+          onChange={(e) => setSortBy(e.currentTarget.value as any)}
+          value={sortBy}
+        >
+          <option value="extract_date">Datum</option>
+          <option value="id">Brief-ID</option>
+        </select>
+      </div>
+      {loading && <Loading />}
+      {error && <div>{error}</div>}
+      {data && !loading && (
+        <>
+          {data.untouched.length > 0 && (
+            <div className="mb-6 bg-slate-50 p-4">
+              <h3 className="mb-1">
+                Noch nicht kontrollierte Briefe ({data.untouched.length})
+              </h3>
+              <LetterGrid
+                currentLetter={currentLetter}
+                close={close}
+                letters={data.untouched}
+              />
+            </div>
+          )}
+          <div className="mb-3 text-sm flex justify-between">
+            <div>{data.all.length} Briefe</div>
+            <ul className="flex space-x-4 items-center">
+              <li className="flex items-center">
+                <span
+                  className={`inline-block mr-1 w-4 h-4 ${progressColorMap["untouched"]}`}
+                ></span>
+                Noch nicht kontrolliert (
+                {
+                  data.all.filter((a) => a.extract_status === "untouched")
+                    .length
+                }
+                )
+              </li>
+              <li className="flex items-center">
+                <span
+                  className={`inline-block mr-1 w-4 h-4 ${progressColorMap["touched"]}`}
+                ></span>
+                Noch nicht abgeschlossen (
+                {data.all.filter((a) => a.extract_status === "touched").length})
+              </li>
+              <li className="flex items-center">
+                <span
+                  className={`inline-block mr-1 w-4 h-4 ${progressColorMap["finished"]}`}
+                ></span>
+                Abgeschlossen (
+                {data.all.filter((a) => a.extract_status === "finished").length}
+                )
+              </li>
+            </ul>
+          </div>
+          <LetterGrid
+            currentLetter={currentLetter}
+            close={close}
+            letters={data.all}
+          />
+        </>
+      )}
+    </Modal>
+  );
+};
+
+const progressColorMap: Record<string, string> = {
+  untouched: "bg-yellow-300 hover:bg-yellow-500",
+  touched: "bg-slate-300 hover:bg-slate-500",
+  finished: "bg-emerald-400 hover:bg-emerald-600",
+};
+
+const LetterGrid = ({
+  currentLetter,
+  letters,
+  close,
+}: {
+  currentLetter?: number;
+  letters: Awaited<ReturnType<typeof letterProgressList>>["all"];
+  close: () => void;
+}) => {
+  return (
+    <div className="leading-[0.2]">
+      {letters.map((d) => {
+        return (
+          <Link
+            onClick={() => close()}
+            href={`/letter/${d.id}`}
+            className={`inline-block mx-[1px] my-[1px] w-4 h-4 ${progressColorMap[d.extract_status || ""]} ${currentLetter === d.id ? "outline outline-1 outline-gray-500" : ""}`}
+            key={d.id}
+            title={`${d.id} - ${d.extract_date_string}`}
+          ></Link>
+        );
+      })}
     </div>
   );
 };
@@ -225,6 +367,7 @@ type NavigationButtonProps = {
   href?: string;
   disabled?: boolean;
   showActiveIcon?: boolean;
+  className?: string;
 };
 
 const NavigationButton = forwardRef<
@@ -237,7 +380,7 @@ const NavigationButton = forwardRef<
       title={props.label}
       ref={ref as any}
       href={props.href!}
-      className="text-sm min-w-12 h-12 relative first:rounded-l-lg last:rounded-r-lg hover:bg-blue-200 flex items-center justify-center disabled:text-gray-300"
+      className={`text-sm min-w-12 h-12 relative first:rounded-l-lg last:rounded-r-lg hover:bg-blue-200 flex items-center justify-center disabled:text-gray-300 ${props.className ? props.className : ""}`}
       onClick={(e) => !props.disabled && props.onClick && props.onClick()}
       aria-label={props.label}
       disabled={props.disabled}
