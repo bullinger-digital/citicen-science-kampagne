@@ -61,6 +61,7 @@ export interface LetterVersion {
   extract_date: string | null;
   extract_date_string: string | null;
   extract_language: string | null;
+  extract_names_without_ref_count: number | null;
   extract_source: string | null;
   extract_status: string | null;
   extract_type: string | null;

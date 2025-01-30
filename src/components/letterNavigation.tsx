@@ -150,7 +150,9 @@ export const LetterNavigation = () => {
             >
               <option value="!finished">Zu bearbeiten</option>
               <option value="finished">Abgeschlossen</option>
-              <option value="untouched">Noch nicht kontrolliert</option>
+              <option value="low-hanging-fruit">
+                Briefe mit einer einzigen fehlenden Referenz
+              </option>
               <option value="">Alle</option>
             </select>
           </FilterWithLabel>
@@ -274,53 +276,43 @@ const ProgressModal = ({
       {error && <div>{error}</div>}
       {data && !loading && (
         <>
-          {data.untouched.length > 0 && (
-            <div className="mb-6 bg-slate-50 p-4">
-              <h3 className="mb-1">
-                Noch nicht kontrollierte Briefe ({data.untouched.length})
-              </h3>
-              <LetterGrid
-                currentLetter={currentLetter}
-                close={close}
-                letters={data.untouched}
-              />
-            </div>
-          )}
           <div className="mb-3 text-sm flex justify-between">
-            <div>{data.all.length} Briefe</div>
+            <div>{data.length} Briefe</div>
             <ul className="flex space-x-4 items-center">
               <li className="flex items-center">
                 <span
-                  className={`inline-block mr-1 w-4 h-4 ${progressColorMap["untouched"]}`}
+                  className={`inline-block mr-1 w-4 h-4 ${mapColor({ extract_status: "touched", extract_names_without_ref_count: 1 })}`}
                 ></span>
-                Noch nicht kontrolliert (
+                Eine fehlende Referenz (
                 {
-                  data.all.filter((a) => a.extract_status === "untouched")
-                    .length
+                  data.filter(
+                    (a) =>
+                      a.extract_names_without_ref_count === 1 &&
+                      a.extract_status !== "finished"
+                  ).length
                 }
                 )
               </li>
               <li className="flex items-center">
                 <span
-                  className={`inline-block mr-1 w-4 h-4 ${progressColorMap["touched"]}`}
+                  className={`inline-block mr-1 w-4 h-4 ${mapColor({ extract_status: "touched" })}`}
                 ></span>
                 Noch nicht abgeschlossen (
-                {data.all.filter((a) => a.extract_status === "touched").length})
+                {data.filter((a) => a.extract_status === "touched").length})
               </li>
               <li className="flex items-center">
                 <span
-                  className={`inline-block mr-1 w-4 h-4 ${progressColorMap["finished"]}`}
+                  className={`inline-block mr-1 w-4 h-4 ${mapColor({ extract_status: "finished" })}`}
                 ></span>
                 Abgeschlossen (
-                {data.all.filter((a) => a.extract_status === "finished").length}
-                )
+                {data.filter((a) => a.extract_status === "finished").length})
               </li>
             </ul>
           </div>
           <LetterGrid
             currentLetter={currentLetter}
             close={close}
-            letters={data.all}
+            letters={data}
           />
         </>
       )}
@@ -328,10 +320,19 @@ const ProgressModal = ({
   );
 };
 
-const progressColorMap: Record<string, string> = {
-  untouched: "bg-yellow-300 hover:bg-yellow-500",
-  touched: "bg-slate-300 hover:bg-slate-500",
-  finished: "bg-emerald-400 hover:bg-emerald-600",
+const mapColor = ({
+  extract_status,
+  extract_names_without_ref_count,
+}: {
+  extract_status: string | null;
+  extract_names_without_ref_count?: number | null;
+}) => {
+  if (extract_status === "finished")
+    return "bg-emerald-400 hover:bg-emerald-600";
+  if (extract_names_without_ref_count === 1)
+    return "bg-yellow-200 hover:bg-yellow-400";
+  if (extract_status === "touched") return "bg-slate-300 hover:bg-slate-500";
+  return "bg-gray-300 hover:bg-gray-500";
 };
 
 const LetterGrid = ({
@@ -340,20 +341,27 @@ const LetterGrid = ({
   close,
 }: {
   currentLetter?: number;
-  letters: Awaited<ReturnType<typeof letterProgressList>>["all"];
+  letters: Awaited<ReturnType<typeof letterProgressList>>;
   close: () => void;
 }) => {
   return (
     <div className="leading-[0.2]">
       {letters.map((d) => {
+        const missingRefs = d.extract_names_without_ref_count;
         return (
           <Link
             onClick={() => close()}
             href={`/letter/${d.id}`}
-            className={`inline-block mx-[1px] my-[1px] w-4 h-4 ${progressColorMap[d.extract_status || ""]} ${currentLetter === d.id ? "outline outline-1 outline-gray-500" : ""}`}
+            className={`inline-block relative mx-[1px] my-[1px] w-4 h-4 ${mapColor(d) || ""} ${currentLetter === d.id ? "outline outline-1 outline-gray-500" : ""}`}
             key={d.id}
-            title={`${d.id} - ${d.extract_date_string}`}
-          ></Link>
+            title={`${d.id} - ${d.extract_date_string}, ${missingRefs} fehlende Referenzen`}
+          >
+            {!!missingRefs && (
+              <span className="overflow-hidden block absolute top-0 left-0 h-full w-full text-xs text-center text-gray-500">
+                {missingRefs >= 10 ? ">" : missingRefs}
+              </span>
+            )}
+          </Link>
         );
       })}
     </div>

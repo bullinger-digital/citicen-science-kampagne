@@ -31,7 +31,6 @@ export type EditorContextProps = {
 };
 
 export enum LetterState {
-  Untouched = "untouched",
   Touched = "touched",
   Finished = "finished",
 }

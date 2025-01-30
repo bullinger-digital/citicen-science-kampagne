@@ -41,6 +41,9 @@ export const extractAndStoreMetadata = async ({
     dateNode?.getAttribute("notBefore") ||
     dateNode?.getAttribute("notAfter") ||
     null;
+  const namesWithoutRefCount = xmlDom.querySelectorAll(
+    "persName:not([ref]), persName[ref=''], placeName:not([ref]), placeName[ref='']"
+  ).length;
 
   const dateString = !dateNode ? null : dateAsString(dateNode);
 
@@ -55,6 +58,7 @@ export const extractAndStoreMetadata = async ({
       extract_status: state || null,
       extract_date: date || null,
       extract_date_string: dateString || null,
+      extract_names_without_ref_count: namesWithoutRefCount,
     })
     .execute();
 

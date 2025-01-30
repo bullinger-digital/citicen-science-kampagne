@@ -488,11 +488,18 @@ const letterSelection = (
         e.where("extract_language", "=", filter.language!)
       )
       .$if(!!filter.status, (e) =>
-        e.where(
-          "extract_status",
-          filter.status?.startsWith("!") ? "!=" : "=",
-          filter.status?.replace("!", "")!
-        )
+        filter.status! === "low-hanging-fruit"
+          ? e.where((e) =>
+              e.and([
+                e("extract_names_without_ref_count", "=", 1),
+                e("extract_status", "!=", "finished"),
+              ])
+            )
+          : e.where(
+              "extract_status",
+              filter.status?.startsWith("!") ? "!=" : "=",
+              filter.status?.replace("!", "")!
+            )
       )
       .$if(!!filter.person_id, (e) =>
         e.where((eb) =>
@@ -517,16 +524,15 @@ export const letterProgressList = async ({
 }) => {
   await requireRoleOrThrow("user");
 
-  return {
-    all: await letterSelection(kdb, { ...filter, status: undefined })
-      .select(["id", "extract_status", "extract_date_string"])
-      .orderBy(sortBy)
-      .execute(),
-    untouched: await letterSelection(kdb, { ...filter, status: "untouched" })
-      .select(["id", "extract_status", "extract_date_string"])
-      .orderBy(sortBy)
-      .execute(),
-  };
+  return await letterSelection(kdb, { ...filter, status: undefined })
+    .select([
+      "id",
+      "extract_status",
+      "extract_date_string",
+      "extract_names_without_ref_count",
+    ])
+    .orderBy(sortBy)
+    .execute();
 };
 
 export const letterNavigation = async ({
@@ -634,10 +640,7 @@ export const letterNavigation = async ({
               e
                 .selectFrom("should_prioritize_edited")
                 .select("should_prioritize_edited"),
-              e.or([
-                e("extract_source", "like", "HBBW-%"),
-                e("extract_status", "=", "untouched"),
-              ]),
+              e("extract_source", "like", "HBBW-%"),
             ]),
           "desc"
         )
