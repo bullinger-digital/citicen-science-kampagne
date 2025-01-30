@@ -50,7 +50,7 @@ services:
 
   # Source: https://github.com/ixc/restic-pg-dump-docker
   restic-backup:
-    image: interaction/restic-pg-dump:sha-sha-b98c2fd837ea978e2e70d3f8b5c55fa59345f38f
+    image: interaction/restic-pg-dump:d893de06022febc1048fde1c4d54f7852b7bafab
     restart: always
     environment:
       AWS_ACCESS_KEY_ID: $RESTIC_BACKUP_AWS_ACCESS_KEY_ID
