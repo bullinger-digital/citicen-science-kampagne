@@ -520,7 +520,7 @@ export const letterProgressList = async ({
   sortBy,
 }: {
   filter: LetterNavigationFilter;
-  sortBy: "extract_date" | "id";
+  sortBy: "extract_date" | "id" | "-extract_names_without_ref_count";
 }) => {
   await requireRoleOrThrow("user");
 
@@ -531,7 +531,13 @@ export const letterProgressList = async ({
       "extract_date_string",
       "extract_names_without_ref_count",
     ])
-    .orderBy(sortBy)
+    .orderBy(
+      sortBy.replace(/^-/, "") as
+        | "id"
+        | "extract_date"
+        | "extract_names_without_ref_count",
+      sortBy.startsWith("-") ? "desc" : "asc"
+    )
     .execute();
 };
 

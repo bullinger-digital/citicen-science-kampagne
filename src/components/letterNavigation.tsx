@@ -243,7 +243,9 @@ const ProgressModal = ({
   filters: LetterNavigationFilter;
   close: () => void;
 }) => {
-  const [sortBy, setSortBy] = useState<"extract_date" | "id">("extract_date");
+  const [sortBy, setSortBy] = useState<
+    "extract_date" | "id" | "-extract_names_without_ref_count"
+  >("extract_date");
   const { data, loading, error } = useServerFetch(letterProgressList, {
     filter: filters,
     sortBy: sortBy,
@@ -270,6 +272,9 @@ const ProgressModal = ({
         >
           <option value="extract_date">Datum</option>
           <option value="id">Brief-ID</option>
+          <option value="-extract_names_without_ref_count">
+            Anzahl fehlender Referenzen (absteigend)
+          </option>
         </select>
       </div>
       {loading && <Loading />}
