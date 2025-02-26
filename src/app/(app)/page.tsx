@@ -4,11 +4,21 @@ import { TinaMarkdown } from "tinacms/dist/rich-text";
 import { components } from "@/components/content/markdownComponents";
 import LoginRegisterInfo from "@/components/common/loginRegisterInfo";
 import { PageContent } from "@/components/content/pageContent";
+import { Link } from "@/components/common/navigation-block/link";
 
 export default function Home() {
   return (
     <main className="px-5 pb-5 text-center font-light mt-5 text-2xl">
       <LoginRegisterInfo />
+      <div className="text-base bg-yellow-100 max-w-3xl p-5 mb-5 mx-auto">
+        Die Mithelfen-Kampagne endet per 10.03.2025. Danach wird dieses Tool
+        nicht mehr verfügbar sein. Die in den Briefen annotierten Namen sind
+        anschliessend weiterhin unter{" "}
+        <Link className="underline" href="https://www.bullinger-digital.ch">
+          www.bullinger-digital.ch
+        </Link>{" "}
+        einsehbar.
+      </div>
       <HomePageContent />
     </main>
   );
