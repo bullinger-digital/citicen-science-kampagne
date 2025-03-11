@@ -5,7 +5,7 @@ import { Versioning } from "../versioning";
 import { LOCK_DURATION } from "./locking_common";
 
 export const aquireLetterLock = async ({ id }: { id: number }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   if (!id) throw new Error("ID is required");
 
   const v = new Versioning();

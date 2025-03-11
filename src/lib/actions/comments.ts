@@ -49,7 +49,7 @@ export const addComment = async ({
   if (content.length > 3000) {
     throw new Error("Comment too long");
   }
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   return await transactionWithLogId(kdb, async (logId, db) => {
     await db
       .insertInto("comment")
@@ -69,7 +69,7 @@ export const updateComment = async ({
   id: number;
   content: string;
 }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   return await transactionWithLogId(kdb, async (logId, db) => {
     await verifyAdminOrOwner(id, db);
 
@@ -82,7 +82,7 @@ export const updateComment = async ({
 };
 
 export const deleteComment = async ({ id }: { id: number }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   return await transactionWithLogId(kdb, async (logId, db) => {
     await verifyAdminOrOwner(id, db);
 

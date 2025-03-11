@@ -151,7 +151,7 @@ export const getSingleGndResult = async ({
 }: {
   id: string | null | undefined;
 }): Promise<GndResult | null> => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
 
   try {
     if (!id || typeof id !== "string") {
