@@ -27,6 +27,7 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import Modal from "./common/modal";
 import { Loading } from "./common/loadingIndicator";
 import { MdOutlineCheckBox } from "react-icons/md";
+import { isInRole } from "@/lib/security/isInRole";
 
 const INPUT_CLASSNAMES =
   "w-full px-2 py-2 border-b-2 border-gray-300 outline-none focus:border-beige-500 placeholder-gray-300 text-gray-700";
@@ -58,6 +59,7 @@ export const LetterNavigation = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const session = useUser();
+  const isAdmin = isInRole(session, "admin");
 
   // Read filter from localstorage if available; otherwise use DEFAULT_FILTER
   const [filter, setFilter] = useLocalStorage(
@@ -77,7 +79,7 @@ export const LetterNavigation = () => {
       current_letter_id: current_letter_id,
     },
     {
-      skip: !session.user,
+      skip: !session.user || !isAdmin,
     }
   );
 
@@ -86,7 +88,7 @@ export const LetterNavigation = () => {
     useCallback(() => setShowFilter(false), [setShowFilter])
   );
 
-  return !session.user ? (
+  return !session.user || !isAdmin ? (
     <div className="border-l border-gray-300">&nbsp;</div>
   ) : (
     <div className="flex">

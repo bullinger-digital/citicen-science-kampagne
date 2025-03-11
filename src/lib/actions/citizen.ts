@@ -30,7 +30,7 @@ export const getCurrentUserId = async () => {
 };
 
 export const fileOnCurrentCommit = async ({ id }: { id: string }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   if (!id) throw new Error("ID is required");
 
   const v = new Versioning();
@@ -46,7 +46,7 @@ export const personById = async ({
   gnd?: string;
   includeGndData?: boolean;
 }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   if (!id && !gnd) throw new Error("ID or GND is required");
   const p = await kdb
     .selectFrom("person_version")
@@ -110,7 +110,7 @@ export const searchPerson = async ({
 }: FilterTableOptions & {
   includeOnlyCorrespondents?: boolean;
 }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const keywords = query.split(" ").map((k) => {
     const ext = latinPersonExtension.find((e) => k.endsWith(e));
     // If the keyword ends with a latin extension and has at least 3 characters more than the extension, remove the extension
@@ -190,7 +190,7 @@ export const searchPlace = async ({
   offset = 0,
   orderBy = { column: "computed_link_counts", direction: "desc" },
 }: FilterTableOptions) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const keywords = query.split(" ");
   const baseQuery = kdb
     .selectFrom("place")
@@ -247,7 +247,7 @@ export const searchPlace = async ({
 export const placeById = async (
   params: { id: string } | { geonames: string }
 ) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const id = "id" in params ? params.id : null;
   const geonames = "geonames" in params ? params.geonames : null;
   if (!id && !geonames) throw new Error("ID or Geonames ID is required");
@@ -300,7 +300,7 @@ export const insertOrUpdatePerson = async (
   newPerson: InferType<typeof updateOrInsertPersonSchema>
 ) => {
   await updateOrInsertPersonSchema.validate(newPerson);
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
 
   const result = await kdb.transaction().execute(async (t) => {
     const v = new Versioning(t);
@@ -362,7 +362,7 @@ export const insertOrUpdatePlace = async (
   newPlace: InferType<typeof updateOrInsertPlaceSchema>
 ) => {
   await updateOrInsertPlaceSchema.validate(newPlace);
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
 
   const result = await kdb.transaction().execute(async (t) => {
     const v = new Versioning(t);
@@ -418,7 +418,7 @@ export const saveVersion = async ({
   xml: string;
   actions: EditorAction[];
 }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const v = new Versioning();
 
   const currentVersion = await v.getCurrentVersion("letter", id, version_id);
@@ -522,7 +522,7 @@ export const letterProgressList = async ({
   filter: LetterNavigationFilter;
   sortBy: "extract_date" | "id" | "-extract_names_without_ref_count";
 }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
 
   return await letterSelection(kdb, { ...filter, status: undefined })
     .select([
@@ -548,7 +548,7 @@ export const letterNavigation = async ({
   filter: LetterNavigationFilter;
   current_letter_id: number;
 }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
 
   const result = await kdb
     .with("selection", (e) =>
@@ -671,7 +671,7 @@ export const letterNavigation = async ({
 };
 
 export const orgNameByRef = async ({ ref }: { ref: string }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const orgName = await kdb
     .selectFrom("org_names")
     .where("id", "=", ref)
@@ -686,7 +686,7 @@ export const orgNameByRef = async ({ ref }: { ref: string }) => {
 };
 
 export const getPersonUsages = async ({ id }: { id: number }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const usages = await kdb
     .selectFrom("letter_version_extract_person")
     .leftJoin(
@@ -703,7 +703,7 @@ export const getPersonUsages = async ({ id }: { id: number }) => {
 };
 
 export const getPlaceUsages = async ({ id }: { id: number }) => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const usages = await kdb
     .selectFrom("letter_version_extract_place")
     .leftJoin(
@@ -727,7 +727,7 @@ export const getPlaceUsages = async ({ id }: { id: number }) => {
 };
 
 export const getLatestWork = async () => {
-  await requireRoleOrThrow("user");
+  await requireRoleOrThrow("admin");
   const userId = await getCurrentUserId();
   if (!userId) {
     return [];
