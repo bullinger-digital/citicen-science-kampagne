@@ -10,11 +10,16 @@ export default function Home() {
   return (
     <main className="px-5 pb-5 text-center font-light mt-5 text-2xl">
       <LoginRegisterInfo />
-      <div className="text-base bg-yellow-100 max-w-3xl p-5 mb-5 mx-auto">
-        Die Mithelfen-Kampagne endet per 10.03.2025. Danach wird dieses Tool
-        nicht mehr verfügbar sein. Die in den Briefen annotierten Namen sind
-        anschliessend weiterhin unter{" "}
-        <Link className="underline" href="https://www.bullinger-digital.ch">
+      <div className="text-base bg-red-100 max-w-3xl p-7 mb-5 mx-auto">
+        <h2 className="font-bold mb-2">Kampagne geschlossen</h2>
+        Die Mithelfen-Kampagne wurde am 11.03.2025 beendet. Wir danken allen
+        Helfenden für den grossen Einsatz! Die in den Briefen annotierten Namen
+        sind weiterhin unter{" "}
+        <Link
+          target="_blank"
+          className="underline whitespace-nowrap"
+          href="https://www.bullinger-digital.ch"
+        >
           www.bullinger-digital.ch
         </Link>{" "}
         einsehbar.
