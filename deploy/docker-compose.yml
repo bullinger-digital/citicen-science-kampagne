@@ -46,7 +46,7 @@ services:
     networks:
       - citizen_science
     command: >
-      -c work_mem=1024MB
+      -c work_mem=3072MB
   
 
   # Source: https://github.com/ixc/restic-pg-dump-docker
