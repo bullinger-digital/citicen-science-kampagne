@@ -275,7 +275,7 @@ export const OpenRegistersButton = ({
   const isLoggedIn = !!session.user;
   const isAdmin = isInRole(session, "admin");
 
-  return !isLoggedIn ? null : (
+  return !isLoggedIn || !isAdmin ? null : (
     <div>
       <button
         onClick={() => setIsOpen(true)}

@@ -1,11 +1,17 @@
 "use client";
 
 import { Editor } from "@/components/editor/editor";
-import { useParams } from "next/navigation";
-import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
+import { redirect, useParams } from "next/navigation";
+import { useUser, withPageAuthRequired } from "@auth0/nextjs-auth0/client";
+import { isInRole } from "@/lib/security/isInRole";
 
 export default withPageAuthRequired(function LetterPage() {
+  const user = useUser();
   const params = useParams<{ letterId: string }>();
+
+  if (!isInRole(user, "admin")) {
+    return redirect("/");
+  }
 
   if (!params?.letterId || isNaN(parseInt(params.letterId))) {
     return (

@@ -9,12 +9,11 @@ import { Link } from "@/components/common/navigation-block/link";
 export default function Home() {
   return (
     <main className="px-5 pb-5 text-center font-light mt-5 text-2xl">
-      <LoginRegisterInfo />
       <div className="text-base bg-red-100 max-w-3xl p-7 mb-5 mx-auto">
-        <h2 className="font-bold mb-2">Kampagne geschlossen</h2>
-        Die Mithelfen-Kampagne wurde am 11.03.2025 beendet. Wir danken allen
-        Helfenden für den grossen Einsatz! Die in den Briefen annotierten Namen
-        sind weiterhin unter{" "}
+        <h2 className="mb-2 text-2xl">Kampagne geschlossen</h2>
+        Die Mithelfen-Kampagne wurde am 11.03.2025 beendet. Eine Mitarbeit ist
+        nicht mehr möglich. Wir danken allen Helfenden für den grossen Einsatz!
+        Die in den Briefen annotierten Namen sind weiterhin unter{" "}
         <Link
           target="_blank"
           className="underline whitespace-nowrap"
@@ -24,6 +23,7 @@ export default function Home() {
         </Link>{" "}
         einsehbar.
       </div>
+      <LoginRegisterInfo />
       <HomePageContent />
     </main>
   );
