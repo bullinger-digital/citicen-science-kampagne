@@ -79,6 +79,7 @@ const EMPTY_NEW_PERSON = {
   forename: "",
   surname: "",
   gnd: "",
+  hls: "",
   hist_hub: "",
   wiki: "",
   portrait: "",
@@ -121,6 +122,7 @@ export const EditPersonModal = ({
           forename: p.forename || "",
           surname: p.surname || "",
           gnd: p.gnd || "",
+          hls: p.hls || "",
           hist_hub: p.hist_hub || "",
           wiki: p.wiki || "",
           portrait: p.portrait || "",
@@ -212,6 +214,13 @@ export const EditPersonModal = ({
             onUseExisting={(id) => close(id)}
           />
         )}
+        <InputWithLabel
+          value={newPerson.hls || ""}
+          onChange={(e) => setNewPerson({ ...newPerson, hls: e.target.value })}
+          label="HLS-Link"
+          placeholder="https://hls-dhs-dss.ch/de/articles/000000/0000-00-00/"
+          title="HLS-Link im Format https://hls-dhs-dss.ch/de/articles/000000/0000-00-00/"
+        />
         {/* <MetaGridField
           value={newPerson.meta_grid}
           onChange={(v) => setNewPerson({ ...newPerson, meta_grid: v })}

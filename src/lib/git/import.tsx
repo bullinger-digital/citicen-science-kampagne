@@ -187,6 +187,7 @@ export const importFromCurrentCommit = async () => {
             // // Todo: Fix typing
           ) as any,
           gnd: person.querySelector("idno[subtype='gnd']")?.textContent || "",
+          hls: person.querySelector("idno[subtype='hls']")?.textContent || "",
           hist_hub:
             person.querySelector("idno[subtype='histHub']")?.textContent || "",
           portrait:
@@ -247,8 +248,11 @@ export const importFromCurrentCommit = async () => {
         .execute();
     }
 
+    let numberProcessed = 0;
     await iterateFiles(async (name, fileContents) => {
-      console.log(name);
+      if (numberProcessed % 100 === 0) {
+        console.log("Processed", numberProcessed, "letters");
+      }
       const letterId = parseInt(name.replace(".xml", ""));
 
       await v.importVersioned(
@@ -261,6 +265,7 @@ export const importFromCurrentCommit = async () => {
         },
         gitImportSpecs
       );
+      numberProcessed++;
     });
 
     await v.updateComputedLinkCounts({});
