@@ -135,6 +135,7 @@ export interface PersonVersion {
   git_import_id: number;
   gnd: string | null;
   hist_hub: string | null;
+  hls: string | null;
   id: number;
   is_latest: Generated<boolean>;
   is_new: Generated<boolean>;

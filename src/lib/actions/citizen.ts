@@ -271,6 +271,7 @@ const updateOrInsertPersonSchema = object({
     message: "Ungültige GND ID",
     excludeEmptyString: true,
   }),
+  hls: string().nullable(),
   hist_hub: string().matches(/\/?[0-9]{6,12}$/, {
     message: "Ungültige HistHub ID",
     excludeEmptyString: true,
@@ -313,6 +314,7 @@ export const insertOrUpdatePerson = async (
         null,
         {
           gnd: newPerson.gnd,
+          hls: newPerson.hls,
           hist_hub: newPerson.hist_hub,
           wiki: newPerson.wiki,
           portrait: newPerson.portrait,
@@ -332,6 +334,7 @@ export const insertOrUpdatePerson = async (
         "person",
         {
           gnd: newPerson.gnd,
+          hls: newPerson.hls,
           hist_hub: newPerson.hist_hub,
           wiki: newPerson.wiki,
           forename: newPerson.forename,

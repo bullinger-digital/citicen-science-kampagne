@@ -97,6 +97,7 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
     .select([
       "id",
       "gnd",
+      "hls",
       "hist_hub",
       "portrait",
       "wiki",
@@ -234,6 +235,15 @@ const exportPersons = async (db: Kysely<DB>, gitExportId: number) => {
           person.wiki,
           (node) => {
             node.setAttribute("subtype", "wiki");
+          }
+        );
+        h.textContentNode(
+          personNode,
+          `idno[subtype='hls']`,
+          "idno",
+          person.hls,
+          (node) => {
+            node.setAttribute("subtype", "hls");
           }
         );
       }
