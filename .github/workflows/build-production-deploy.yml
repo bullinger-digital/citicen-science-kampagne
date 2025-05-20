@@ -1,7 +1,7 @@
 name: Build and (optionally) deploy
 
-on:
-  push:
+# on:
+#   push:
 
 env:
   IMAGE_NAME: bullinger-citizen-science
