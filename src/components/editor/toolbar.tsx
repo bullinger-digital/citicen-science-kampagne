@@ -54,11 +54,6 @@ const getXmlStartAndEndNode = (selection: Selection | null) => {
     return { isValid: false };
   }
 
-  // Todo: Verify selection is within a text node and does not overlap other nodes
-  // Todo: extend selection to include siblings if it is not within a text node? Or if offset is = 0 and is has no previous sibling
-  // or exclude element from end of selection if offset = 0
-  // Selection cleanup seams not so easy, because browsers are not consistent in how they handle selections (needs proper testing in all major browsers)
-
   const startNode = (range?.startContainer.parentElement as any)
     .xmlNode as Node;
   const endNode = (range?.endContainer.parentElement as any).xmlNode as Node;
