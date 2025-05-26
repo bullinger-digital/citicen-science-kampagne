@@ -18,8 +18,9 @@ Data was imported into the PostgreSQL database from the GitHub repository. The b
 On the frontend, users were able to:
 
 - Annotate person and place names in letter texts, abstracts, and footnotes
-- Link annotations to specific persons and places
+- Link annotations to specific persons and places in Bullinger Digital
 - Modify person and place records
+- Link persons and places to GND, Wikipedia and HLS records
 
 Data was regularly exported back to the GitHub repository using an automated export process. An admin interface allowed staff to review changes of person/place entries (two-step workflow). It also provided searchable overviews of all registered persons and places, with tools for editing and merging duplicate entries.
 
@@ -37,7 +38,7 @@ These videos were used to instruct people how to use the web application and dem
 
 [![Neue Ortsnamen erfassen](https://img.youtube.com/vi/tW3a1Y_5zJU/0.jpg)](https://www.youtube.com/watch?v=tW3a1Y_5zJU)
 
-### 👤 Adding New People
+### 👤 Adding New Persons
 
 [![Neue Personen erfassen](https://img.youtube.com/vi/eNfN9MiJOs8/0.jpg)](https://www.youtube.com/watch?v=eNfN9MiJOs8)
 
